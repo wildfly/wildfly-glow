@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+
+<installation xmlns="urn:jboss:galleon:provisioning:3.0">
+    <feature-pack location="org.wildfly:wildfly-ee-galleon-pack:29.0.0.Final"/>
+    <feature-pack location="org.wildfly:wildfly-datasources-galleon-pack:5.0.0.Final"/>
+    <feature-pack location="org.keycloak:keycloak-saml-adapter-galleon-pack:999.0.0-SNAPSHOT"/>
+</installation>

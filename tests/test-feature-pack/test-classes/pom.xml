@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.wildfly.glow</groupId>
+        <artifactId>wildfly-glow-test-feature-pack-parent</artifactId>
+        <version>1.0.0.Alpha1-SNAPSHOT</version>
+    </parent>
+    <artifactId>wildfly-glow-test-feature-pack-classes</artifactId>
+
+    <packaging>jar</packaging>
+
+    <properties>
+        <license.output.directory>${project.build.directory}/resources/content/docs/licenses</license.output.directory>
+        <license.src.directory>${basedir}/src/license</license.src.directory>
+        <checkstyle.skip>true</checkstyle.skip>
+    </properties>
+
+</project>

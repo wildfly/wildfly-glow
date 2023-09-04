@@ -1,0 +1,11 @@
+### Goals overview
+
+[options="autowidth"]
+|===
+|<<_help>> |Prints help for the plugin.
+|<<_scan>> |Scan test classes, create deployments and generate provisioning.xml.
+|===
+
+include::help/index.adoc[]
+include::scan/index.adoc[]
+
