@@ -10,7 +10,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <wildfly.glow.galleon.feature-packs.url>https://raw.githubusercontent.com/jfdenise/wildfly-galleon-feature-packs/release/</wildfly.glow.galleon.feature-packs.url>
+        <wildfly.glow.galleon.feature-packs.url>https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/release/</wildfly.glow.galleon.feature-packs.url>
 
         <!-- versions -->
         <version.org.ow2.asm>9.5</version.org.ow2.asm>
