@@ -53,6 +53,8 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class AbstractLayerMetaDataTestCase {
@@ -133,10 +135,14 @@ public class AbstractLayerMetaDataTestCase {
     }
 
     protected Set<String> checkLayersForArchive(Path archivePath, Consumer<ScanArguments.Builder> argumentsAugmenter, String...expectedLayers) {
-        return checkLayersForArchive(archivePath, argumentsAugmenter, new ExpectedLayers(expectedLayers));
+        return checkLayersForArchive(archivePath, argumentsAugmenter, new ExpectedLayers(expectedLayers), true);
     }
 
     protected Set<String> checkLayersForArchive(Path archivePath, Consumer<ScanArguments.Builder> argumentsAugmenter, ExpectedLayers expectedLayers) {
+        return checkLayersForArchive(archivePath, argumentsAugmenter, expectedLayers, true);
+    }
+
+    protected Set<String> checkLayersForArchive(Path archivePath, Consumer<ScanArguments.Builder> argumentsAugmenter, ExpectedLayers expectedLayers, boolean deleteArchive) {
         try {
             checkMethodCalled = true;
             ScanArguments.Builder argumentsBuilder = Arguments.scanBuilder().setBinaries(Collections.singletonList(archivePath));
@@ -156,6 +162,14 @@ public class AbstractLayerMetaDataTestCase {
         } catch (Exception e) {
             if (e instanceof RuntimeException) throw (RuntimeException)e;
             throw new RuntimeException(e);
+        } finally {
+            if (deleteArchive) {
+                try {
+                    Files.delete(archivePath);
+                } catch (IOException ex) {
+                    throw new RuntimeException("Got " + ex + " trying to delete " + archivePath);
+                }
+            }
         }
     }
 

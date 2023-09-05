@@ -51,6 +51,12 @@ public class DeploymentFileRuleInspector {
         return ParsedRule.extract(archiveFileRegistry, rootPath, prop);
     }
 
+    // This is the separator chosen in WildFly Glow rules
+    private static String toUnixFilePath(String path) {
+        // Windows path handling
+        return path.replaceAll("\\\\", "/");
+    }
+
     private class ArchiveFileRegistry {
         private final Map<String, Path> allFilePaths;
         private final Path rootPath;
@@ -63,13 +69,13 @@ public class DeploymentFileRuleInspector {
                     new NestedWarOrExplodedArchiveFileVisitor(rootPath, archive) {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    allFilePaths.put(dir.toString(), dir);
+                    allFilePaths.put(toUnixFilePath(dir.toString()), dir);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    allFilePaths.put(file.toString(), file);
+                    allFilePaths.put(toUnixFilePath(file.toString()), file);
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -131,6 +137,7 @@ public class DeploymentFileRuleInspector {
                 pattern = Pattern.compile(escapedPath);
             } else {
                 escapedPath = rootPath.resolve(pathRelativeToRoot(path)).toString();
+                escapedPath = toUnixFilePath(escapedPath);
             }
             return new PatternOrValue(escapedPath, pattern);
         }
@@ -163,6 +170,7 @@ public class DeploymentFileRuleInspector {
 
         private static String adjustPatternInputRelativeToRoot(Path rootPath, String pathPattern) {
             String path = rootPath.toString();
+            path = toUnixFilePath(path);
             if (!path.endsWith("/")) {
                 path += "/";
             }

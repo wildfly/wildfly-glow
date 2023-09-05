@@ -61,7 +61,7 @@
 
 
         <!-- Surefire arguments -->
-        <testLogToFile>false</testLogToFile>
+        <testLogToFile>true</testLogToFile>
         <maven.test.redirectTestOutputToFile>${testLogToFile}</maven.test.redirectTestOutputToFile>
 
     </properties>
