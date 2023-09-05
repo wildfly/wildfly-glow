@@ -1,0 +1,15 @@
+## Glow Arquillian Maven plugin
+
+This chapter is dedicated to the Maven plugin that can be used to use WildFly Glow. Maven
+coordinates of the Maven plugin artifact are
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>org.wildfly.glow</groupId>
+    <artifactId>glow-arquillian-plugin</artifactId>
+    <version>{revnumber}</version>
+</dependency>
+----
+
+include::goals/index.adoc[]
