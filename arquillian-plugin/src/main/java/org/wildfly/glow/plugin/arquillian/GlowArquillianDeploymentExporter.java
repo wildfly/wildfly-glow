@@ -65,7 +65,9 @@ public class GlowArquillianDeploymentExporter {
     private void inspectClassFile(String className) throws IOException {
         Class<?> clazz;
         try {
-            //System.out.println("Inspect " + className);
+            if(verbose) {
+                System.out.println("Inspect " + className);
+            }
             clazz = Class.forName(className, false, loader);
         } catch (Throwable e) {
             if (verbose) {
@@ -146,8 +148,9 @@ public class GlowArquillianDeploymentExporter {
         String outputName = m.getDeclaringClass().getSimpleName() + (++counter);
         outputName += archiveSuffix;
         Path outputPath = outputFolder.resolve(outputName).toAbsolutePath();
-
-        //System.out.println("---->" + outputName);
+        if (verbose) {
+            System.out.println("---->" + outputName);
+        }
         ZipExporter exporter = archive.as(ZipExporter.class);
         exporter.exportTo(outputPath.toFile(), true);
         this.fileNames.add(outputPath.toString());
