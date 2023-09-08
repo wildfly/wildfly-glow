@@ -1,3 +1,4 @@
+cli/dependency-reduced-pom.xml
 /docs/target/
 /maven-resolver/target/
 /tests/glow-tests/target/
