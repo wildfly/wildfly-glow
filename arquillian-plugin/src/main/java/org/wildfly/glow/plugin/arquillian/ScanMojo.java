@@ -321,7 +321,10 @@ public class ScanMojo extends AbstractMojo {
                 results.outputConfig(outputFolder, false);
             }
         } catch (Exception ex) {
-            throw new MojoExecutionException(ex);
+            if (ex instanceof MojoExecutionException) {
+                throw (MojoExecutionException) ex;
+            }
+            throw new MojoExecutionException(ex.getMessage(), ex);
         } finally {
             HiddenPropertiesAccessor.clearOverrides();
         }
@@ -352,11 +355,15 @@ public class ScanMojo extends AbstractMojo {
         for (URL url : testArtifacts) {
             urlList.append(url).append(",");
         }
-        //System.out.println("URLS " + urlList);
-        //System.out.println("CLASSES " + classesLst);
+        if(enableVerboseOutput) {
+            System.out.println("SCANNER: Urls: " + urlList);
+            System.out.println("SCANNER: Classes: " + classesLst);
+        }
         final StringBuilder cp = new StringBuilder();
-        collectCpUrls(System.getProperty("java.home"), Thread.currentThread().getContextClassLoader(), cp);
-        //System.out.println("CP " + cp);
+        collectCpUrls(System.getProperty("java.home"), Thread.currentThread().getContextClassLoader(), cp, enableVerboseOutput);
+        if(enableVerboseOutput) {
+            System.out.println("SCANNER: classpath: " + cp);
+        }
 
 
         List<String> cmd = new ArrayList<>();
@@ -379,18 +386,21 @@ public class ScanMojo extends AbstractMojo {
     }
 
 
-    private static void collectCpUrls(String javaHome, ClassLoader cl, StringBuilder buf) throws MojoExecutionException {
+    private static void collectCpUrls(String javaHome, ClassLoader cl, StringBuilder buf, boolean enableVerboseOutput) throws MojoExecutionException {
         final ClassLoader parentCl = cl.getParent();
         if (parentCl != null) {
-            collectCpUrls(javaHome, cl.getParent(), buf);
+            collectCpUrls(javaHome, cl.getParent(), buf, enableVerboseOutput);
         }
         if (cl instanceof URLClassLoader) {
             for (URL url : ((URLClassLoader) cl).getURLs()) {
                 final String file;
+                if (enableVerboseOutput) {
+                    System.out.println("SCANNER: CP file url " + url);
+                }
                 try {
                     file = new File(url.toURI()).getAbsolutePath();
                 } catch (URISyntaxException ex) {
-                    throw new MojoExecutionException(ex);
+                    throw new MojoExecutionException(ex.getMessage(), ex);
                 }
                 if (file.startsWith(javaHome)) {
                     continue;
