@@ -18,6 +18,7 @@
     </properties>
 
     <modules>
+        <module>arquillian-plugin-tests</module>
         <module>glow-tests</module>
         <module>test-feature-pack</module>
     </modules>
