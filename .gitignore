@@ -9,3 +9,4 @@ cli/dependency-reduced-pom.xml
 /arquillian-plugin/target/
 /tests/test-feature-pack/test-classes/target/
 /tests/arquillian-plugin-tests/target/
+/arquillian-plugin-scanner/target/

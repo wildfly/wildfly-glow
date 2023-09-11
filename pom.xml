@@ -205,6 +205,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-arquillian-plugin-scanner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${version.org.apache.commons}</version>
@@ -427,6 +432,7 @@
     </dependencyManagement>
     <modules>
         <module>arquillian-plugin</module>
+        <module>arquillian-plugin-scanner</module>
         <module>core</module>
         <module>cli</module>
         <module>docs</module>

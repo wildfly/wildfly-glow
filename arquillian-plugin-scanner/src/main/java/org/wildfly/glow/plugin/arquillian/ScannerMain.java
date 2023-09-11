@@ -52,9 +52,10 @@ public class ScannerMain {
 
         boolean verbose = Boolean.parseBoolean(args[4]);
         // ClassLoader to load the Scanner from the classpath (equivalent to application cp).
-        URLClassLoader cpLoader = buildClassLoader(cpArray, null);
+        // Delegates to the application classpath to resolve Java API.
+        URLClassLoader cpLoader = buildClassLoader(cpArray, Thread.currentThread().getContextClassLoader(), verbose);
         // ClassLoader to load the test classes, delegate to cpLoader
-        URLClassLoader testLoader = buildClassLoader(urlsArray, cpLoader);
+        URLClassLoader testLoader = buildClassLoader(urlsArray, cpLoader, verbose);
         Class<?> exporterClass = Class.forName("org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter", true, cpLoader);
         Constructor ctr = exporterClass.getConstructor(List.class, ClassLoader.class, Path.class, Boolean.TYPE);
         Object obj = ctr.newInstance(classes, testLoader, outputFolder, verbose);
@@ -63,14 +64,15 @@ public class ScannerMain {
         System.exit(0);
     }
 
-    private static URLClassLoader buildClassLoader(String[] cpUrls, ClassLoader parent) throws Exception {
+    private static URLClassLoader buildClassLoader(String[] cpUrls, ClassLoader parent, boolean verbose) throws Exception {
         List<URL> urls = new ArrayList<>();
         for (String s : cpUrls) {
-            System.out.println("URL " + s);
+            if (verbose) {
+                System.out.println("URL " + s);
+            }
             urls.add(new File(s).toURI().toURL());
         }
         URL[] cp = urls.toArray(new URL[0]);
-        ClassLoader originalCl = Thread.currentThread().getContextClassLoader();
         return new URLClassLoader(cp, parent);
     }
 }
