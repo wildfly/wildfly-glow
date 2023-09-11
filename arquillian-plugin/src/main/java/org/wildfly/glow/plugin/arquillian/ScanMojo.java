@@ -65,7 +65,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.apache.maven.plugin.logging.Log;
 import org.wildfly.glow.error.IdentifiedError;
+import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
+import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
 
 /**
  *
@@ -225,13 +228,13 @@ public class ScanMojo extends AbstractMojo {
             if (!Files.exists(outputFolder)) {
                 Files.createDirectories(outputFolder);
             }
-            List<URL> urls = new ArrayList<>();
+            List<String> paths = new ArrayList<>();
             for (String s : project.getTestClasspathElements()) {
-                urls.add(new File(s).toURI().toURL());
+                paths.add(new File(s).getAbsolutePath());
             }
             Arguments arguments = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
-                    setBinaries(retrieveDeployments(urls, classesRootFolder, outputFolder)).
+                    setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
                     setProvisoningXML(buildInputConfig(outputFolder)).
                     setUserEnabledAddOns(addOns).
                     setConfigName(configName).
@@ -288,8 +291,8 @@ public class ScanMojo extends AbstractMojo {
                     }
                     throw new MojoExecutionException("The following errors are unexpected:\n" + builder.toString());
                 }
-                System.out.println("Expected errors found in glow scanning results. "
-                        + " The test execiution should fix them (eg: add missing datasources)");
+                getLog().info("Expected errors found in glow scanning results. "
+                        + " The test execution should fix them (eg: add missing datasources)");
             } else {
                 if (!expectedErrors.isEmpty()) {
                     throw new MojoExecutionException("expected-errors contains errors but no error reported.");
@@ -346,25 +349,34 @@ public class ScanMojo extends AbstractMojo {
 
     private Process startScanner(Path outputFolder,
             List<String> classes,
-            List<URL> testArtifacts) throws IOException, MojoExecutionException {
+            List<String> testArtifacts) throws IOException, MojoExecutionException {
         StringBuilder classesLst = new StringBuilder();
         for (String c : classes) {
             classesLst.append(c).append(",");
         }
-        StringBuilder urlList = new StringBuilder();
-        for (URL url : testArtifacts) {
-            urlList.append(url).append(",");
+        StringBuilder pathList = new StringBuilder();
+        for (String path : testArtifacts) {
+            pathList.append(path).append(",");
         }
+        Path lst = outputFolder.resolve(TEST_PATHS);
+        Files.write(lst, pathList.toString().getBytes());
         if(enableVerboseOutput) {
-            System.out.println("SCANNER: Urls: " + urlList);
-            System.out.println("SCANNER: Classes: " + classesLst);
+            getLog().info("SCANNER: Test elements: " + pathList);
+            getLog().info("SCANNER: Classes: " + classesLst);
         }
         final StringBuilder cp = new StringBuilder();
-        collectCpUrls(System.getProperty("java.home"), Thread.currentThread().getContextClassLoader(), cp, enableVerboseOutput);
+        final StringBuilder reducedCp = new StringBuilder();
+        collectCpPaths(System.getProperty("java.home"),
+                Thread.currentThread().getContextClassLoader(),
+                cp,
+                enableVerboseOutput,
+                reducedCp,
+                getLog());
         if(enableVerboseOutput) {
-            System.out.println("SCANNER: classpath: " + cp);
+            getLog().info("SCANNER: classpath: " + cp);
         }
-
+        Path cpFile = outputFolder.resolve(TEST_CLASSPATH);
+        Files.write(cpFile, cp.toString().getBytes());
 
         List<String> cmd = new ArrayList<>();
         cmd.add(getJavaCommand());
@@ -373,9 +385,10 @@ public class ScanMojo extends AbstractMojo {
             cmd.add("-D" + sysPropName + "=" + systemPropertyVariables.get(sysPropName));
         }
         cmd.add("-cp");
-        cmd.add(cp.toString());
+        cmd.add(reducedCp.toString());
         cmd.add("org.wildfly.glow.plugin.arquillian.ScannerMain");
-        cmd.add(urlList.toString());
+        cmd.add(cpFile.toAbsolutePath().toString());
+        cmd.add(lst.toAbsolutePath().toString());
         cmd.add(classesLst.toString());
         cmd.add(outputFolder.toAbsolutePath().toString());
         cmd.add(enableVerboseOutput || getLog().isDebugEnabled() ? "true" : "false");
@@ -386,29 +399,39 @@ public class ScanMojo extends AbstractMojo {
     }
 
 
-    private static void collectCpUrls(String javaHome, ClassLoader cl, StringBuilder buf, boolean enableVerboseOutput) throws MojoExecutionException {
+    private static void collectCpPaths(String javaHome, ClassLoader cl, StringBuilder buf,
+            boolean enableVerboseOutput,
+            StringBuilder reducedCp, Log log) throws MojoExecutionException {
         final ClassLoader parentCl = cl.getParent();
         if (parentCl != null) {
-            collectCpUrls(javaHome, cl.getParent(), buf, enableVerboseOutput);
+            collectCpPaths(javaHome, cl.getParent(), buf, enableVerboseOutput, reducedCp, log);
         }
         if (cl instanceof URLClassLoader) {
             for (URL url : ((URLClassLoader) cl).getURLs()) {
-                final String file;
+                final String filePath;
+                File file;
                 if (enableVerboseOutput) {
-                    System.out.println("SCANNER: CP file url " + url);
+                    log.info("SCANNER: CP file url " + url);
                 }
                 try {
-                    file = new File(url.toURI()).getAbsolutePath();
+                    file = new File(url.toURI());
+                    filePath = file.getAbsolutePath();
                 } catch (URISyntaxException ex) {
                     throw new MojoExecutionException(ex.getMessage(), ex);
                 }
-                if (file.startsWith(javaHome)) {
+                if (filePath.startsWith(javaHome)) {
                     continue;
                 }
                 if (buf.length() > 0) {
-                    buf.append(File.pathSeparatorChar);
+                    buf.append(",");
                 }
-                buf.append(file);
+                buf.append(filePath);
+                if (file.getName().contains("wildfly-glow-arquillian-plugin")) {
+                    if (reducedCp.length() > 0) {
+                        reducedCp.append(",");
+                    }
+                    reducedCp.append(filePath);
+                }
             }
         }
     }
@@ -431,7 +454,7 @@ public class ScanMojo extends AbstractMojo {
         return p;
     }
 
-    private List<Path> retrieveDeployments(List<URL> testArtifacts, Path classesRootFolder, Path outputFolder) throws Exception {
+    private List<Path> retrieveDeployments(List<String> testArtifacts, Path classesRootFolder, Path outputFolder) throws Exception {
         if (skipScanning) {
             return Collections.emptyList();
         }
