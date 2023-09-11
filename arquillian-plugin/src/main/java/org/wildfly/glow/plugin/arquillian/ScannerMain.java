@@ -17,17 +17,17 @@
  */
 package org.wildfly.glow.plugin.arquillian;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 
 /**
  *
@@ -37,24 +37,40 @@ public class ScannerMain {
 
     public static void main(String[] args) throws Exception {
         System.out.println("Starting Scanner in forked process");
-        String[] cpUrls = args[0].split(",");
-        String[] cls = args[1].split(",");
+        Path cpFile = Paths.get(args[0]);
+        String cp = Files.readString(cpFile);
+        String[] cpArray = cp.split(",");
+        Path urlsFile = Paths.get(args[1] );
+        String urls = Files.readString(urlsFile);
+        String[] urlsArray = urls.split(",");
+
+        String[] cls = args[2].split(",");
         List<String> classes = new ArrayList<>();
+
         classes.addAll(Arrays.asList(cls));
-        Path outputFolder = Paths.get(args[2]);
-        boolean verbose = Boolean.parseBoolean(args[3]);
-        GlowArquillianDeploymentExporter exporter = new GlowArquillianDeploymentExporter(classes, buildClassLoader(cpUrls), outputFolder, verbose);
-        exporter.scanAndExport();
+        Path outputFolder = Paths.get(args[3]);
+
+        boolean verbose = Boolean.parseBoolean(args[4]);
+        // ClassLoader to load the Scanner from the classpath (equivalent to application cp).
+        URLClassLoader cpLoader = buildClassLoader(cpArray, null);
+        // ClassLoader to load the test classes, delegate to cpLoader
+        URLClassLoader testLoader = buildClassLoader(urlsArray, cpLoader);
+        Class<?> exporterClass = Class.forName("org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter", true, cpLoader);
+        Constructor ctr = exporterClass.getConstructor(List.class, ClassLoader.class, Path.class, Boolean.TYPE);
+        Object obj = ctr.newInstance(classes, testLoader, outputFolder, verbose);
+        Method scan = exporterClass.getMethod("scanAndExport");
+        scan.invoke(obj);
         System.exit(0);
     }
 
-    private static URLClassLoader buildClassLoader(String[] cpUrls) throws DependencyResolutionRequiredException, MalformedURLException, URISyntaxException {
+    private static URLClassLoader buildClassLoader(String[] cpUrls, ClassLoader parent) throws Exception {
         List<URL> urls = new ArrayList<>();
         for (String s : cpUrls) {
-            urls.add(new URI(s).toURL());
+            System.out.println("URL " + s);
+            urls.add(new File(s).toURI().toURL());
         }
         URL[] cp = urls.toArray(new URL[0]);
         ClassLoader originalCl = Thread.currentThread().getContextClassLoader();
-        return new URLClassLoader(cp, originalCl);
+        return new URLClassLoader(cp, parent);
     }
 }

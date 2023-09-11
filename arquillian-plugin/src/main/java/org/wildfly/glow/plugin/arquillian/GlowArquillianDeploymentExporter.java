@@ -37,7 +37,8 @@ public class GlowArquillianDeploymentExporter {
 
     private static final Class<Deployment> DEPLOYMENT_ANNOTATION = Deployment.class;
     public static final String ARCHIVE_LIST_FILENAME = "glow-archive-list.txt";
-
+    public static final String TEST_PATHS = "glow-test-path-list.txt";
+    public static final String TEST_CLASSPATH = "glow-test-cp-list.txt";
     private final List<String> testClasses;
     private final Path outputFolder;
     private final ClassLoader loader;
