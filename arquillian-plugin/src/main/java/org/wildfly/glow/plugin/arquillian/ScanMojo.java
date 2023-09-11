@@ -374,6 +374,7 @@ public class ScanMojo extends AbstractMojo {
                 getLog());
         if(enableVerboseOutput) {
             getLog().info("SCANNER: classpath: " + cp);
+            getLog().info("SCANNER: bootstrap classpath: " + reducedCp);
         }
         Path cpFile = outputFolder.resolve(TEST_CLASSPATH);
         Files.write(cpFile, cp.toString().getBytes());
@@ -422,15 +423,16 @@ public class ScanMojo extends AbstractMojo {
                 if (filePath.startsWith(javaHome)) {
                     continue;
                 }
-                if (buf.length() > 0) {
-                    buf.append(",");
-                }
-                buf.append(filePath);
-                if (file.getName().contains("wildfly-glow-arquillian-plugin")) {
+                if (file.getName().contains("wildfly-glow-arquillian-plugin-scanner")) {
                     if (reducedCp.length() > 0) {
-                        reducedCp.append(",");
+                        reducedCp.append(File.pathSeparator);
                     }
                     reducedCp.append(filePath);
+                } else {
+                    if (buf.length() > 0) {
+                        buf.append(",");
+                    }
+                    buf.append(filePath);
                 }
             }
         }
