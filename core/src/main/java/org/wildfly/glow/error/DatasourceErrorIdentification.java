@@ -46,6 +46,8 @@ import static org.wildfly.glow.Utils.getAddOnFix;
  */
 public class DatasourceErrorIdentification implements ErrorIdentification {
 
+    private static final String DEFAULT_DATASOURCE_JNDI_NAME="java:comp/DefaultDataSource";
+
     private static final String UNBOUND_DATASOURCES_ERROR = "unbound-datasources";
     private static final String NO_DEFAULT_DATASOURCE_ERROR = "no-default-datasource";
     private static final String UNBOUND_DATASOURCES_ERROR_DESCRIPTION = "unbound datasources error";
@@ -88,7 +90,14 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
             Set<String> unboundDatasources = new TreeSet<>();
             for (String ds : expectedDataSources) {
                 if (!allDS.contains(ds)) {
-                    unboundDatasources.add(ds);
+                    if (DEFAULT_DATASOURCE_JNDI_NAME.equals(ds)) {
+                        Set<IdentifiedError> errs = new HashSet<>();
+                        errs.add(new MissingDefaultDatasourceError(NO_DEFAULT_DATASOURCE_ERROR,
+                                NO_DEFAULT_DATASOURCE_ERROR_DESCRIPTION));
+                        errors.put(NO_DEFAULT_DATASOURCE_ERROR, errs);
+                    } else {
+                        unboundDatasources.add(ds);
+                    }
                 }
             }
             if (!unboundDatasources.isEmpty()) {
