@@ -767,15 +767,17 @@ public class GlowSession {
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String configName) throws ProvisioningException {
         ProvisioningConfig.Builder activeConfig = ProvisioningConfig.builder();
-        Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
-        // Add WildFly first.
-        FeaturePackLocation.FPID baseFPID = input.getFeaturePackDeps().iterator().next().getLocation().getFPID();
-        activeFeaturePacks.add(baseFPID);
         Map<FPID, FeaturePackConfig> map = new HashMap<>();
+        Map<FPID, FPID> universeToGav = new HashMap<>();
         for (FeaturePackConfig cfg : input.getFeaturePackDeps()) {
             FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
             map.put(fpid, cfg);
+            universeToGav.put(cfg.getLocation().getFPID(), fpid);
         }
+        Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
+        // Add WildFly first.
+        FeaturePackLocation.FPID baseFPID = universeToGav.get(input.getFeaturePackDeps().iterator().next().getLocation().getFPID());
+        activeFeaturePacks.add(baseFPID);
         for (Layer l : allBaseLayers) {
             activeFeaturePacks.addAll(l.getFeaturePacks());
         }
