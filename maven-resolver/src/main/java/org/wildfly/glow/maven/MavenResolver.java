@@ -17,6 +17,7 @@
  */
 package org.wildfly.glow.maven;
 
+import java.nio.file.Path;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -48,8 +49,9 @@ public final class MavenResolver {
     public static MavenRepoManager newMavenResolver() {
         RepositorySystem repoSystem = MavenResolver.newRepositorySystem();
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-        LocalRepository localRepo = new LocalRepository(Paths.get(System.getProperty("user.home"), ".m2", "repository")
-                .toFile());
+        String localPath = System.getProperty("maven.repo.local");
+        Path localCache = localPath == null ? Paths.get(System.getProperty("user.home"), ".m2", "repository") : Paths.get(localPath);
+        LocalRepository localRepo = new LocalRepository(localCache.toFile());
         session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
         List<RemoteRepository> repos = new ArrayList<>();
         RemoteRepository.Builder central = new RemoteRepository.Builder("central", "default", CENTRAL_REPO_URL);
