@@ -350,7 +350,8 @@ public class ExplodedArchiveTestCase {
 
     private String runScan(Path archive) throws Exception {
         Arguments arguments = Arguments.scanBuilder().setBinaries(Collections.singletonList(archive)).build();
-        ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
-        return scanResults.getCompactInformation();
+        try( ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT)) {
+            return scanResults.getCompactInformation();
+        }
     }
 }

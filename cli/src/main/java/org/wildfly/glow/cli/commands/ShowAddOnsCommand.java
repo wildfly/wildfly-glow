@@ -17,22 +17,16 @@
 package org.wildfly.glow.cli.commands;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
-import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.Utils;
-import org.wildfly.glow.maven.MavenResolver;
+import org.wildfly.glow.cli.commands.CommandsUtils.ProvisioningConsumer;
 
 import picocli.CommandLine;
 
@@ -57,33 +51,30 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving add-ons...");
-        MavenRepoManager resolver = MavenResolver.newMavenResolver();
-        UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;
         }
-        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(context,
-                provisioningXml.orElse(null), wildflyServerVersion.orElse(null), GlowMessageWriter.DEFAULT, wildflyPreview.orElse(false))) {
-            Map<String, Layer> all;
-            try {
-                all = Utils.getAllLayers(universeResolver, layout, new HashMap<>());
-            } finally {
-                layout.close();
-            }
-            LayerMapping mapping = Utils.buildMapping(all, Collections.emptySet());
-            StringBuilder builder = new StringBuilder();
-            for (Map.Entry<String, Set<AddOn>> entry : mapping.getAddOnFamilyMembers().entrySet()) {
-                builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:%n");
-                for (AddOn member : mapping.getAddOnFamilyMembers().get(entry.getKey())) {
-                    if (!member.getName().endsWith(":default")) {
-                        builder.append(" - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
+        CommandsUtils.ProvisioningConsumer consumer = new ProvisioningConsumer() {
+            @Override
+            public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
+                    LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) {
+                StringBuilder builder = new StringBuilder();
+                for (Map.Entry<String, Set<AddOn>> entry : mapping.getAddOnFamilyMembers().entrySet()) {
+                    builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:%n");
+                    for (AddOn member : mapping.getAddOnFamilyMembers().get(entry.getKey())) {
+                        if (!member.getName().endsWith(":default")) {
+                            builder.append(" - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
+                        }
                     }
                 }
+                print(builder.toString());
+                print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
+
             }
-            print(builder.toString());
-            print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
-        }
+
+        };
+        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
         return 0;
     }
 }

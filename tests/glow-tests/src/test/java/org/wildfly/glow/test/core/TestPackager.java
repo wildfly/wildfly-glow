@@ -34,7 +34,6 @@ import java.util.Collections;
 public class TestPackager {
     private Path archivePath;
     private ScanResults scanResults;
-
     public ScanResults packageTestAsArchiveAndScan(Object instance) throws Exception {
         return packageTestAsArchiveAndScan(instance.getClass());
     }
@@ -63,6 +62,7 @@ public class TestPackager {
     }
 
     public void reset() {
+        this.scanResults.close();
         this.scanResults = null;
         this.archivePath = null;
     }

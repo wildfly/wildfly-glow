@@ -17,20 +17,22 @@
 package org.wildfly.glow;
 
 import java.nio.file.Path;
-import org.jboss.galleon.config.ProvisioningConfig;
 import org.wildfly.glow.error.ErrorIdentificationSession;
 
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 
-public class ScanResults {
+public class ScanResults implements AutoCloseable {
 
     private final GlowSession glowSession;
     private final Set<Layer> discoveredLayers;
     private final Set<Layer> excludedLayers;
     private final Layer baseLayer;
     private final Set<Layer> decorators;
-    private final ProvisioningConfig provisioningConfig;
+    private final Provisioning provisioning;
+    private final GalleonProvisioningConfig config;
     private final ErrorIdentificationSession errorSession;
     private final Map<AddOn, String> disabledAddOns;
     private final Set<AddOn> enabledAddOns;
@@ -41,7 +43,8 @@ public class ScanResults {
             Set<Layer> excludedLayers,
             Layer baseLayer,
             Set<Layer> decorators,
-            ProvisioningConfig provisioningConfig,
+            Provisioning provisioning,
+            GalleonProvisioningConfig config,
             Set<AddOn> enabledAddOns,
             Map<AddOn, String> disabledAddOns,
             Suggestions suggestions,
@@ -51,7 +54,8 @@ public class ScanResults {
         this.excludedLayers = excludedLayers;
         this.baseLayer = baseLayer;
         this.decorators = decorators;
-        this.provisioningConfig = provisioningConfig;
+        this.provisioning = provisioning;
+        this.config = config;
         this.disabledAddOns = disabledAddOns;
         this.enabledAddOns = enabledAddOns;
         this.suggestions = suggestions;
@@ -74,8 +78,11 @@ public class ScanResults {
         return decorators;
     }
 
-    public ProvisioningConfig getProvisioningConfig() {
-        return provisioningConfig;
+    public Provisioning getProvisioning() {
+        return provisioning;
+    }
+    public GalleonProvisioningConfig getProvisioningConfig() {
+        return config;
     }
 
     public Suggestions getSuggestions() {
@@ -119,5 +126,10 @@ public class ScanResults {
     public String getCompactInformation() throws Exception {
         ScanResultsPrinter printer = new ScanResultsPrinter(GlowMessageWriter.DEFAULT);
         return glowSession.getCompactInformation(printer, this);
+    }
+
+    @Override
+    public void close() {
+        provisioning.close();
     }
 }

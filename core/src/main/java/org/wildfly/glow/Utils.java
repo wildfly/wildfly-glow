@@ -19,26 +19,13 @@ package org.wildfly.glow;
 
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.ProvisioningManager;
-import org.jboss.galleon.config.ConfigId;
-import org.jboss.galleon.config.ConfigModel;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
-import org.jboss.galleon.spec.ConfigLayerDependency;
-import org.jboss.galleon.spec.ConfigLayerSpec;
 import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.MavenChannel;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
-import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -73,10 +60,24 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.GalleonFeaturePackDescription;
+import org.jboss.galleon.api.GalleonFeaturePackLayout;
+import org.jboss.galleon.api.GalleonLayer;
+import org.jboss.galleon.api.GalleonLayerDependency;
+import org.jboss.galleon.api.GalleonProvisioningLayout;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.config.ConfigId;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.maven.MavenChannel;
 
 import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
 import static org.wildfly.glow.GlowSession.OFFLINE_DOCS_DIR;
 import static org.wildfly.glow.GlowSession.OFFLINE_FEATURE_PACKS_DIR;
+import static org.wildfly.glow.GlowSession.OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR;
 import static org.wildfly.glow.GlowSession.OFFLINE_ZIP;
 
 /**
@@ -136,23 +137,34 @@ public final class Utils {
         return alldeps;
     }
 
-    static void exportOffline(UniverseResolver universeResolver,
-            ProvisioningLayout<FeaturePackLayout> pLayout) throws ProvisioningException, IOException {
+    static void exportOffline(Provisioning provisioning, GalleonProvisioningConfig config, UniverseResolver universeResolver) throws ProvisioningException, IOException {
         Path featurePacksDir = OFFLINE_FEATURE_PACKS_DIR;
+        Path featurePackDependenciesDir = OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR;
         Path docsDir = OFFLINE_DOCS_DIR;
         Files.createDirectories(featurePacksDir);
+        Files.createDirectories(featurePackDependenciesDir);
         Files.createDirectories(docsDir);
         int index = 0;
-        for (FeaturePackLayout fp : pLayout.getOrderedFeaturePacks()) {
-            Channel c = universeResolver.getChannel(fp.getFPID().getLocation());
-            Path resolved = c.resolve(fp.getFPID().getLocation());
+        for (GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
+            FeaturePackLocation fpl = fp.getLocation();
+            Channel c = universeResolver.getChannel(fpl);
+            Path resolved = c.resolve(fpl);
             Path target = featurePacksDir.resolve(index + "-" + resolved.getFileName().toString());
             if (!Files.exists(target)) {
                 Files.copy(resolved, target);
             }
             index += 1;
+            GalleonFeaturePackDescription desc = Provisioning.getFeaturePackDescription(resolved);
+            for (FPID dep : desc.getDependencies()) {
+                Channel depChannel = universeResolver.getChannel(dep.getLocation());
+                Path resolvedDep = depChannel.resolve(dep.getLocation());
+                Path depTarget = featurePackDependenciesDir.resolve(resolvedDep.getFileName().toString());
+                if (!Files.exists(depTarget)) {
+                    Files.copy(resolvedDep, depTarget);
+                }
+            }
         }
-        Map<String, Layer> layers = getAllLayers(universeResolver, pLayout, new HashMap<>());
+        Map<String, Layer> layers = getAllLayers(config, universeResolver, provisioning, new HashMap<>());
         for (Layer l : layers.values()) {
             for (String k : l.getProperties().keySet()) {
                 if (LayerMetadata.CONFIGURATION.equals(k)) {
@@ -171,66 +183,68 @@ public final class Utils {
         }
     }
 
-    public static Map<String, Layer> getAllLayers(UniverseResolver universeResolver,
-            ProvisioningLayout<FeaturePackLayout> pLayout,
+    public static Map<String, Layer> getAllLayers(GalleonProvisioningConfig config, UniverseResolver universeResolver,
+            Provisioning context,
             Map<FPID, Set<ProducerSpec>> fpDependencies)
             throws ProvisioningException, IOException {
         Map<String, Layer> layersMap = new HashMap<>();
         Set<String> autoInjected = new TreeSet<>();
         Set<String> hiddens = new TreeSet<>();
         Map<String, Set<String>> unresolvedDependencies = new LinkedHashMap<>();
-        for (FeaturePackLayout fp : pLayout.getOrderedFeaturePacks()) {
-            ConfigModel m = fp.loadModel("standalone");
-            if (m != null) {
-                autoInjected.addAll(m.getIncludedLayers());
-            }
-            FPID fpid = toMavenCoordinates(fp.getFPID(), universeResolver);
-            for (ConfigId layer : fp.loadLayers()) {
-                ConfigLayerSpec spec = fp.loadConfigLayerSpec(layer.getModel(), layer.getName());
-                String kind = spec.getProperties().get(LayerMetadata.KIND);
-                if (kind != null && "hidden".equals(kind)) {
-                    //System.out.println("Layer " + layer.getName() + " is hidden");
-                    hiddens.add(layer.getName());
-                    continue;
+        try (GalleonProvisioningLayout layout = context.newProvisioningLayout(config)) {
+            for (GalleonFeaturePackLayout fp : layout.getOrderedFeaturePacks()) {
+                GalleonConfigurationWithLayers m = fp.loadModel("standalone");
+                if (m != null) {
+                    autoInjected.addAll(m.getIncludedLayers());
                 }
-                Set<String> dependencies = new TreeSet<>();
-                for (ConfigLayerDependency dep : spec.getLayerDeps()) {
-                    dependencies.add(dep.getName());
-                }
-                // Case where a layer is redefined in multiple FP. Add all deps.
-
-                Layer l = layersMap.get(layer.getName());
-                if (l != null) {
-                    Set<String> deps = unresolvedDependencies.get(l.getName());
-                    if (deps != null) {
-                        deps.addAll(dependencies);
-                    }
-                    l.getProperties().putAll(spec.getProperties());
-                    String redefinedKind = spec.getProperties().get(LayerMetadata.KIND);
-                    if (redefinedKind != null && "hidden".equals(redefinedKind)) {
-                        layersMap.remove(layer.getName());
-                    }
-                } else {
-                    if (hiddens.contains(layer.getName())) {
-                        // Could be that the layer is redefined in another feature-pack but hidden.
+                FPID fpid = toMavenCoordinates(fp.getFPID(), universeResolver);
+                for (ConfigId layer : fp.loadLayers()) {
+                    GalleonLayer spec = fp.loadLayer(layer.getModel(), layer.getName());
+                    String kind = spec.getProperties().get(LayerMetadata.KIND);
+                    if (kind != null && "hidden".equals(kind)) {
+                        //System.out.println("Layer " + layer.getName() + " is hidden");
+                        hiddens.add(layer.getName());
                         continue;
                     }
-                    l = new Layer(layer.getName());
-                    l.getProperties().putAll(spec.getProperties());
-                    unresolvedDependencies.put(l.getName(), dependencies);
-                    layersMap.put(layer.getName(), l);
-                }
-                l.getFeaturePacks().add(fpid);
-            }
-            Set<ProducerSpec> producers = fpDependencies.computeIfAbsent(fpid, (value) -> new HashSet<>());
-            for (FeaturePackConfig cfg : fp.getSpec().getFeaturePackDeps()) {
-                FPID fpidDep = toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
-                producers.add(fpidDep.getProducer());
-            }
+                    Set<String> dependencies = new TreeSet<>();
+                    for (GalleonLayerDependency dep : spec.getLayerDeps()) {
+                        dependencies.add(dep.getName());
+                    }
+                    // Case where a layer is redefined in multiple FP. Add all deps.
 
-            for (Layer l : layersMap.values()) {
-                if (autoInjected.contains(l.getName())) {
-                    l.setIsAutomaticInjection(true);
+                    Layer l = layersMap.get(layer.getName());
+                    if (l != null) {
+                        Set<String> deps = unresolvedDependencies.get(l.getName());
+                        if (deps != null) {
+                            deps.addAll(dependencies);
+                        }
+                        l.getProperties().putAll(spec.getProperties());
+                        String redefinedKind = spec.getProperties().get(LayerMetadata.KIND);
+                        if (redefinedKind != null && "hidden".equals(redefinedKind)) {
+                            layersMap.remove(layer.getName());
+                        }
+                    } else {
+                        if (hiddens.contains(layer.getName())) {
+                            // Could be that the layer is redefined in another feature-pack but hidden.
+                            continue;
+                        }
+                        l = new Layer(layer.getName());
+                        l.getProperties().putAll(spec.getProperties());
+                        unresolvedDependencies.put(l.getName(), dependencies);
+                        layersMap.put(layer.getName(), l);
+                    }
+                    l.getFeaturePacks().add(fpid);
+                }
+                Set<ProducerSpec> producers = fpDependencies.computeIfAbsent(fpid, (value) -> new HashSet<>());
+                for (FPID depFpid : fp.getFeaturePackDeps()) {
+                    FPID fpidDep = toMavenCoordinates(depFpid, universeResolver);
+                    producers.add(fpidDep.getProducer());
+                }
+
+                for (Layer l : layersMap.values()) {
+                    if (autoInjected.contains(l.getName())) {
+                        l.setIsAutomaticInjection(true);
+                    }
                 }
             }
         }
@@ -269,45 +283,40 @@ public final class Utils {
         return OFFLINE_CONTENT;
     }
 
-    public static ProvisioningLayout<FeaturePackLayout> buildLayout(String executionContext,
-            Path provisioningXML, String version, GlowMessageWriter writer, boolean techPreview) throws Exception {
-        ProvisioningLayoutFactory factory = ProvisioningLayoutFactory.getInstance();
-        ProvisioningConfig pConfig = buildProvisioningConfig(factory, executionContext, provisioningXML, version, writer, techPreview);
-        return factory.newConfigLayout(pConfig);
-    }
-
-    public static ProvisioningConfig buildProvisioningConfig(ProvisioningLayoutFactory factory,
-            String executionContext, Path provisioningXML, String version, GlowMessageWriter writer, boolean techPreview) throws Exception {
-        ProvisioningConfig pConfig;
+    public static GalleonProvisioningConfig buildOfflineProvisioningConfig(GalleonBuilder provider,
+            GlowMessageWriter writer) throws Exception {
+        FileSystem fs = null;
+        GalleonProvisioningConfig config = null;
         Path offlineContent = getOffLineContent();
+
         if (Files.exists(offlineContent)) {
+            GalleonProvisioningConfig.Builder builder = GalleonProvisioningConfig.builder();
             writer.info("Offline content detected");
             List<File> files = Stream.of(OFFLINE_FEATURE_PACKS_DIR.toFile().listFiles())
                     .filter(file -> !file.isDirectory())
                     .sorted()
                     .collect(Collectors.toList());
-
-            ProvisioningConfig.Builder builder = ProvisioningConfig.builder();
             for (File f : files) {
-                builder.addFeaturePackDep(factory.addLocal(f.toPath(), false));
+                FeaturePackLocation loc = provider.addLocal(f.toPath(), false);
+                builder.addFeaturePackDep(loc);
             }
-            pConfig = builder.build();
-        } else {
-            if (provisioningXML == null) {
-                provisioningXML = FeaturePacks.getFeaturePacks(version, executionContext, techPreview);
+            List<File> depFiles = Stream.of(OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR.toFile().listFiles())
+                    .filter(file -> !file.isDirectory())
+                    .sorted()
+                    .collect(Collectors.toList());
+            for (File f : depFiles) {
+                provider.addLocal(f.toPath(), false);
             }
-            pConfig = ProvisioningXmlParser.parse(provisioningXML);
+            config = builder.build();
         }
-        return pConfig;
-    }
-    public static ProvisioningLayout<FeaturePackLayout> buildLayout(ProvisioningLayoutFactory factory, ProvisioningConfig pConfig, String executionContext, Path provisioningXML, String version, GlowMessageWriter writer) throws IOException, ProvisioningException, URISyntaxException {
-        FileSystem fs = null;
-        ProvisioningLayout<FeaturePackLayout> layout = factory.newConfigLayout(pConfig);
-        return layout;
+        if (fs != null) {
+            fs.close();
+        }
+        return config;
     }
 
-    static void provisionServer(ProvisioningConfig config, Path home, MavenRepoManager resolver, GlowMessageWriter writer) throws ProvisioningException {
-        try (ProvisioningManager pm = ProvisioningManager.builder().addArtifactResolver(resolver)
+    static void provisionServer(GalleonProvisioningConfig config, Path home, MavenRepoManager resolver, GlowMessageWriter writer) throws ProvisioningException {
+        try (Provisioning pm = new GalleonBuilder().addArtifactResolver(resolver).newProvisioningBuilder(config)
                 .setInstallationHome(home)
                 .setLogTime(false)
                 .setMessageWriter(new MessageWriter() {
@@ -341,6 +350,7 @@ public final class Utils {
                 .setRecordState(true)
                 .build()) {
             ProvisioningTracker.initTrackers(pm, writer);
+
             pm.provision(config);
         }
     }
@@ -615,7 +625,7 @@ public final class Utils {
             if (!l.getConfiguration().isEmpty()) {
                 for (String c : l.getConfiguration()) {
                     URI uri = new URI(c);
-                   Set<Env> envs = EnvHandler.retrieveEnv(uri);
+                    Set<Env> envs = EnvHandler.retrieveEnv(uri);
                     for (Env env : envs) {
                         if (env.isRequired()) {
                             envBuilder.append("   - ").append(env.getName()).append("=").append(env.getDescription()).append("\n");

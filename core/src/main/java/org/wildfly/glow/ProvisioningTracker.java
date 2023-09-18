@@ -16,10 +16,10 @@
  */
 package org.wildfly.glow;
 
-import org.jboss.galleon.ProvisioningManager;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
+import org.jboss.galleon.Constants;
 import org.jboss.galleon.progresstracking.ProgressCallback;
 import org.jboss.galleon.progresstracking.ProgressTracker;
+import org.jboss.galleon.api.Provisioning;
 
 /**
  *
@@ -80,16 +80,16 @@ public class ProvisioningTracker<T> implements ProgressCallback<T> {
     public void complete(ProgressTracker<T> tracker) {
     }
 
-    public static void initTrackers(ProvisioningManager pm, GlowMessageWriter writer) {
-        pm.getLayoutFactory().setProgressCallback(ProvisioningLayoutFactory.TRACK_PACKAGES,
+    public static void initTrackers(Provisioning pm, GlowMessageWriter writer) {
+        pm.setProgressCallback(Constants.TRACK_PACKAGES,
                 new ProvisioningTracker<String>("Installing packages", false, writer));
-        pm.getLayoutFactory().setProgressCallback(ProvisioningLayoutFactory.TRACK_CONFIGS,
+        pm.setProgressCallback(Constants.TRACK_CONFIGS,
                 new ProvisioningTracker<String>("Generating configurations", true, writer));
-        pm.getLayoutFactory().setProgressCallback(ProvisioningLayoutFactory.TRACK_LAYOUT_BUILD,
+        pm.setProgressCallback(Constants.TRACK_LAYOUT_BUILD,
                 new ProvisioningTracker<String>("Resolving feature-packs", false, writer));
-        pm.getLayoutFactory().setProgressCallback("JBMODULES",
+        pm.setProgressCallback("JBMODULES",
                 new ProvisioningTracker<String>("Resolving artifacts", false, writer));
-        pm.getLayoutFactory().setProgressCallback("JBEXTRACONFIGS",
+        pm.setProgressCallback("JBEXTRACONFIGS",
                 new ProvisioningTracker<String>("Generating extra configurations", true, writer));
     }
 }
