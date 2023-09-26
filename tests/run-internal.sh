@@ -8,7 +8,6 @@
 #
 # GLOW_QS_HOME= path to clone of https://github.com/wildfly/quickstart
 # GLOW_S2I_HOME= path to clone of https://github.com/wildfly/wildfly-s2i/tree/main/examples
-# GLOW_SAML_HOME= path to clone of https://github.com/jfdenise/wildfly-s2i/tree/saml-example/examples
 # GLOW_FIRST_RESPONDER_HOME= path to clone of https://github.com/jfdenise/first-responder-demo/tree/ee10
 # GLOW_COOLSTORE_HOME= path to clone of https://github.com/jfdenise/eap-coolstore-monolith/tree/ee10
 # GLOW_QE_OPENSHIFT_TESTS_HOME= path to clone of https://gitlab.hosts.mwqe.eng.bos.redhat.com/jbossqe-eap/openshift-eap-tests/test-eap/src/test/resources/apps/
@@ -18,6 +17,7 @@ set -e
 script_dir=$(dirname "$0")
 jar="${script_dir}/../cli/target/wildfly-glow.jar"
 compact=-Dcompact=true
+fpdb=-Dwildfly-glow-galleon-feature-packs-url=https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/main/
 
 
 executionMode=$1
@@ -63,15 +63,15 @@ if [ ! -z "$preview" ]; then
   preview="--preview";
 fi
 if [ ! -z $GENERATE_CONFIG ]; then
- echo "java -jar -Dverbose=true $jar $warFile ${provisioningFile} $profile $addOns $preview"
- java -jar -Dverbose=true $jar $warFile ${provisioningFile} $profile $addOns $preview
+ echo "java -jar -Dverbose=true $fpdb $jar $warFile ${provisioningFile} $profile $addOns $preview"
+ java -jar -Dverbose=true $fpdb $jar $warFile ${provisioningFile} $profile $addOns $preview
 else
 
   if [ "$DEBUG" = 1 ]; then
-    echo "java $compact  -jar $jar $warFile ${provisioningFile} $profile $addOns $context $preview"
+    echo "java $compact $fpdb  -jar $jar $warFile ${provisioningFile} $profile $addOns $context $preview"
   fi
 
-  found_layers=$(java $compact  -jar $jar \
+  found_layers=$(java $fpdb $compact  -jar $jar \
   $warFile \
   ${provisioningFile} \
   $profile \
@@ -100,7 +100,6 @@ function validateEnvVarSet() {
 
 validateEnvVarSet "$GLOW_QS_HOME" "GLOW_QS_HOME"
 validateEnvVarSet "$GLOW_S2I_HOME" "GLOW_S2I_HOME"
-validateEnvVarSet "$GLOW_SAML_HOME" "GLOW_SAML_HOME"
 validateEnvVarSet "$GLOW_FIRST_RESPONDER_HOME" "GLOW_FIRST_RESPONDER_HOME"
 validateEnvVarSet "$GLOW_COOLSTORE_HOME" "GLOW_COOLSTORE_HOME"
 validateEnvVarSet "$GLOW_GRAPHQL_HOME" "GLOW_GRAPHQL_HOME"
@@ -129,7 +128,7 @@ cloud \
 #graphql
 echo graphql
 test \
-"[cdi, microprofile-graphql]==>ee-core-profile-server,microprofile-graphql" \
+"[cdi, microprofile-config, microprofile-graphql]==>ee-core-profile-server,microprofile-graphql" \
 "$GLOW_GRAPHQL_HOME"quickstart/target/quickstart.war
 
 # merge bmt and contacts-jquerymobile
@@ -176,13 +175,13 @@ echo "* Quickstarts not yet using new provisioning"
 #batch
 echo batch [Execution TESTED]
 test \
-"[batch-jberet, cdi, h2-driver, jpa, jsf]==>ee-core-profile-server,batch-jberet,h2-driver,jpa,jsf" \
+"[batch-jberet, bean-validation, cdi, h2-driver, jpa, jsf]==>ee-core-profile-server,batch-jberet,h2-driver,jpa,jsf" \
 "$GLOW_QS_HOME"batch-processing/target/batch-processing.war
 
 #batch
 echo batch with grpc addon
 test \
-"[batch-jberet, cdi, grpc, h2-driver, jpa, jsf]==>ee-core-profile-server,batch-jberet,grpc,h2-driver,jpa,jsf" \
+"[batch-jberet, bean-validation, cdi, grpc, h2-driver, jpa, jsf]==>ee-core-profile-server,batch-jberet,grpc,h2-driver,jpa,jsf" \
 "$GLOW_QS_HOME"batch-processing/target/batch-processing.war \
 "" \
 "" \
@@ -191,7 +190,7 @@ grpc
 #batch
 echo batch with myfaces addon
 test \
-"[batch-jberet, cdi, h2-driver, jpa, jsf, myfaces]==>ee-core-profile-server,batch-jberet,h2-driver,jpa,myfaces" \
+"[batch-jberet, bean-validation, cdi, h2-driver, jpa, jsf, myfaces]==>ee-core-profile-server,batch-jberet,h2-driver,jpa,myfaces" \
 "$GLOW_QS_HOME"batch-processing/target/batch-processing.war \
 "" \
 "" \
@@ -292,7 +291,7 @@ test \
 #hibernate
 echo hibernate
 test \
-"[cdi, ee-integration, ejb-lite, h2-driver, jpa, jsf]==>ee-core-profile-server,ejb-lite,h2-driver,jpa,jsf" \
+"[bean-validation, cdi, ee-integration, ejb-lite, h2-driver, jpa, jsf]==>ee-core-profile-server,ejb-lite,h2-driver,jpa,jsf" \
 "$GLOW_QS_HOME"hibernate/target/hibernate.war
 
 #http-custom-mechanism
@@ -469,13 +468,13 @@ ha
 echo keycloak saml
 test \
 "[keycloak-client-saml, keycloak-saml, servlet]==>ee-core-profile-server,keycloak-client-saml" \
-"$GLOW_SAML_HOME/saml-auto-reg/target/saml-app.war"
+"$GLOW_S2I_HOME/saml-auto-reg/target/saml-app.war"
 
 # keycloak saml cloud auto-reg
 echo keycloak saml cloud auto-reg
 test \
 "[keycloak-saml, servlet]==>ee-core-profile-server,keycloak-saml" \
-"$GLOW_SAML_HOME/saml-auto-reg/target/saml-app.war" \
+"$GLOW_S2I_HOME/saml-auto-reg/target/saml-app.war" \
 "" \
 "" \
 "" \
@@ -486,19 +485,19 @@ echo "* OCP big apps"
 #first-responder-demo
 echo first-responder-demo  [Execution TESTED]
 test \
-"[bean-validation, cdi, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-lite,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
+"[bean-validation, cdi, datasources, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-lite,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
 "$GLOW_FIRST_RESPONDER_HOME/backend/target/frdemo-backend.war"
 
 #first-responder-demo ha profile
 echo first-responder-demo ha
 test \
-"[ha][bean-validation, cdi, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-dist-cache,ejb-lite,jaxrs,jpa-distributed,microprofile-reactive-messaging-kafka,-ejb-local-cache" \
+"[ha][bean-validation, cdi, datasources, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-dist-cache,ejb-lite,jaxrs,jpa-distributed,microprofile-reactive-messaging-kafka,-ejb-local-cache" \
 "$GLOW_FIRST_RESPONDER_HOME/backend/target/frdemo-backend.war"  ha
 
 #first-responder-demo cloud
 echo first-responder-demo cloud
 test \
-"[bean-validation, cdi, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-lite,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
+"[bean-validation, cdi, datasources, ee-integration, ejb-lite, jaxrs, jpa, jsonb, jsonp, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, transactions]==>ee-core-profile-server,ejb-lite,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
 "$GLOW_FIRST_RESPONDER_HOME/backend/target/frdemo-backend.war" \
 "" \
 "" \
@@ -544,7 +543,7 @@ test \
 #microprofile-jwt
 echo microprofile-jwt
 test \
-"[cdi, ee-integration, jaxrs, microprofile-jwt]==>ee-core-profile-server,jaxrs,microprofile-jwt" \
+"[cdi, ee-integration, jaxrs, microprofile-config, microprofile-jwt]==>ee-core-profile-server,jaxrs,microprofile-jwt" \
 "$GLOW_QS_HOME"microprofile-jwt/target/microprofile-jwt.war
 
 #microprofile-openapi
@@ -564,7 +563,7 @@ tests/ee-provisioning.xml
 #microprofile-reactive-messaging-kafka  [Execution TESTED]
 echo microprofile-reactive-messaging-kafka
 test \
-"[cdi, ee-integration, h2-datasource, jaxrs, jpa, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, microprofile-reactive-streams-operators, transactions]==>ee-core-profile-server,h2-datasource,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
+"[cdi, datasources, ee-integration, h2-datasource, jaxrs, jpa, microprofile-config, microprofile-reactive-messaging, microprofile-reactive-messaging-kafka, microprofile-reactive-streams-operators, transactions]==>ee-core-profile-server,h2-datasource,jaxrs,jpa,microprofile-reactive-messaging-kafka" \
 "$GLOW_QS_HOME"microprofile-reactive-messaging-kafka/target/microprofile-reactive-messaging-kafka.war
 
 #microprofile-rest-client server
@@ -576,7 +575,7 @@ test \
 #microprofile-rest-client client
 echo microprofile-rest-client client
 test \
-"[cdi, jaxrs, microprofile-rest-client]==>ee-core-profile-server,jaxrs,microprofile-rest-client" \
+"[cdi, jaxrs, microprofile-config, microprofile-rest-client]==>ee-core-profile-server,jaxrs,microprofile-rest-client" \
 "$GLOW_QS_HOME"microprofile-rest-client/country-client/target/country-client.war
 
 # Quickstarts

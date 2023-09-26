@@ -430,6 +430,23 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <!-- When building the test feature-pack, there is an offline resolution of the wildfly-galleon-plugins 
+        that has already been downloaded when resolving the maven plugin using jboss-public-repository (in jboss-parent pom). So we need to set
+        te same repository for the dependencies resolution otherwise it is not found -->
+    <repositories>
+      <repository>
+        <id>jboss-public-repository</id>
+        <name>JBoss Public Maven Repository</name>
+        <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+        <layout>default</layout>
+        <releases>
+          <enabled>true</enabled>
+        </releases>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
     <modules>
         <module>arquillian-plugin</module>
         <module>arquillian-plugin-scanner</module>
