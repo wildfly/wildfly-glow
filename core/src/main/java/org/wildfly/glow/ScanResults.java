@@ -94,8 +94,8 @@ public class ScanResults {
         return enabledAddOns;
     }
 
-    public void outputConfig(Path target, boolean image) throws Exception {
-        glowSession.outputConfig(this, target, image);
+    public Path outputConfig(Path target, String dockerImageName) throws Exception {
+        return glowSession.outputConfig(this, target, dockerImageName);
     }
 
     public void outputInformation() throws Exception {

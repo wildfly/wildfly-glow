@@ -25,6 +25,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>wildfly-glow-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+        </dependency>
         <!-- to fix slf4j warning when provisioning -->
         <dependency>
             <groupId>org.jboss.slf4j</groupId>

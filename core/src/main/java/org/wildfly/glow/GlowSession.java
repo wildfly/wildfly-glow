@@ -96,7 +96,7 @@ public class GlowSession {
         }
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
 
-        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(Arguments.CLOUD_EXECUTION_CONTEXT,
+        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(arguments.getExecutionContext(),
                 arguments.getProvisioningXML(), arguments.getVersion(), writer, arguments.isTechPreview())) {
             Utils.exportOffline(universeResolver, layout);
         }
@@ -161,7 +161,7 @@ public class GlowSession {
             // END VALIDATE USER INPUTS
 
             // DISCOVERY
-            if (!arguments.getBinaries().isEmpty()) {
+            if (arguments.getBinaries() != null && !arguments.getBinaries().isEmpty()) {
                 Path windup = WindupSupport.getWindupMapping();
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
@@ -451,29 +451,30 @@ public class GlowSession {
         }
     }
 
-    void outputConfig(ScanResults scanResults, Path target, boolean generateImage) throws Exception {
+    Path outputConfig(ScanResults scanResults, Path target, String dockerImageName) throws Exception {
         if (arguments.getOutput() == null) {
             throw new IllegalStateException("No output format set");
         }
-        if (OutputFormat.SERVER.equals(arguments.getOutput()) || OutputFormat.BOOTABLE_JAR.equals(arguments.getOutput())) {
+        Path ret = null;
+        if (OutputFormat.DOCKER_IMAGE.equals(arguments.getOutput()) || OutputFormat.SERVER.equals(arguments.getOutput()) || OutputFormat.BOOTABLE_JAR.equals(arguments.getOutput())) {
             if (scanResults.getErrorSession().hasErrors()) {
                 writer.warn("You are provisioning a server although some errors still exist. You should first fix them.");
             }
             Path generatedArtifact = provisionServer(arguments.getBinaries(),
                     scanResults.getProvisioningConfig(), resolver, arguments.getOutput(),
                     arguments.isCloud(), target);
-            if (arguments.isCloud()) {
+            if (OutputFormat.DOCKER_IMAGE.equals(arguments.getOutput())) {
                 // generate docker image
-                if (generateImage) {
-                    String image = "image-" + generatedArtifact.getFileName().toString().toLowerCase();
-                    DockerSupport.buildApplicationImage(image, generatedArtifact, arguments, writer);
-                    writer.info("Image generation DONE. To run the image: " + ExecUtil.resolveImageBinary(writer) + " run " + image);
-                }
+                String imageName = dockerImageName == null ? DockerSupport.getImageName(generatedArtifact.getFileName().toString()) : dockerImageName;
+                ret = DockerSupport.buildApplicationImage(imageName, generatedArtifact, arguments, writer);
             }
+            IoUtils.recursiveDelete(generatedArtifact);
         } else {
             if (OutputFormat.PROVISIONING_XML.equals(arguments.getOutput())) {
-                writer.info("Generating provisioning.xml in " + target.toAbsolutePath());
-                try (FileWriter fileWriter = new FileWriter(target.resolve("provisioning.xml").toFile())) {
+                IoUtils.recursiveDelete(target);
+                Files.createDirectories(target);
+                ret = target.resolve("provisioning.xml");
+                try (FileWriter fileWriter = new FileWriter(ret.toFile())) {
                     ProvisioningXmlWriter.getInstance().write(scanResults.getProvisioningConfig(), fileWriter);
                 }
             }
@@ -497,6 +498,7 @@ public class GlowSession {
             writer.info("The file " + p + " contains the environment variables to set in a " + arguments.getExecutionContext() + " context");
             Files.write(p, envFileContent.toString().getBytes());
         }
+        return ret;
     }
 
     private String buildEnvs(Map<Layer, Set<Env>> map, boolean isRequired) {
@@ -526,7 +528,15 @@ public class GlowSession {
 
     private Path provisionServer(List<Path> binaries, ProvisioningConfig activeConfig,
             MavenRepoManager resolver, OutputFormat format, boolean isCloud, Path target) throws Exception {
-        IoUtils.recursiveDelete(target);
+        Path tmpDir = null;
+        Path originalTarget = target;
+        if (!isCloud && OutputFormat.BOOTABLE_JAR.equals(format)) {
+            // We create a tmp directory in which the server is provisioned
+            tmpDir = Files.createTempDirectory("wildfly-glow-bootable");
+            target = tmpDir;
+        } else {
+            IoUtils.recursiveDelete(target);
+        }
         Utils.provisionServer(activeConfig, target.toAbsolutePath(), resolver, writer);
 
         if (!binaries.isEmpty()) {
@@ -539,66 +549,65 @@ public class GlowSession {
         }
         Path ret = target;
         if (!isCloud && OutputFormat.BOOTABLE_JAR.equals(format)) {
-            String bootableJarName = "";
-            if (!binaries.isEmpty()) {
-                for (Path binary : binaries) {
-                    int i = binary.getFileName().toString().lastIndexOf(".");
-                    bootableJarName = bootableJarName + binary.getFileName().toString().substring(0, i);
-                }
-            } else {
-                bootableJarName = "hollow";
-            }
-            Path targetJarFile = target.toAbsolutePath().getParent().resolve(bootableJarName + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
-            ret = targetJarFile;
-            Files.deleteIfExists(targetJarFile);
-            BootableJarSupport.packageBootableJar(targetJarFile,target.toAbsolutePath().getParent(),
-                    activeConfig, target.toAbsolutePath(),
-                    resolver,
-                    new MessageWriter() {
-                @Override
-                public void verbose(Throwable cause, CharSequence message) {
-                    if (writer.isVerbose()) {
-                        writer.trace(message);
+            try {
+                String bootableJarName = "";
+                if (!binaries.isEmpty()) {
+                    for (Path binary : binaries) {
+                        int i = binary.getFileName().toString().lastIndexOf(".");
+                        bootableJarName = bootableJarName + binary.getFileName().toString().substring(0, i);
                     }
+                } else {
+                    bootableJarName = "hollow";
                 }
-
-                @Override
-                public void print(Throwable cause, CharSequence message) {
-                    writer.info(message);
-                }
-
-                @Override
-                public void error(Throwable cause, CharSequence message) {
-                    writer.error(message);
-                }
-
-                @Override
-                public boolean isVerboseEnabled() {
-                    return writer.isVerbose();
-                }
-
-                @Override
-                public void close() throws Exception {
-                }
-
-            }, new ArtifactLog() {
-                @Override
-                public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                    writer.info("Found artifact " + a);
-                }
-
-                @Override
-                public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                    if (writer.isVerbose()) {
-                        writer.trace("Found artifact " + a);
+                String vers = arguments.getVersion() == null ? FeaturePacks.getLatestVersion() : arguments.getVersion();
+                Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" + vers + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
+                ret = targetJarFile;
+                Files.deleteIfExists(targetJarFile);
+                BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
+                        activeConfig, tmpDir.toAbsolutePath(),
+                        resolver,
+                        new MessageWriter() {
+                    @Override
+                    public void verbose(Throwable cause, CharSequence message) {
+                        if (writer.isVerbose()) {
+                            writer.trace(message);
+                        }
                     }
-                }
-            }, null);
-            IoUtils.recursiveDelete(target);
-            writer.info("DONE. To run the server: java -jar " + targetJarFile);
-        } else {
-            if (!isCloud) {
-                writer.info("DONE. To run the server: sh " + target + "/bin/" + (isCloud ? "openshift-launch.sh" : "standalone.sh"));
+
+                    @Override
+                    public void print(Throwable cause, CharSequence message) {
+                        writer.info(message);
+                    }
+
+                    @Override
+                    public void error(Throwable cause, CharSequence message) {
+                        writer.error(message);
+                    }
+
+                    @Override
+                    public boolean isVerboseEnabled() {
+                        return writer.isVerbose();
+                    }
+
+                    @Override
+                    public void close() throws Exception {
+                    }
+
+                }, new ArtifactLog() {
+                    @Override
+                    public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+                        writer.info("Found artifact " + a);
+                    }
+
+                    @Override
+                    public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+                        if (writer.isVerbose()) {
+                            writer.trace("Found artifact " + a);
+                        }
+                    }
+                }, null);
+            } finally {
+                IoUtils.recursiveDelete(target);
             }
         }
         return ret;

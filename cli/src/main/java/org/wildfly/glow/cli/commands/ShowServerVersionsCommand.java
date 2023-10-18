@@ -14,32 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.wildfly.glow.cli.commands;
 
-package org.wildfly.glow;
+import org.wildfly.glow.FeaturePacks;
+import picocli.CommandLine;
 
-import java.util.Map;
+@CommandLine.Command(
+        name = Constants.SHOW_SERVER_VERSIONS_COMMAND,
+        sortOptions = true
+)
+public class ShowServerVersionsCommand extends AbstractCommand {
 
-public class HiddenPropertiesAccessor {
-    private static Map<String, String> overrides;
-
-    public HiddenPropertiesAccessor() {
-    }
-
-    public String getProperty(String name) {
-        if (overrides != null) {
-            String value = overrides.get(name);
-            if (value != null) {
-                return value;
-            }
-        }
-        return System.getProperty(name);
-    }
-
-    public static void clearOverrides() {
-        overrides = null;
-    }
-
-    public static void setOverrides(Map<String, String> overrides) {
-        HiddenPropertiesAccessor.overrides = overrides;
+    @Override
+    public Integer call() throws Exception {
+        System.out.println(FeaturePacks.getAllVersions());
+        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold WildFly server version can be set using the|@ @|fg(yellow) "+Constants.SERVER_VERSION_OPTION+"=<server version>|@ @|bold option of the|@ @|fg(yellow) "+Constants.SCAN_COMMAND+"|@ @|bold command|@"));
+        return 0;
     }
 }

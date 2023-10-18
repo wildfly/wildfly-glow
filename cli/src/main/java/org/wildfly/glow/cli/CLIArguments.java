@@ -22,13 +22,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.jboss.galleon.config.FeaturePackConfig;
 import org.jboss.galleon.config.ProvisioningConfig;
-import org.wildfly.glow.AddOn;
+import org.jboss.galleon.universe.FeaturePackLocation;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import static org.wildfly.glow.GlowSession.STANDALONE_PROFILE;
@@ -62,7 +63,7 @@ public class CLIArguments extends Arguments {
     private final boolean help;
     private final boolean version;
     private final boolean displayConfigurationInfo;
-    private CLIArguments(
+    public CLIArguments(
             boolean version,
             boolean help,
             String executionContext,
@@ -303,30 +304,41 @@ public class CLIArguments extends Arguments {
         System.out.println(builder);
     }
 
-    public static void dumpConfiguration(String context, String serverVersion, Map<String, Layer> allLayers,
+    public static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies, String context, String serverVersion, Map<String, Layer> allLayers,
             LayerMapping mapping, ProvisioningConfig fps, boolean isLatest, boolean techPreview) throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append("\n Execution context: ").append(context).append("\n");
-        builder.append("\n Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
-        builder.append("\n Tech Preview: ").append(techPreview).append("\n");
-        builder.append("\n Known Galleon feature-packs:\n");
+        builder.append("Execution context: ").append(context).append("\n");
+        builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
+        builder.append("Tech Preview: ").append(techPreview).append("\n");
+        Set<FeaturePackLocation.ProducerSpec> topLevel = new LinkedHashSet<>();
         for(FeaturePackConfig fp : fps.getFeaturePackDeps()) {
-            builder.append("  * ").append(fp.getLocation().getFPID()).append("\n");
+            topLevel.add(fp.getLocation().getProducer());
         }
-        builder.append("\n Possible add-ons:\n");
-        for (Map.Entry<String, Set<AddOn>> entry : mapping.getAddOnFamilyMembers().entrySet()) {
-            builder.append("  * ").append(entry.getKey()).append(" add-ons:\n");
-            for (AddOn member : mapping.getAddOnFamilyMembers().get(entry.getKey())) {
-                if (!member.getName().endsWith(":default")) {
-                    builder.append("   - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("\n");
+        for(FeaturePackConfig fp : fps.getFeaturePackDeps()) {
+            builder.append("\nFeature-pack: ").append("@|bold ").append(fp.getLocation().getFPID()).append("|@\n");
+            builder.append("Contained layers: ");
+            Set<String> layers = new TreeSet<>();
+            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(fp.getLocation().getFPID());
+            for(Layer l : allLayers.values()) {
+                if(l.getFeaturePacks().contains(fp.getLocation().getFPID())) {
+                    layers.add(l.getName());
+                }
+                if(deps != null) {
+                    for (FeaturePackLocation.ProducerSpec dep : deps) {
+                        if (!topLevel.contains(dep)) {
+                            for (FeaturePackLocation.FPID fpid : l.getFeaturePacks()) {
+                                if (fpid.getProducer().equals(dep)) {
+                                    layers.add(l.getName());
+                                }
+                            }
+                        }
+                    }
                 }
             }
+            topLevel.addAll(deps);
+            builder.append(layers).append("\n");
         }
-        builder.append("\n Known Galleon layers:\n");
-        Set<String> sortedSet = new TreeSet<>();
-        sortedSet.addAll(allLayers.keySet());
-        builder.append(sortedSet).append("\n");
-        System.out.println(builder.toString());
+        return builder.toString();
     }
 
     public boolean isGoOffline() {

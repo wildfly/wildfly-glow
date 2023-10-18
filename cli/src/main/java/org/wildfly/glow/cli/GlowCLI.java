@@ -19,6 +19,7 @@ package org.wildfly.glow.cli;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import org.jboss.galleon.layout.FeaturePackLayout;
 import org.jboss.galleon.layout.ProvisioningLayout;
 import org.jboss.galleon.universe.UniverseResolver;
@@ -42,6 +43,14 @@ import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Version;
 
 import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
+import org.wildfly.glow.cli.commands.CompletionCommand;
+import org.wildfly.glow.cli.commands.GoOfflineCommand;
+import org.wildfly.glow.cli.commands.ShowConfigurationCommand;
+import org.wildfly.glow.cli.commands.MainCommand;
+import org.wildfly.glow.cli.commands.ScanCommand;
+import org.wildfly.glow.cli.commands.ShowAddOnsCommand;
+import org.wildfly.glow.cli.commands.ShowServerVersionsCommand;
+import picocli.CommandLine;
 
 /**
  *
@@ -50,6 +59,23 @@ import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
 public class GlowCLI {
 
     public static void main(String[] args) throws Exception {
+        try {
+            CommandLine commandLine = new CommandLine(new MainCommand());
+            commandLine.addSubcommand(new ScanCommand());
+            commandLine.addSubcommand(new ShowAddOnsCommand());
+            commandLine.addSubcommand(new ShowServerVersionsCommand());
+            commandLine.addSubcommand(new ShowConfigurationCommand());
+            commandLine.addSubcommand(new GoOfflineCommand());
+            commandLine.addSubcommand(new CompletionCommand());
+            commandLine.setUsageHelpAutoWidth(true);
+            final boolean isVerbose = Arrays.stream(args).anyMatch(s -> s.equals("-vv") || s.equals("--verbose"));
+            commandLine.setExecutionExceptionHandler(new ExecutionExceptionHandler(isVerbose));
+            int exitCode = commandLine.execute(args);
+            System.exit(exitCode);
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
         CLIArguments arguments = CLIArguments.fromMainArguments(args);
         if (arguments.isVersion()) {
            System.out.println(Version.getVersion());
@@ -76,7 +102,7 @@ public class GlowCLI {
                     String serverVersion = isLatest ? FeaturePacks.getLatestVersion() : arguments.getVersion();
                     Path fps = FeaturePacks.getFeaturePacks(serverVersion, arguments.getExecutionContext(), arguments.isTechPreview());
                     ProvisioningConfig config = ProvisioningXmlParser.parse(fps);
-                    CLIArguments.dumpConfiguration(arguments.getExecutionContext(), serverVersion, all, mapping, config, isLatest, arguments.isTechPreview());
+                    CLIArguments.dumpConfiguration(null, arguments.getExecutionContext(), serverVersion, all, mapping, config, isLatest, arguments.isTechPreview());
                 }
             } finally {
                 IoUtils.recursiveDelete(OFFLINE_CONTENT);
@@ -92,7 +118,7 @@ public class GlowCLI {
             if (arguments.getOutput() == null) {
                 scanResults.outputInformation();
             } else {
-                scanResults.outputConfig(Paths.get("server"), true);
+                scanResults.outputConfig(Paths.get("server"), null);
             }
         }
     }

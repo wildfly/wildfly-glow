@@ -24,7 +24,8 @@ package org.wildfly.glow;
 public enum OutputFormat {
     PROVISIONING_XML("provisioning.xml", "Galleon provisioning file usable with Galleon tooling."),
     SERVER("server", "Provision a WildFly server."),
-    BOOTABLE_JAR("bootable-jar", "Provision a WildFly bootable jar.");
+    BOOTABLE_JAR("bootable-jar", "Provision a WildFly bootable jar."),
+    DOCKER_IMAGE("docker-image", "Produce a docker image.");
 
     public final String name;
     public final String description;
