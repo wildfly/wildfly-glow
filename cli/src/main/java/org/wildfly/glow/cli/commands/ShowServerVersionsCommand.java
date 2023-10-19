@@ -27,8 +27,8 @@ public class ShowServerVersionsCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        System.out.println(FeaturePacks.getAllVersions());
-        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold WildFly server version can be set using the|@ @|fg(yellow) "+Constants.SERVER_VERSION_OPTION+"=<server version>|@ @|bold option of the|@ @|fg(yellow) "+Constants.SCAN_COMMAND+"|@ @|bold command|@"));
+        print(FeaturePacks.getAllVersions());
+        print("@|bold WildFly server version can be set using the|@ @|fg(yellow) %s=<server version>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.SERVER_VERSION_OPTION, Constants.SCAN_COMMAND);
         return 0;
     }
 }

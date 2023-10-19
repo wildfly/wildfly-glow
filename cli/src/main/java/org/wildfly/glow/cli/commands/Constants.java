@@ -36,6 +36,9 @@ public interface Constants {
     String ADD_ONS_OPTION_LABEL = "<add-on>";
     String ADD_ONS_OPTION_SHORT = "-ao";
 
+    String BATCH_OPTION = "--batch";
+    String BATCH_OPTION_SHORT = "-B";
+
     String CLOUD_OPTION = "--cloud";
     String CLOUD_OPTION_SHORT = "-c";
     String DOCKER_IMAGE_NAME_OPTION = "--docker-image-name";

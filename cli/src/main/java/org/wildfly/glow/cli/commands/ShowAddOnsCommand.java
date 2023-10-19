@@ -56,7 +56,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        System.out.println("Wildfly Glow is retrieving add-ons...");
+        print("Wildfly Glow is retrieving add-ons...");
         MavenRepoManager resolver = MavenResolver.newMavenResolver();
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
@@ -74,15 +74,15 @@ public class ShowAddOnsCommand extends AbstractCommand {
             LayerMapping mapping = Utils.buildMapping(all, Collections.emptySet());
             StringBuilder builder = new StringBuilder();
             for (Map.Entry<String, Set<AddOn>> entry : mapping.getAddOnFamilyMembers().entrySet()) {
-                builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:\n");
+                builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:%n");
                 for (AddOn member : mapping.getAddOnFamilyMembers().get(entry.getKey())) {
                     if (!member.getName().endsWith(":default")) {
-                        builder.append(" - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("\n");
+                        builder.append(" - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
                     }
                 }
             }
-            System.out.println(CommandLine.Help.Ansi.AUTO.string(builder.toString()));
-            System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Add-ons can be set using the|@ @|fg(yellow) " + Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@"));
+            print(builder.toString());
+            print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
         }
         return 0;
     }

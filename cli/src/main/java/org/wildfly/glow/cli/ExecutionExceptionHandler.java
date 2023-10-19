@@ -17,6 +17,7 @@
 
 package org.wildfly.glow.cli;
 
+import org.wildfly.glow.cli.commands.AbstractCommand;
 import picocli.CommandLine;
 
 
@@ -25,18 +26,20 @@ import picocli.CommandLine;
  */
 public class ExecutionExceptionHandler implements CommandLine.IExecutionExceptionHandler {
 
+    private final AbstractCommand command;
     private final boolean isVerbose;
 
-    public ExecutionExceptionHandler(boolean isVerbose) {
+    public ExecutionExceptionHandler(boolean isVerbose, AbstractCommand command) {
         this.isVerbose = isVerbose;
+        this.command = command;
     }
 
     @Override
     public int handleExecutionException(Exception ex, CommandLine commandLine, CommandLine.ParseResult parseResult)
             throws Exception {
-        System.err.println(CommandLine.Help.Ansi.AUTO.string("@|fg(red) ERROR: " + ex.getLocalizedMessage() + "|@"));
+        command.printError("ERROR: %s",  ex.getLocalizedMessage());
         if(isVerbose) {
-            ex.printStackTrace();
+            ex.printStackTrace(command.getStderr());
         }
         return 1;
     }

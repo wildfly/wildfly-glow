@@ -30,6 +30,7 @@ import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.ScanResults;
 import org.wildfly.glow.Utils;
+import org.wildfly.glow.cli.commands.AbstractCommand;
 import org.wildfly.glow.maven.MavenResolver;
 
 import java.util.Collections;
@@ -59,8 +60,9 @@ import picocli.CommandLine;
 public class GlowCLI {
 
     public static void main(String[] args) throws Exception {
+        final AbstractCommand command = new MainCommand();
         try {
-            CommandLine commandLine = new CommandLine(new MainCommand());
+            CommandLine commandLine = new CommandLine(command);
             commandLine.addSubcommand(new ScanCommand());
             commandLine.addSubcommand(new ShowAddOnsCommand());
             commandLine.addSubcommand(new ShowServerVersionsCommand());
@@ -69,7 +71,7 @@ public class GlowCLI {
             commandLine.addSubcommand(new CompletionCommand());
             commandLine.setUsageHelpAutoWidth(true);
             final boolean isVerbose = Arrays.stream(args).anyMatch(s -> s.equals("-vv") || s.equals("--verbose"));
-            commandLine.setExecutionExceptionHandler(new ExecutionExceptionHandler(isVerbose));
+            commandLine.setExecutionExceptionHandler(new ExecutionExceptionHandler(isVerbose, command));
             int exitCode = commandLine.execute(args);
             System.exit(exitCode);
         } catch (Exception ex) {
@@ -78,7 +80,7 @@ public class GlowCLI {
         }
         CLIArguments arguments = CLIArguments.fromMainArguments(args);
         if (arguments.isVersion()) {
-           System.out.println(Version.getVersion());
+           command.print(Version.getVersion());
            return;
         }
         boolean dumpInfos = args.length == 0 || arguments.isHelp();

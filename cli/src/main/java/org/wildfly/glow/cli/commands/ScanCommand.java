@@ -49,9 +49,6 @@ import picocli.CommandLine.Parameters;
 )
 public class ScanCommand extends AbstractCommand {
 
-    @CommandLine.Spec
-    protected CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
@@ -90,7 +87,7 @@ public class ScanCommand extends AbstractCommand {
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         boolean compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         if (!compact) {
-            System.out.println("Wildfly Glow is scanning...");
+            print("Wildfly Glow is scanning...");
         }
         Builder builder = Arguments.scanBuilder();
         if (cloud.orElse(false)) {
@@ -113,9 +110,7 @@ public class ScanCommand extends AbstractCommand {
         if (wildflyServerVersion.isPresent()) {
             builder.setVersion(wildflyServerVersion.get());
         }
-        if (verbose.isPresent()) {
-            builder.setVerbose(verbose.get());
-        }
+        builder.setVerbose(verbose);
         if (!addOns.isEmpty()) {
             builder.setUserEnabledAddOns(addOns);
         }
@@ -145,58 +140,58 @@ public class ScanCommand extends AbstractCommand {
             if (!compact) {
                 if (suggest.orElse(false)) {
                     if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() && addOns.isEmpty()) {
-                        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold To enable add-ons add the|@ @|fg(yellow) " + Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@"));
+                        print("@|bold To enable add-ons add the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
                     }
                     if (!scanResults.getSuggestions().getPossibleProfiles().isEmpty()) {
-                        System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold To enable the HA profile add the|@ @|fg(yellow) " + Constants.HA_OPTION + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@"));
+                        print("@|bold To enable the HA profile add the|@ @|fg(yellow) %s|@ @|bold option to the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.HA_OPTION, Constants.SCAN_COMMAND);
                     }
                 }
-                System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold To provision the WildFly server for your deployment add the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "=SERVER|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@"));
+                print("@|bold To provision the WildFly server for your deployment add the|@ @|fg(yellow) %s=SERVER|@ @|bold option to the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.PROVISION_OPTION, Constants.SCAN_COMMAND);
             }
         } else {
-            System.out.print("\n");
+            print();
             Path target = null;
             String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
             String doneMessage = null;
             switch (provision.get()) {
                 case BOOTABLE_JAR: {
                     target = Paths.get("");
-                    System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Building WildFly Bootable JAR file|@"));
+                    print("@|bold Building WildFly Bootable JAR file|@");
                     break;
                 }
                 case PROVISIONING_XML: {
                     target = Paths.get("server-" + vers);
-                    System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Generating provisioning configuration in " + target + "/provisioning.xml file|@"));
-                    doneMessage = CommandLine.Help.Ansi.AUTO.string("@|bold Generation DONE. Provisioning configuration is located in " + target + "/provisioning.xml file|@");
+                    print("@|bold Generating provisioning configuration in %s/provisioning.xml file|@", target);
+                    doneMessage = "@|bold Generation DONE. Provisioning configuration is located in " + target + "/provisioning.xml file|@";
                     break;
                 }
                 case SERVER: {
                     target = Paths.get("server-" + vers);
-                    System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Provisioning server in " + target + " directory|@"));
+                    print("@|bold Provisioning server in %s directory|@", target);
                     if (cloud.orElse(false)) {
-                        doneMessage = CommandLine.Help.Ansi.AUTO.string("@|bold Provisioning DONE. To run the server: 'JBOSS_HOME=" + target + " sh " + target + "/bin/openshift-launch.sh'|@");
+                        doneMessage = "@|bold Provisioning DONE. To run the server: 'JBOSS_HOME=" + target + " sh " + target + "/bin/openshift-launch.sh'|@";
                     } else {
-                        doneMessage = CommandLine.Help.Ansi.AUTO.string("@|bold Provisioning DONE. To run the server: 'sh " + target + "/bin/standalone.sh'|@");
+                        doneMessage = "@|bold Provisioning DONE. To run the server: 'sh " + target + "/bin/standalone.sh'|@";
                     }
                     break;
                 }
                 case DOCKER_IMAGE: {
                     target = Paths.get("server-" + vers);
                     String imageName = dockerImageName.isPresent()? dockerImageName.get() : DockerSupport.getImageName(target.toString());
-                    System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Generating docker image '" + imageName + "'|@"));
-                    doneMessage = CommandLine.Help.Ansi.AUTO.string("@|bold To run the image call: 'docker run " + imageName + "'|@");
+                    print("@|bold Generating docker image '%s'|@", imageName);
+                    doneMessage = "@|bold To run the image call: 'docker run " + imageName + "'|@";
                     break;
                 }
             }
             Path actualTarget = scanResults.outputConfig(target, dockerImageName.orElse(null));
             if (BOOTABLE_JAR.equals(provision.get())) {
-                doneMessage = CommandLine.Help.Ansi.AUTO.string("@|bold Bootable JAR build DONE. To run the jar: 'java -jar " + actualTarget + "'|@");
+                doneMessage = "@|bold Bootable JAR build DONE. To run the jar: 'java -jar " + actualTarget + "'|@";
             } else {
                 if (DOCKER_IMAGE.equals(provision.get())) {
-                    System.out.println(CommandLine.Help.Ansi.AUTO.string("@|bold Image generation DONE. Docker file generated in " + actualTarget.toAbsolutePath() + "|@."));
+                    print("@|bold Image generation DONE. Docker file generated in %s|@.", actualTarget.toAbsolutePath());
                 }
             }
-            System.out.println(doneMessage);
+            print(doneMessage);
         }
         return 0;
     }

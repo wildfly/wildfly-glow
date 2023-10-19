@@ -60,7 +60,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        System.out.println("Wildfly Glow is retrieving know provisioning configuration...");
+        print("Wildfly Glow is retrieving know provisioning configuration...");
         MavenRepoManager resolver = MavenResolver.newMavenResolver();
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
@@ -82,7 +82,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
             Path fps = FeaturePacks.getFeaturePacks(vers, context, wildflyPreview.orElse(false));
             ProvisioningConfig config = ProvisioningXmlParser.parse(fps);
             String configStr = CLIArguments.dumpConfiguration(fpDependencies, context, vers, all, mapping, config, isLatest, wildflyPreview.orElse(false));
-            System.out.println(CommandLine.Help.Ansi.AUTO.string(configStr));
+            print(configStr);
         }
         return 0;
     }
