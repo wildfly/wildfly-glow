@@ -14,32 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.wildfly.glow.cli.commands;
 
-package org.wildfly.glow;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 
-import java.util.Map;
+import picocli.CommandLine;
 
-public class HiddenPropertiesAccessor {
-    private static Map<String, String> overrides;
+public abstract class AbstractCommand implements Callable<Integer> {
 
-    public HiddenPropertiesAccessor() {
-    }
+    @SuppressWarnings("unused")
+    @CommandLine.Option(
+            names = {Constants.HELP_OPTION_SHORT, Constants.HELP_OPTION},
+            usageHelp = true
+    )
+    boolean help;
 
-    public String getProperty(String name) {
-        if (overrides != null) {
-            String value = overrides.get(name);
-            if (value != null) {
-                return value;
-            }
-        }
-        return System.getProperty(name);
-    }
-
-    public static void clearOverrides() {
-        overrides = null;
-    }
-
-    public static void setOverrides(Map<String, String> overrides) {
-        HiddenPropertiesAccessor.overrides = overrides;
-    }
+    @SuppressWarnings("unused")
+    @CommandLine.Option(
+            names = {Constants.VERBOSE_OPTION_SHORT, Constants.VERBOSE_OPTION}
+    )
+    Optional<Boolean> verbose;
 }

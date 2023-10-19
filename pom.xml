@@ -18,6 +18,7 @@
         <wildfly.glow.galleon.feature-packs.url>https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/release/</wildfly.glow.galleon.feature-packs.url>
 
         <!-- versions -->
+        <version.info.picocli>4.7.5</version.info.picocli>
         <version.org.ow2.asm>9.5</version.org.ow2.asm>
         <version.biz.aQute.bnd>6.4.0</version.biz.aQute.bnd>
         <version.bootable.jar>10.0.0.Final</version.bootable.jar>
@@ -208,6 +209,11 @@
                 <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-glow-arquillian-plugin-scanner</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli</artifactId>
+                <version>${version.info.picocli}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

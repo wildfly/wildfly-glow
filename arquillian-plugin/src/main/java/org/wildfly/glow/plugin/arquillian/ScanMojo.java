@@ -321,7 +321,7 @@ public class ScanMojo extends AbstractMojo {
                     ProvisioningXmlWriter.getInstance().write(builder.build(), fileWriter);
                 }
             } else {
-                results.outputConfig(outputFolder, false);
+                results.outputConfig(outputFolder, null);
             }
         } catch (Exception ex) {
             if (ex instanceof MojoExecutionException) {

@@ -31,20 +31,25 @@ import static java.lang.String.join;
  */
 public class DockerSupport {
 
-    public static boolean buildApplicationImage(String image, Path jbossHome, Arguments arguments, GlowMessageWriter writer) throws IOException {
+    public static Path buildApplicationImage(String image, Path jbossHome, Arguments arguments, GlowMessageWriter writer) throws IOException {
         jbossHome = jbossHome.toAbsolutePath();
         String binary = ExecUtil.resolveImageBinary(writer);
-        generateDockerfile( "quay.io/wildfly/wildfly-runtime:latest", jbossHome.getParent(), jbossHome);
+        Path file = generateDockerfile("quay.io/wildfly/wildfly-runtime:latest", jbossHome.getParent(), jbossHome);
         writer.info(format("Building application image %s using %s.", image, binary));
         String[] dockerArgs = new String[]{"build", "-t", image, "."};
 
         writer.info(format("Executing the following command to build application image: '%s %s'",
                 binary, join(" ", dockerArgs)));
-        return ExecUtil.exec(jbossHome.getParent().toFile(), binary, writer,
+        ExecUtil.exec(jbossHome.getParent().toFile(), binary, writer,
                 dockerArgs);
+        return file;
     }
 
-    private static void generateDockerfile(String runtimeImage, Path targetDir, Path jbossHome)
+    public static String getImageName(String target) {
+        return ("wildfly-glow-image-" + target.replaceAll("\\.", "_") + ":latest").toLowerCase();
+    }
+
+    private static Path generateDockerfile(String runtimeImage, Path targetDir, Path jbossHome)
             throws IOException {
 
         // Docker requires the source file be relative to the context. From the documentation:
@@ -53,11 +58,12 @@ public class DockerSupport {
         if (jbossHome.isAbsolute()) {
             jbossHome = targetDir.relativize(jbossHome);
         }
-
-        Files.writeString(targetDir.resolve("Dockerfile"),
+        Path file = targetDir.resolve("Dockerfile");
+        Files.writeString(file,
                 "FROM " + runtimeImage + "\n"
                 + "COPY --chown=jboss:root " + jbossHome + " $JBOSS_HOME\n"
                 + "RUN chmod -R ug+rwX $JBOSS_HOME\n",
                 StandardCharsets.UTF_8);
+        return file;
     }
 }

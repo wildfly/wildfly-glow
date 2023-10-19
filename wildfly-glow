@@ -1,0 +1,17 @@
+#!/bin/bash
+if [ -n "${DEBUG}" ];
+then
+  JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787"
+else
+  JAVA_OPTS="$JAVA_OPTS"
+fi
+
+if [ -z "${WILDFLY_GLOW_HOME}" ];
+then
+ full_path=$(realpath $0)
+ WILDFLY_GLOW_HOME=$(dirname $full_path)
+fi
+CLASSPATH=( "${WILDFLY_GLOW_HOME}/cli/target/"wildfly-glow.jar )
+
+java ${JAVA_OPTS} -jar "${CLASSPATH}" "$@"
+

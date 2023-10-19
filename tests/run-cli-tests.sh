@@ -21,33 +21,33 @@ function test {
 
 if [ ! -z "$provisioningFile" ]; then
   if [ ! "default" == "$provisioningFile" ]; then
-    provisioningFile="--feature-packs-file=$provisioningFile";
+    provisioningFile="--input-feature-packs-file=$provisioningFile";
   else
     unset provisioningFile
   fi
 fi
 if [ ! -z "$profile" ]; then
-  profile="--profiles=$profile";
+  profile="--$profile";
 fi
 if [ ! -z "$addOns" ]; then
   addOns="--add-ons=$addOns";
 fi
 if [ ! -z "$context" ]; then
-  context="--context=$context";
+  context="--$context";
 fi
 if [ ! -z "$preview" ]; then
-  preview="--preview";
+  preview="--wildfly-preview";
 fi
 if [ ! -z $GENERATE_CONFIG ]; then
- echo "java -jar -Dverbose=true $jar $warFile ${provisioningFile} $profile $addOns $preview"
- java -jar -Dverbose=true $jar $warFile ${provisioningFile} $profile $addOns $preview
+ echo "java -jar -Dverbose=true $jar scan $warFile ${provisioningFile} $profile $addOns $preview"
+ java -jar -Dverbose=true $jar scan $warFile ${provisioningFile} $profile $addOns $preview
 else
 
   if [ "$DEBUG" = 1 ]; then
-    echo "java $compact  -jar $jar $warFile ${provisioningFile} $profile $addOns $context $preview"
+    echo "java $compact  -jar $jar scan $warFile ${provisioningFile} $profile $addOns $context $preview"
   fi
 
-  found_layers=$(java $compact  -jar $jar \
+  found_layers=$(java $compact  -jar $jar scan \
   $warFile \
   ${provisioningFile} \
   $profile \
@@ -71,9 +71,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "* Display configuration"
+echo "* Show configuration"
 
-java -jar $jar --display-configuration
+java -jar $jar show-configuration
 
 if [ $? -ne 0 ]; then
     echo "Error, check log"

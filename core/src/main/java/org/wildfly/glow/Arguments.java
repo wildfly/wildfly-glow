@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
 
-    private static final String COMPACT_PROPERTY = "compact";
+    public static final String COMPACT_PROPERTY = "compact";
     private static final String MANUAL_LAYERS_PROPERTY = "org.wildfly.glow.manual.layers";
 
     private final Set<String> executionProfiles;

@@ -41,19 +41,23 @@ public class FeaturePacks {
     private static final String TECH_PREVIEW = "/tech-preview/";
 
     public static Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
-        String rootURL = getFeaturePacksURL();
-        Yaml yaml = new Yaml();
-        if (version == null) {
-            Map<String, String> map = yaml.load(new URI(rootURL + VERSIONS).toURL().openStream());
-            version = map.get("latest");
+        try {
+            String rootURL = getFeaturePacksURL();
+            Yaml yaml = new Yaml();
+            if (version == null) {
+                Map<String, String> map = yaml.load(new URI(rootURL + VERSIONS).toURL().openStream());
+                version = map.get("latest");
+            }
+            Path p = Files.createTempFile("glow-provisioning-", context);
+            try (InputStream in = new URL(rootURL + version + (techPreview ? TECH_PREVIEW : "") + PROVISIONING_FILE_RADICAL + context + ".xml").openStream()) {
+                Files.copy(in, p,
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            p.toFile().deleteOnExit();
+            return p;
+        } catch (Exception ex) {
+            throw new Exception("Exception occured while retrieving known Galleon feature-packs for version " + version + ". Cause: " + ex.getLocalizedMessage());
         }
-        Path p = Files.createTempFile("glow-provisioning-", context);
-        try (InputStream in = new URL(rootURL + version + (techPreview ? TECH_PREVIEW : "") + PROVISIONING_FILE_RADICAL + context + ".xml").openStream()) {
-            Files.copy(in, p,
-                    StandardCopyOption.REPLACE_EXISTING);
-        }
-        p.toFile().deleteOnExit();
-        return p;
     }
 
     public static String getFeaturePacksURL() throws Exception {

@@ -48,28 +48,28 @@ to adjust the provisioned WildFly server (execution context, profile, add-ons, W
 
 * To display the required Galleon layers and feature-packs required to run kitchensink: 
 
-`java -jar cli/target/wildfly-glow.jar examples/war/kitchensink.war`
+`./wildfly-glow scan examples/war/kitchensink.war`
 
 * To display the required Galleon layers and feature-packs required to run kitchensink on the cloud: 
 
-`java -jar cli/target/wildfly-glow.jar examples/war/kitchensink.war --context=cloud`
+`./wildfly-glow scan examples/war/kitchensink.war --cloud`
 
 * To provision a WildFly server to run kitchensink: 
 
-`java -jar cli/target/wildfly-glow.jar examples/war/kitchensink.war --output=server`
+`./wildfly-glow scan examples/war/kitchensink.war --provision=server`
 
 * To provision a WildFly Bootable JAR to run kitchensink:
 
-`java -jar cli/target/wildfly-glow.jar examples/war/kitchensink.war --output=bootable-jar`
+`./wildfly-glow scan examples/war/kitchensink.war --provision=bootable-jar`
 
 * To provision a WildFly server for the cloud and produce a Docker image to run kitchensink: 
 
-`java -jar cli/target/wildfly-glow.jar examples/war/kitchensink.war --output=server --context=cloud`
+`./wildfly-glow scan examples/war/kitchensink.war --provision=server --cloud`
 
 
 # Accessing the WildFly Glow command line help
 
-`java -jar cli/target/wildfly-glow.jar --help` 
+`./wildfly-glow --help` 
 
 # WildFly Glow documentation
 

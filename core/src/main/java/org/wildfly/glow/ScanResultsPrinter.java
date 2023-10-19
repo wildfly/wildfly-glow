@@ -79,8 +79,7 @@ public class ScanResultsPrinter {
             profileBuilder.append("none");
         }
         writer.info(profileBuilder);
-        writer.info("\ngalleon discovery");
-        writer.info("- raw basic layers: " + scanResults.getDiscoveredLayers());
+        writer.info("galleon discovery");
         StringBuilder builder = new StringBuilder();
         builder.append("- feature-packs").append("\n");
         for (FeaturePackConfig fp : scanResults.getProvisioningConfig().getFeaturePackDeps()) {
@@ -107,10 +106,8 @@ public class ScanResultsPrinter {
             }
             writer.info(addOnsBuilder);
         }
-        writer.info("disabled add-ons");
-        if (scanResults.getDisabledAddOns().isEmpty()) {
-            writer.info("none\n");
-        } else {
+        if (!scanResults.getDisabledAddOns().isEmpty()) {
+            writer.info("disabled add-ons");
             StringBuilder disabledBuilder = new StringBuilder();
             for (Map.Entry<AddOn, String> l : scanResults.getDisabledAddOns().entrySet()) {
                 disabledBuilder.append("- ").append(l.getKey().getName()).append(": ").append(l.getValue()).append("\n");
@@ -144,18 +141,15 @@ public class ScanResultsPrinter {
             }
         }
 
-        writer.info("identified errors");
-        if (errorBuilders.isEmpty()) {
-            writer.info("none\n");
-        } else {
+        if (!errorBuilders.isEmpty()) {
+            writer.info("identified errors");
             for (StringBuilder errorBuilder : errorBuilders) {
                 writer.error(errorBuilder);
             }
         }
-        writer.info("possible issues");
-        if (warnBuilders.isEmpty()) {
-            writer.info("none\n");
-        } else {
+
+        if (!warnBuilders.isEmpty()) {
+            writer.info("possible issues");
             for (StringBuilder warnBuilder : warnBuilders) {
                 writer.warn(warnBuilder);
             }
