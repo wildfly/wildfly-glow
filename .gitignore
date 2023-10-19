@@ -1,5 +1,6 @@
 target
 cli/dependency-reduced-pom.xml
+tests/.env
 
 # Intellij
 *.iml

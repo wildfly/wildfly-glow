@@ -24,6 +24,7 @@ import org.wildfly.glow.error.IdentifiedError;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,12 +167,13 @@ public class ScanResultsPrinter {
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getStronglySuggestedConfigurations().entrySet()) {
                 writer.warn(buildSuggestions(entry.getKey(), entry.getValue()));
             }
+            writer.warn("");
         }
 
-        writer.info("suggestions");
         String suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
 
         if (arguments.isSuggest()) {
+            writer.info("suggestions");
             if (scanResults.getSuggestions().getPossibleAddOns().isEmpty() && scanResults.getSuggestions().getPossibleProfiles().isEmpty() && suggestedConfigs.isEmpty()) {
                 writer.info("none");
             } else {
@@ -211,9 +213,7 @@ public class ScanResultsPrinter {
             }
         } else {
             if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !suggestedConfigs.isEmpty()) {
-                writer.info("some suggestions have been found. You could enable suggestions with --suggest option.");
-            } else {
-                writer.info("none");
+                writer.info("Some suggestions have been found. You could enable suggestions with --suggest option.");
             }
         }
     }
@@ -229,8 +229,13 @@ public class ScanResultsPrinter {
     private static String buildSuggestions(Layer layer, Set<Env> envs) throws URISyntaxException, IOException {
         StringBuilder suggestedConfigsBuilder = new StringBuilder();
         suggestedConfigsBuilder.append("\n").append(layer.getName()).append(":\n");
-        for (Env e : envs) {
-            suggestedConfigsBuilder.append(" - ").append(e.getName()).append("=").append(e.getDescription()).append("\n");
+        Iterator<Env> it = envs.iterator();
+        while (it.hasNext()) {
+            Env e = it.next();
+            suggestedConfigsBuilder.append(" - ").append(e.getName()).append("=").append(e.getDescription());
+            if (it.hasNext()) {
+                suggestedConfigsBuilder.append("\n");
+            }
         }
         return suggestedConfigsBuilder.toString();
     }}

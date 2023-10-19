@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import org.wildfly.glow.Env;
 
 import static org.wildfly.glow.Utils.getAddOnFix;
 
@@ -122,9 +123,10 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
     }
 
     @Override
-    public void refreshErrors(Set<Layer> allBaseLayers) throws Exception {
+    public Map<Layer, Set<Env>> refreshErrors(Set<Layer> allBaseLayers) throws Exception {
         Set<IdentifiedError> unboundDatasourcesErrors = errors.get(UNBOUND_DATASOURCES_ERROR);
         Set<String> toRemove = new HashSet<>();
+        Map<Layer, Set<Env>> ret = new HashMap<>();
         if (unboundDatasourcesErrors != null) {
             for (IdentifiedError error : unboundDatasourcesErrors) {
                 UnboundDatasourceError uds = (UnboundDatasourceError) error;
@@ -142,6 +144,14 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                                     content = fix.getContent();
                                     if (content != null) {
                                         content = content.replaceAll("##ITEM##", uds.unboundDatasource);
+                                    }
+                                    if(fix.isEnv()) {
+                                        Set<Env> envs = ret.get(l);
+                                        if(envs == null) {
+                                            envs = new HashSet<>();
+                                            ret.put(l, envs);
+                                        }
+                                        envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
                                     }
                                 }
                                 String errorMessage = getAddOnFix(l.getAddOn(), content);
@@ -167,6 +177,14 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                             Fix fix = l.getAddOn().getFixes().get(error.getId());
                             if (fix != null) {
                                 String content = fix.getContent();
+                                if (fix.isEnv()) {
+                                    Set<Env> envs = ret.get(l);
+                                    if (envs == null) {
+                                        envs = new HashSet<>();
+                                        ret.put(l, envs);
+                                    }
+                                    envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
+                                }
                                 String errorMessage = getAddOnFix(l.getAddOn(), content);
                                 error.setFixed(errorMessage);
                             }
@@ -175,6 +193,7 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                 }
             }
         }
+        return ret;
     }
 
     @Override

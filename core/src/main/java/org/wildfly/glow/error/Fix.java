@@ -72,6 +72,15 @@ public class Fix {
         return description;
     }
 
+    public boolean isEnv() {
+        return description.endsWith(" env");
+    }
+
+    public String getEnvName() {
+        String[] split = content.split("=");
+        return split[0];
+    }
+
     /**
      * @return the content
      */
@@ -84,5 +93,10 @@ public class Fix {
      */
     public String getForId() {
         return forId;
+    }
+
+    public static String getEnvValue(String value) {
+        String[] split = value.split("=");
+        return split[1];
     }
 }

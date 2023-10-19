@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.wildfly.glow.Env;
 
 /**
  *
@@ -55,8 +56,8 @@ public class ErrorIdentificationSession {
         jndiErrorIdentification.collectErrors(verbose, resourceInjectionInfos, initialContextLookupInfos, allClasses);
     }
 
-    public void refreshErrors(Set<Layer> allBaseLayers, LayerMapping mapping, Set<AddOn> enabledAddOns) throws Exception {
-        ds.refreshErrors(allBaseLayers);
+    public Map<Layer, Set<Env>> refreshErrors(Set<Layer> allBaseLayers, LayerMapping mapping, Set<AddOn> enabledAddOns) throws Exception {
+        Map<Layer, Set<Env>> stronglySuggested = ds.refreshErrors(allBaseLayers);
         // We could have an Enabbled addOn
         for (IdentifiedError error : getErrors()) {
             if (!error.isFixed()) {
@@ -66,6 +67,7 @@ public class ErrorIdentificationSession {
                 }
             }
         }
+        return stronglySuggested;
     }
 
     public List<IdentifiedError> getErrors() {

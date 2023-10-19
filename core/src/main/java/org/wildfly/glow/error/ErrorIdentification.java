@@ -21,7 +21,9 @@ import org.wildfly.glow.Layer;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.wildfly.glow.Env;
 
 /**
  *
@@ -29,6 +31,6 @@ import java.util.Set;
  */
 public interface ErrorIdentification {
     void collectErrors(Path rootPath) throws Exception;
-    void refreshErrors(Set<Layer> allBaseLayers) throws Exception;
+    Map<Layer, Set<Env>> refreshErrors(Set<Layer> allBaseLayers) throws Exception;
     List<IdentifiedError> getErrors();
 }
