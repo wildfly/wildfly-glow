@@ -11,3 +11,5 @@ cli/dependency-reduced-pom.xml
 /tests/arquillian-plugin-tests/target/
 /arquillian-plugin-scanner/target/
 tests/.env
+.idea
+*.iml
