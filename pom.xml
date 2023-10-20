@@ -196,6 +196,11 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-glow-test-galleon-pack</artifactId>
                 <type>zip</type>
                 <version>${project.version}</version>

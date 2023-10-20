@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="wildfly-glow-core" />
+        <module name="wildfly-glow-arquillian-plugin-tests" />
+        <module name="wildfly-glow" />
+        <module name="wildfly-glow-test-feature-pack-classes" />
+        <module name="wildfly-glow-arquillian-plugin" />
+        <module name="wildfly-glow-arquillian-plugin-scanner" />
+        <module name="wildfly-glow-maven-resolver" />
+        <module name="wildfly-glow-tests" />
+        <module name="wildfly-glow-test-feature-pack-layer-metadata-tests" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="wildfly-glow-release" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="wildfly-glow" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-arquillian-plugin" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-arquillian-plugin-scanner" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-arquillian-plugin-tests" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-core" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-maven-resolver" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-test-feature-pack-classes" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-test-feature-pack-layer-metadata-tests" options="-Xlint:unchecked" />
+      <module name="wildfly-glow-tests" options="-Xlint:unchecked" />
+    </option>
+  </component>
+</project>

@@ -1,0 +1,24 @@
+#!/bin/bash
+if [ -n "${DEBUG}" ];
+then
+  JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8787"
+else
+  JAVA_OPTS="$JAVA_OPTS"
+fi
+
+if [ -z "${WILDFLY_GLOW_HOME}" ];
+then
+ full_path=$(realpath $0)
+ WILDFLY_GLOW_HOME=$(dirname $full_path)
+fi
+
+CLI_EXECUTABLE=${WILDFLY_GLOW_HOME}/wildfly-glow.jar
+if [ ! -f "${CLI_EXECUTABLE}" ]; then
+  echo "Could not find ${CLI_EXECUTABLE}. Please make sure that this script is in the same directory as wildfly-glow.jar, or set the WILDFLY_GLOW_HOME environment variable to point to the directory containing wildfly-glow.jar."
+  exit 1
+fi
+
+CLASSPATH=( "${CLI_EXECUTABLE}" )
+
+java ${JAVA_OPTS} -jar "${CLASSPATH}" "$@"
+

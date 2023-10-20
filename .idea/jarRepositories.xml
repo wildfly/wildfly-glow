@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jboss-public-repository" />
+      <option name="name" value="JBoss Public Maven Repository" />
+      <option name="url" value="https://repository.jboss.org/nexus/content/groups/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jboss-public-repository-group" />
+      <option name="name" value="JBoss Public Repository Group" />
+      <option name="url" value="https://repository.jboss.org/nexus/content/groups/public-jboss/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://repo1.maven.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="atlassian-plugin-sdk" />
+      <option name="name" value="atlassian-plugin-sdk" />
+      <option name="url" value="file:///opt/homebrew/Cellar/atlassian-plugin-sdk/8.2.7/libexec/repository" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jboss.community" />
+      <option name="name" value="JBoss Community repository" />
+      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+  </component>
+</project>
