@@ -57,6 +57,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
+import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 
@@ -426,7 +428,15 @@ public class GlowSession {
             }
             // END cleanup
 
-            errorSession.refreshErrors(allBaseLayers, mapping, allEnabledAddOns);
+            Map<Layer, Set<Env>> stronglySuggestConfigFixes = errorSession.refreshErrors(allBaseLayers, mapping, allEnabledAddOns);
+            for(Layer l : stronglySuggestConfigFixes.keySet()) {
+                Set<Env> envs = stronglySuggestedConfigurations.get(l);
+                if(envs == null) {
+                    envs = new TreeSet<>();
+                    stronglySuggestedConfigurations.put(l, envs);
+                }
+                envs.addAll(stronglySuggestConfigFixes.get(l));
+            }
             // Identify the active feature-packs.
             ProvisioningConfig activeConfig = buildProvisioningConfig(pConfig, layout,
                     universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName());
@@ -451,39 +461,53 @@ public class GlowSession {
         }
     }
 
-    Path outputConfig(ScanResults scanResults, Path target, String dockerImageName) throws Exception {
+    OutputContent outputConfig(ScanResults scanResults, Path target, String dockerImageName) throws Exception {
         if (arguments.getOutput() == null) {
             throw new IllegalStateException("No output format set");
         }
-        Path ret = null;
-        if (OutputFormat.DOCKER_IMAGE.equals(arguments.getOutput()) || OutputFormat.SERVER.equals(arguments.getOutput()) || OutputFormat.BOOTABLE_JAR.equals(arguments.getOutput())) {
+        Map<OutputContent.OutputFile, Path> files = new HashMap<>();
+        if (!OutputFormat.PROVISIONING_XML.equals(arguments.getOutput())) {
             if (scanResults.getErrorSession().hasErrors()) {
                 writer.warn("You are provisioning a server although some errors still exist. You should first fix them.");
             }
             Path generatedArtifact = provisionServer(arguments.getBinaries(),
                     scanResults.getProvisioningConfig(), resolver, arguments.getOutput(),
                     arguments.isCloud(), target);
-            if (OutputFormat.DOCKER_IMAGE.equals(arguments.getOutput())) {
-                // generate docker image
-                String imageName = dockerImageName == null ? DockerSupport.getImageName(generatedArtifact.getFileName().toString()) : dockerImageName;
-                ret = DockerSupport.buildApplicationImage(imageName, generatedArtifact, arguments, writer);
-            }
-            IoUtils.recursiveDelete(generatedArtifact);
-        } else {
-            if (OutputFormat.PROVISIONING_XML.equals(arguments.getOutput())) {
-                IoUtils.recursiveDelete(target);
-                Files.createDirectories(target);
-                ret = target.resolve("provisioning.xml");
-                try (FileWriter fileWriter = new FileWriter(ret.toFile())) {
-                    ProvisioningXmlWriter.getInstance().write(scanResults.getProvisioningConfig(), fileWriter);
+            switch (arguments.getOutput()) {
+                case DOCKER_IMAGE: {
+                    // generate docker image
+                    dockerImageName = dockerImageName == null ? DockerSupport.getImageName(generatedArtifact.getFileName().toString()) : dockerImageName;
+                    Path origDockerFile = DockerSupport.buildApplicationImage(dockerImageName, generatedArtifact, arguments, writer);
+                    IoUtils.recursiveDelete(generatedArtifact);
+                    Files.createDirectories(target);
+                    Path dockerFile = target.resolve("Dockerfile");
+                    Files.copy(origDockerFile, dockerFile);
+                    Files.delete(origDockerFile);
+                    files.put(OutputContent.OutputFile.DOCKER_FILE,dockerFile.toAbsolutePath());
+                    break;
+                }
+                case BOOTABLE_JAR: {
+                    files.put(OutputContent.OutputFile.BOOTABLE_JAR_FILE, generatedArtifact.toAbsolutePath());
+                    break;
+                }
+                case SERVER: {
+                    files.put(OutputContent.OutputFile.SERVER_DIR, generatedArtifact.toAbsolutePath());
+                    break;
                 }
             }
+        } else {
+            IoUtils.recursiveDelete(target);
+            Files.createDirectories(target);
+            Path prov = target.resolve("provisioning.xml");
+            try (FileWriter fileWriter = new FileWriter(prov.toFile())) {
+                ProvisioningXmlWriter.getInstance().write(scanResults.getProvisioningConfig(), fileWriter);
+            }
+            files.put(OutputContent.OutputFile.PROVISIONING_XML_FILE, prov.toAbsolutePath());
         }
         StringBuilder envFileContent = new StringBuilder();
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty() ||
                 (arguments.isSuggest() && !scanResults.getSuggestions().getSuggestedConfigurations().isEmpty())) {
-            envFileContent.append("Environment variables for ").
-                    append(arguments.getExecutionContext()).append(" execution context.").append(System.lineSeparator());
+            envFileContent.append("Environment variables to set. ").append(System.lineSeparator());
         }
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty()) {
             envFileContent.append(buildEnvs(scanResults.getSuggestions().
@@ -494,11 +518,14 @@ public class GlowSession {
                     getSuggestedConfigurations(), false)).append(System.lineSeparator());
         }
         if (envFileContent.length() != 0) {
+            if (!Files.exists(target)) {
+               Files.createDirectories(target);
+            }
             Path p = target.resolve("configuration.env");
-            writer.info("The file " + p + " contains the environment variables to set in a " + arguments.getExecutionContext() + " context");
             Files.write(p, envFileContent.toString().getBytes());
+            files.put(OutputContent.OutputFile.ENV_FILE, p.toAbsolutePath());
         }
-        return ret;
+        return new OutputContent(files, dockerImageName);
     }
 
     private String buildEnvs(Map<Layer, Set<Env>> map, boolean isRequired) {
