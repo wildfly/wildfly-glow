@@ -16,41 +16,26 @@
  */
 package org.wildfly.glow.cli.commands;
 
-import java.io.IOException;
 import java.util.ResourceBundle;
-import java.util.concurrent.Callable;
 import org.wildfly.glow.Version;
 
 import picocli.CommandLine;
 
 @CommandLine.Command(name = Constants.WILDFLY_GLOW, resourceBundle = "UsageMessages",
         versionProvider = MainCommand.VersionProvider.class)
-public class MainCommand implements Callable<Integer> {
-
-    @CommandLine.Spec
-    protected CommandLine.Model.CommandSpec spec;
-
-
-    @SuppressWarnings("unused")
-    @CommandLine.Option(names = {Constants.HELP_OPTION_SHORT, Constants.HELP_OPTION}, usageHelp = true)
-    boolean help;
+public class MainCommand extends AbstractCommand {
 
     @SuppressWarnings("unused")
     @CommandLine.Option(names = {Constants.VERSION_OPTION_SHORT, Constants.VERSION_OPTION}, versionHelp = true)
     boolean version;
 
-    @SuppressWarnings("unused")
-    @CommandLine.Option(names = {Constants.VERBOSE_OPTION_SHORT, Constants.VERBOSE_OPTION})
-    boolean verbose;
-
     @Override
-    public Integer call() throws IOException {
+    public Integer call() {
+        spec.commandLine().usage(System.out);
         // print welcome message - this is not printed when -h option is set
         ResourceBundle usageBundle = ResourceBundle.getBundle("UsageMessages");
 
-        System.out.println(CommandLine.Help.Ansi.AUTO.string(usageBundle.getString("glow.welcomeMessage")));
-        // print main command usage
-        spec.commandLine().usage(System.out);
+        print(usageBundle.getString("glow.welcomeMessage"));
         return 0;
     }
 

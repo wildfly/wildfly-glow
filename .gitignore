@@ -1,15 +1,22 @@
+target
 cli/dependency-reduced-pom.xml
-/docs/target/
-/maven-resolver/target/
-/tests/glow-tests/target/
-/core/target/
-/cli/target/
-/tests/test-feature-pack/layer-metadata-tests/target/
-/tests/test-feature-pack/galleon-pack/target/
-/arquillian-plugin/target/
-/tests/test-feature-pack/test-classes/target/
-/tests/arquillian-plugin-tests/target/
-/arquillian-plugin-scanner/target/
-tests/.env
-.idea
+
+# Intellij
 *.iml
+*.ipr
+*.iws
+.idea
+
+# Eclipse
+**/.settings
+**/.project
+**/.classpath
+**/.checkstyle
+**/.factorypath
+
+# VS Code
+**/.vscode/
+
+# macOS Files
+.DS_Store
+

@@ -16,12 +16,17 @@
  */
 package org.wildfly.glow.cli.commands;
 
-import java.util.Optional;
+import java.io.PrintWriter;
 import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
 
 public abstract class AbstractCommand implements Callable<Integer> {
+
+    @CommandLine.Option(
+            names = {Constants.BATCH_OPTION_SHORT, Constants.BATCH_OPTION}
+    )
+    private boolean batch;
 
     @SuppressWarnings("unused")
     @CommandLine.Option(
@@ -34,5 +39,76 @@ public abstract class AbstractCommand implements Callable<Integer> {
     @CommandLine.Option(
             names = {Constants.VERBOSE_OPTION_SHORT, Constants.VERBOSE_OPTION}
     )
-    Optional<Boolean> verbose;
+    boolean verbose;
+
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
+    private PrintWriter stdout;
+
+    private PrintWriter stderr;
+    private CommandLine.Help.Ansi ansi;
+
+    public void print() {
+        final PrintWriter writer = getStdout();
+        writer.println();
+    }
+
+    public void print(final Object msg) {
+        final PrintWriter writer = getStdout();
+        writer.println(format(String.valueOf(msg)));
+    }
+
+    public void print(final String fmt, final Object... args) {
+        print(0, fmt, args);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    public void print(final int padding, final Object message) {
+        final PrintWriter writer = getStdout();
+        if (padding > 0) {
+            writer.printf("%1$" + padding + "s", " ");
+        }
+        writer.println(message);
+    }
+
+    public void print(final int padding, final String fmt, final Object... args) {
+        print(getStdout(), padding, fmt, args);
+    }
+
+    public void printError(final String fmt, final Object... args) {
+        print(getStderr(), 0, "@|fg(red) " + fmt + "|@", args);
+    }
+
+    public PrintWriter getStdout() {
+        if (stdout == null) {
+            stdout = spec.commandLine().getOut();
+        }
+        return stdout;
+    }
+
+    String format(final String fmt, final Object... args) {
+        if (ansi == null) {
+            ansi = batch ? CommandLine.Help.Ansi.OFF : spec.commandLine().getColorScheme().ansi();
+        }
+        return format(ansi, String.format(fmt, args));
+    }
+
+    String format(final CommandLine.Help.Ansi ansi, final String value) {
+        return ansi.string(value);
+    }
+
+    public PrintWriter getStderr() {
+        if (stderr == null) {
+            stderr = spec.commandLine().getErr();
+        }
+        return stderr;
+    }
+
+    private void print(final PrintWriter writer, final int padding, final String fmt, final Object... args) {
+        if (padding > 0) {
+            writer.printf("%1$" + padding + "s", " ");
+        }
+        writer.println(format(fmt, args));
+    }
 }

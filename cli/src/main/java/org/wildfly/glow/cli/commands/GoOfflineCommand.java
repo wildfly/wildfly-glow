@@ -34,9 +34,6 @@ import picocli.CommandLine;
 )
 public class GoOfflineCommand extends AbstractCommand {
 
-    @CommandLine.Spec
-    protected CommandLine.Model.CommandSpec spec;
-
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
@@ -51,7 +48,7 @@ public class GoOfflineCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        System.out.println("Wildfly Glow is assembling offline content...");
+        print("Wildfly Glow is assembling offline content...");
         Builder builder = Arguments.scanBuilder();
         if (cloud.orElse(false)) {
             builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
@@ -62,14 +59,12 @@ public class GoOfflineCommand extends AbstractCommand {
         if (wildflyServerVersion.isPresent()) {
             builder.setVersion(wildflyServerVersion.get());
         }
-        if (verbose.isPresent()) {
-            builder.setVerbose(verbose.get());
-        }
+        builder.setVerbose(verbose);
         if (provisioningXml.isPresent()) {
             builder.setProvisoningXML(provisioningXml.get());
         }
         GlowSession.goOffline(MavenResolver.newMavenResolver(), builder.build(), GlowMessageWriter.DEFAULT);
-        System.out.println("Offline zip file "+ OFFLINE_ZIP + " generated");
+        print("Offline zip file %s generated", OFFLINE_ZIP);
         return 0;
     }
 }
