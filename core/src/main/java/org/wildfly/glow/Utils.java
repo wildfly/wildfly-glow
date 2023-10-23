@@ -283,7 +283,6 @@ public final class Utils {
 
     public static ProvisioningConfig buildProvisioningConfig(ProvisioningLayoutFactory factory,
             String executionContext, Path provisioningXML, String version, GlowMessageWriter writer, boolean techPreview) throws Exception {
-        FileSystem fs = null;
         ProvisioningConfig pConfig;
         Path offlineContent = getOffLineContent();
         if (Files.exists(offlineContent)) {
@@ -303,9 +302,6 @@ public final class Utils {
                 provisioningXML = FeaturePacks.getFeaturePacks(version, executionContext, techPreview);
             }
             pConfig = ProvisioningXmlParser.parse(provisioningXML);
-        }
-        if (fs != null) {
-            fs.close();
         }
         return pConfig;
     }

@@ -66,6 +66,7 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jboss.galleon.util.IoUtils;
 
 import static org.objectweb.asm.Opcodes.ASM9;
 
@@ -119,6 +120,9 @@ public class DeploymentScanner implements AutoCloseable {
             } catch (IOException ignore) {
             }
         }
+        if(parent == null) {
+            IoUtils.recursiveDelete(tempDirectory);
+        }
     }
 
     public void scan(LayerMapping mapping, Set<Layer> layers, Map<String, Layer> all, ErrorIdentificationSession errorSession) throws Exception {
@@ -137,11 +141,14 @@ public class DeploymentScanner implements AutoCloseable {
     private void scan(DeploymentScanContext ctx) throws Exception {
         scanAnnotations(ctx);
         FileSystem fs = isArchive ? ZipUtils.newFileSystem(binary) : binary.getFileSystem();
+        try {
         Path rootPath = isArchive ? fs.getPath("/") : binary;
         scanTypesAndChildren(rootPath, ctx);
         ctx.layers.addAll(inspectDeployment(rootPath, ctx));
-        if (isArchive) {
-            fs.close();
+        } finally {
+            if (isArchive) {
+                fs.close();
+            }
         }
     }
 

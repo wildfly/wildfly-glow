@@ -168,8 +168,9 @@ public class GlowSession {
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
                         //System.out.println("SCAN " + d);
-                        DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose());
-                        deploymentScanner.scan(mapping, layers, all, errorSession);
+                        try (DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose())) {
+                            deploymentScanner.scan(mapping, layers, all, errorSession);
+                        }
                     }
                 } else {
                     for (Path d : arguments.getBinaries()) {
@@ -496,7 +497,6 @@ public class GlowSession {
                 }
             }
         } else {
-            IoUtils.recursiveDelete(target);
             Files.createDirectories(target);
             Path prov = target.resolve("provisioning.xml");
             try (FileWriter fileWriter = new FileWriter(prov.toFile())) {
@@ -557,26 +557,26 @@ public class GlowSession {
             MavenRepoManager resolver, OutputFormat format, boolean isCloud, Path target) throws Exception {
         Path tmpDir = null;
         Path originalTarget = target;
-        if (!isCloud && OutputFormat.BOOTABLE_JAR.equals(format)) {
+        if (OutputFormat.BOOTABLE_JAR.equals(format)) {
             // We create a tmp directory in which the server is provisioned
             tmpDir = Files.createTempDirectory("wildfly-glow-bootable");
             target = tmpDir;
         } else {
             IoUtils.recursiveDelete(target);
         }
-        Utils.provisionServer(activeConfig, target.toAbsolutePath(), resolver, writer);
-
-        if (!binaries.isEmpty()) {
-            for (Path binary : binaries) {
-                Path deploymentTarget = target.resolve("standalone").
-                        resolve("deployments").resolve(binary.getFileName().toString());
-                writer.info("Copy " + binary + " to " + deploymentTarget);
-                Files.copy(binary, deploymentTarget);
-            }
-        }
         Path ret = target;
-        if (!isCloud && OutputFormat.BOOTABLE_JAR.equals(format)) {
-            try {
+        try {
+            Utils.provisionServer(activeConfig, target.toAbsolutePath(), resolver, writer);
+
+            if (!binaries.isEmpty()) {
+                for (Path binary : binaries) {
+                    Path deploymentTarget = target.resolve("standalone").
+                            resolve("deployments").resolve(binary.getFileName().toString());
+                    writer.info("Copy " + binary + " to " + deploymentTarget);
+                    Files.copy(binary, deploymentTarget);
+                }
+            }
+            if (OutputFormat.BOOTABLE_JAR.equals(format)) {
                 String bootableJarName = "";
                 if (!binaries.isEmpty()) {
                     for (Path binary : binaries) {
@@ -633,8 +633,10 @@ public class GlowSession {
                         }
                     }
                 }, null);
-            } finally {
-                IoUtils.recursiveDelete(target);
+            }
+        } finally {
+            if (tmpDir != null) {
+                IoUtils.recursiveDelete(tmpDir);
             }
         }
         return ret;
