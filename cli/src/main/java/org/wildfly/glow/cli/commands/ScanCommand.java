@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.Arguments;
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
@@ -174,6 +175,7 @@ public class ScanCommand extends AbstractCommand {
             print();
             String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
             Path target = Paths.get("server-" + vers);
+            IoUtils.recursiveDelete(target);
             switch (provision.get()) {
                 case BOOTABLE_JAR: {
                     target = Paths.get("");
