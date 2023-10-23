@@ -1,0 +1,30 @@
+= WildFly Glow
+
+Automatic discovery of Galleon Feature-packs and Galleon Layers from your deployment.
+
+WildFly Glow documentation is available https://github.com/wildfly/wildfly-glow/blob/main/README.md[online].
+
+== WildFly Glow CLI tips
+
+* To display the CLI help call: `./wildfly-glow`
+* To install the CLI commands automatic completion call: `source <(./wildfly-glow completion)`
+
+== Kitchensink example
+
+This war comes from the WildFly https://github.com/wildfly/quickstart/tree/30.0.0.Final/kitchensink[kitchensink] quickstart.
+
+=== To display the discovered Galleon Feature-packs and Galleon Layers required to provision a server to run the kitchensink application:
+
+`./wildfly-glow scan ./examples/kitchensink.war`
+
+=== To provision a WildFly server: 
+
+`./wildfly-glow scan ./examples/kitchensink.war --provision=SERVER`
+
+=== To provision a WildFly Bootable JAR:
+
+`./wildfly-glow scan ./examples/kitchensink.war --provision=BOOTABLE_JAR`
+
+=== To provision a WildFly server for the cloud and produce a Docker image: 
+
+`./wildfly-glow scan ./examples/kitchensink.war --provision=DOCKER_IMAGE --cloud`
