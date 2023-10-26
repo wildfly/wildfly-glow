@@ -18,8 +18,11 @@
 package org.wildfly.glow;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public interface ScanArguments {
 
@@ -65,6 +68,8 @@ public interface ScanArguments {
     Boolean isCompact();
 
     boolean isTechPreview();
+
+    Set<Pattern> getExcludeArchivesFromScan();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -132,6 +137,15 @@ public interface ScanArguments {
 
         public Builder setTechPreview(boolean techPreview) {
             this.techPreview = techPreview;
+            return this;
+        }
+
+        public Builder setExcludeArchivesFromScan(String... archives) {
+            return setExcludeArchivesFromScan(new HashSet<>(Arrays.asList(archives)));
+        }
+
+        public Builder setExcludeArchivesFromScan(Set<String> archives) {
+            this.excludeJarsFromScan = archives;
             return this;
         }
     }

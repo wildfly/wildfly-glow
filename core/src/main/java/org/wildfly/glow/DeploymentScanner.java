@@ -25,6 +25,7 @@ import aQute.bnd.classfile.LocalVariableTableAttribute;
 import aQute.bnd.classfile.LocalVariableTypeTableAttribute;
 import aQute.bnd.classfile.SignatureAttribute;
 import aQute.lib.io.ByteBufferDataInput;
+import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationTarget;
@@ -66,7 +67,6 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.jboss.galleon.util.IoUtils;
 
 import static org.objectweb.asm.Opcodes.ASM9;
 
@@ -75,18 +75,20 @@ public class DeploymentScanner implements AutoCloseable {
     private final Path binary;
     private final Path tempDirectory;
     private boolean verbose;
+    private final Set<Pattern> excludeArchivesFromScan;
     private ArchiveType archiveType;
     private DeploymentScanner parent;
     private final boolean isArchive;
 
-    public DeploymentScanner(Path binary, boolean verbose) throws IOException {
-        this(null, binary, verbose);
+    public DeploymentScanner(Path binary, boolean verbose, Set<Pattern> excludeArchivesFromScan) throws IOException {
+        this(null, binary, verbose, excludeArchivesFromScan);
     }
 
-    private DeploymentScanner(DeploymentScanner parent, Path binary, boolean verbose) throws IOException {
+    private DeploymentScanner(DeploymentScanner parent, Path binary, boolean verbose, Set<Pattern> excludeArchivesFromScan) throws IOException {
         this.parent = parent;
         this.tempDirectory = parent == null ? Files.createTempDirectory("glow") : parent.tempDirectory;
         this.verbose = verbose;
+        this.excludeArchivesFromScan = excludeArchivesFromScan;
 
         if (!Files.exists(binary)) {
             throw new IllegalArgumentException(binary.normalize().toAbsolutePath() + " is not an archive");
@@ -311,7 +313,14 @@ public class DeploymentScanner implements AutoCloseable {
     }
 
     private void scanWithNestedScanner(Path file, DeploymentScanContext ctx) throws IOException {
-        try (DeploymentScanner nestedScanner = new DeploymentScanner(DeploymentScanner.this, file, verbose)) {
+        // Check it is not an excluded archive
+        for (Pattern exclude : excludeArchivesFromScan) {
+            if (exclude.matcher(file.getFileName().toString()).matches()) {
+                return;
+            }
+        }
+
+        try (DeploymentScanner nestedScanner = new DeploymentScanner(DeploymentScanner.this, file, verbose, excludeArchivesFromScan)) {
             try {
                 nestedScanner.scan(ctx);
             } catch (RuntimeException | IOException e) {
