@@ -44,6 +44,10 @@ public interface Constants {
     String DOCKER_IMAGE_NAME_OPTION = "--docker-image-name";
     String DOCKER_IMAGE_NAME_OPTION_LABEL = "<docker image name>";
     String DOCKER_IMAGE_NAME_OPTION_SHORT = "-di";
+
+    String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION = "--exclude-archives-from-scan";
+    String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL = "<list of nested archive names>";
+    String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT = "-ea";
     String HA_OPTION = "--ha";
 
     String HELP_OPTION = "--help";

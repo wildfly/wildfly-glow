@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
 
@@ -30,6 +31,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Set<String> manualLayers;
     private final boolean verbose;
     private final boolean techPreview;
+    private final Set<Pattern> excludeArchivesFromScan;
 
     protected Arguments(
             String executionContext,
@@ -43,7 +45,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             String configName,
             Set<String> layersForJndi,
             boolean verbose,
-            boolean techPreview) {
+            boolean techPreview,
+            Set<Pattern> excludeArchivesFromScan) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -56,6 +59,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.layersForJndi = layersForJndi;
         this.verbose = verbose;
         this.techPreview = techPreview;
+        this.excludeArchivesFromScan = excludeArchivesFromScan;
 
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         this.compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
@@ -163,6 +167,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public boolean isTechPreview() {
         return techPreview;
+    }
+
+    @Override
+    public Set<Pattern> getExcludeArchivesFromScan() {
+        return excludeArchivesFromScan;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

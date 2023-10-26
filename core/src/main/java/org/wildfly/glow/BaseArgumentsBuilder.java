@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class BaseArgumentsBuilder {
     protected Set<String> executionProfiles = Collections.emptySet();
@@ -36,11 +38,17 @@ public class BaseArgumentsBuilder {
     protected boolean verbose;
     protected boolean techPreview;
 
+    protected Set<String> excludeJarsFromScan = Collections.emptySet();
+
     protected BaseArgumentsBuilder() {
 
     }
 
     public Arguments build() {
+        Set<Pattern> excludeJarsFromScan = this.excludeJarsFromScan.stream()
+                .map(v -> Pattern.compile(Utils.escapePattern(v)))
+                .collect(Collectors.toSet());
+
         return new Arguments(
                 executionContext,
                 executionProfiles,
@@ -53,6 +61,7 @@ public class BaseArgumentsBuilder {
                 configName,
                 layersForJndi,
                 verbose,
-                techPreview);
+                techPreview,
+                excludeJarsFromScan);
     }
 }

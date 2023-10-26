@@ -286,6 +286,21 @@ public class ExplodedArchiveTestCase {
                 "ee-core-profile-server,ejb-lite,embedded-activemq,h2-driver,microprofile-reactive-messaging-kafka,pojo,sar", layers);
     }
 
+    @Test
+    public void testEarWithExclusions() throws Exception {
+        EnterpriseArchive archive = createEar();
+        Path archivePath = exportArchive(archive);
+
+        Arguments arguments = Arguments.scanBuilder().
+                setBinaries(Collections.singletonList(archivePath))
+                .setExcludeArchivesFromScan("*.jar", "web.war")
+                .build();
+        ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
+        String layers = scanResults.getCompactInformation();
+        Assert.assertEquals("[resource-adapters, sar]==>ee-core-profile-server,resource-adapters,sar", layers);
+    }
+
+
     // EAR - end
     ///////////////////////
 

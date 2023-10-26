@@ -90,7 +90,8 @@ public class CLIArguments extends Arguments {
                 STANDALONE_XML,
                 layersForJndi,
                 verbose,
-                techPreview);
+                techPreview,
+                null);
         this.goOffline = goOffline;
         this.help = help;
         this.version = version;

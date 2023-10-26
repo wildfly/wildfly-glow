@@ -16,6 +16,21 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.jboss.galleon.util.IoUtils;
+import org.wildfly.glow.Arguments;
+import org.wildfly.glow.FeaturePacks;
+import org.wildfly.glow.GlowMessageWriter;
+import org.wildfly.glow.GlowSession;
+import org.wildfly.glow.HiddenPropertiesAccessor;
+import org.wildfly.glow.OutputContent;
+import org.wildfly.glow.OutputFormat;
+import org.wildfly.glow.ScanArguments.Builder;
+import org.wildfly.glow.ScanResults;
+import org.wildfly.glow.error.IdentifiedError;
+import org.wildfly.glow.maven.MavenResolver;
+import picocli.CommandLine;
+import picocli.CommandLine.Parameters;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -23,27 +38,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.jboss.galleon.util.IoUtils;
-import org.wildfly.glow.Arguments;
+
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
-import org.wildfly.glow.FeaturePacks;
-import org.wildfly.glow.GlowMessageWriter;
-import org.wildfly.glow.GlowSession;
-import org.wildfly.glow.HiddenPropertiesAccessor;
-import org.wildfly.glow.OutputContent;
-import org.wildfly.glow.OutputFormat;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
-import static org.wildfly.glow.OutputFormat.PROVISIONING_XML;
-import static org.wildfly.glow.OutputFormat.SERVER;
-import org.wildfly.glow.ScanArguments.Builder;
-import org.wildfly.glow.ScanResults;
-import org.wildfly.glow.error.IdentifiedError;
-import org.wildfly.glow.maven.MavenResolver;
-
-import picocli.CommandLine;
-import picocli.CommandLine.Parameters;
 
 @CommandLine.Command(
         name = Constants.SCAN_COMMAND,
@@ -87,6 +86,10 @@ public class ScanCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
     Optional<OutputFormat> provision;
+
+    @CommandLine.Option(names = {Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT, Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION},
+            split = ",", paramLabel = Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL)
+    Set<String> excludeArchivesFromScan = new HashSet<>();
 
     @Override
     public Integer call() throws Exception {
@@ -135,6 +138,8 @@ public class ScanCommand extends AbstractCommand {
             }
             builder.setOutput(provision.get());
         }
+        builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
+
         if (dockerImageName.isPresent()) {
             if (provision.isPresent() && !DOCKER_IMAGE.equals(provision.get())) {
                 throw new Exception("Can only set a docker image name when provisioning a docker image. Remove the " + Constants.DOCKER_IMAGE_NAME_OPTION + " option");
