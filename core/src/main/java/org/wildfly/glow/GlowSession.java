@@ -140,7 +140,8 @@ public class GlowSession {
                     = Utils.getAllLayers(universeResolver, layout, fpDependencies);
             LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles());
             if (mapping.getDefaultBaseLayer() == null) {
-                System.err.println("Server feature-packs are not compatible with glow. You need a more recent version of WildFly.");
+                throw new IllegalArgumentException("No base layer found, WildFly Glow doesn't support WildFly server version. "
+                        + "You must upgrade to a more recent WildFly version.");
             }
             // END BUILD MODEL
 
