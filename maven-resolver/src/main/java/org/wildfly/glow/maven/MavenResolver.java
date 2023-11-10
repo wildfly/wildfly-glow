@@ -45,6 +45,7 @@ public final class MavenResolver {
     public static final String JBOSS_REPO_URL = "https://repository.jboss.org/nexus/content/groups/public/";
     public static final String CENTRAL_REPO_URL = "https://repo1.maven.org/maven2/";
     public static final String GA_REPO_URL = "https://maven.repository.redhat.com/ga/";
+    public static final String SPRING_REPO_URL = "https://repo.spring.io/milestone";
 
     public static MavenRepoManager newMavenResolver() {
         RepositorySystem repoSystem = MavenResolver.newRepositorySystem();
@@ -60,6 +61,8 @@ public final class MavenResolver {
         repos.add(ga.build());
         RemoteRepository.Builder nexus = new RemoteRepository.Builder("jboss-nexus", "default", JBOSS_REPO_URL);
         repos.add(nexus.build());
+        RemoteRepository.Builder spring = new RemoteRepository.Builder("spring-repo", "default", SPRING_REPO_URL);
+        repos.add(spring.build());
         MavenArtifactRepositoryManager resolver
                 = new MavenArtifactRepositoryManager(repoSystem, session, repos);
         return resolver;
