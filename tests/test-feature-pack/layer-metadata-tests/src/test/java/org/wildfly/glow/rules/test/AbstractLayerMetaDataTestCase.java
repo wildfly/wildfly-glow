@@ -195,12 +195,12 @@ public class AbstractLayerMetaDataTestCase {
     protected void testSingleClassWar(Class<?> clazz) {
         testSingleClassWar(clazz, null);
     }
-    protected void testSingleClassWar(Class<?> clazz, String layer) {
+    protected void testSingleClassWar(Class<?> clazz, String... layers) {
         Path p = createArchiveBuilder(ArchiveType.WAR)
                 .addClasses(clazz)
                 .build();
-        String[] layers = layer == null ? new String[0] : new String[]{layer};
-        checkLayersForArchive(p, layers);
+        String[] layersArray = layers == null ? new String[0] : layers;
+        checkLayersForArchive(p, layersArray);
     }
 
     public class ArchiveBuilder {

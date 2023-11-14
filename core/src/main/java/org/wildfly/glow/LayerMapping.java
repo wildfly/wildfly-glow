@@ -29,10 +29,10 @@ import java.util.TreeSet;
  */
 public class LayerMapping {
 
-    private final Map<String, Layer> constantPoolClassInfos = new HashMap<>();
-    private final Map<String, Layer> annotations = new HashMap<>();
-    private final Map<String, Layer> activeProfilesLayers = new HashMap();
-    private final Map<String, Set<Layer>> allProfilesLayers = new HashMap();
+    private final Map<String, Set<Layer>> constantPoolClassInfos = new HashMap<>();
+    private final Map<String, Set<Layer>> annotations = new HashMap<>();
+    private final Map<String, Layer> activeProfilesLayers = new HashMap<>();
+    private final Map<String, Set<Layer>> allProfilesLayers = new HashMap<>();
     private Layer defaultBaseLayer;
 
     private final Set<Layer> layersIncludedIfAllDeps = new TreeSet<>();
@@ -50,14 +50,14 @@ public class LayerMapping {
     /**
      * @return the constantPoolClassInfos
      */
-    public Map<String, Layer> getConstantPoolClassInfos() {
+    public Map<String, Set<Layer>> getConstantPoolClassInfos() {
         return constantPoolClassInfos;
     }
 
     /**
      * @return the annotations
      */
-    public Map<String, Layer> getAnnotations() {
+    public Map<String, Set<Layer>> getAnnotations() {
         return annotations;
     }
 
