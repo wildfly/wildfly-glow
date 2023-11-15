@@ -405,7 +405,8 @@ public final class Utils {
                     String[] split = val.split(",");
                     for (String s : split) {
                         s = escapePattern(s);
-                        mapping.getAnnotations().put(s, l);
+                        Set<Layer> ll = mapping.getAnnotations().computeIfAbsent(s, value -> new HashSet<>());
+                        ll.add(l);
                     }
                     continue;
                 }
@@ -414,7 +415,8 @@ public final class Utils {
                     String[] split = val.split(",");
                     for (String s : split) {
                         s = escapePattern(s);
-                        mapping.getConstantPoolClassInfos().put(s, l);
+                        Set<Layer> ll = mapping.getConstantPoolClassInfos().computeIfAbsent(s, value -> new HashSet<>());
+                        ll.add(l);
                     }
                     continue;
                 }

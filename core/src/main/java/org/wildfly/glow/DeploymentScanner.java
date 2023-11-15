@@ -165,14 +165,14 @@ public class DeploymentScanner implements AutoCloseable {
                 handleResourceInjectionAnnotations(ai, ctx);
 
                 //System.out.println("   " + ai.name().packagePrefix());
-                Layer l = ctx.mapping.getAnnotations().get(ai.name().toString());
+                Set<Layer> l = ctx.mapping.getAnnotations().get(ai.name().toString());
                 if (l != null) {
-                    ctx.layers.add(l);
+                    ctx.layers.addAll(l);
                     //System.out.println("Find an annotation " + ai.name().toString() + " layer being " + l);
                 } else {
                     l = ctx.mapping.getAnnotations().get(ai.name().packagePrefix());
                     if (l != null) {
-                        ctx.layers.add(l);
+                        ctx.layers.addAll(l);
                         //System.out.println("Find an annotation " + ai.name().packagePrefix() + " layer being " + l);
                     } else {
                         // Pattern?
@@ -180,7 +180,7 @@ public class DeploymentScanner implements AutoCloseable {
                             if (Utils.isPattern(s)) {
                                 Pattern p = Pattern.compile(s);
                                 if (p.matcher(ai.name().toString()).matches()) {
-                                    ctx.layers.add(ctx.mapping.getAnnotations().get(s));
+                                    ctx.layers.addAll(ctx.mapping.getAnnotations().get(s));
                                 }
                             }
                         }
@@ -240,9 +240,9 @@ public class DeploymentScanner implements AutoCloseable {
                 }
             }
             if (resourceClassName != null) {
-                Layer layer = lookup(resourceClassName, ctx);
+                Set<Layer> layer = lookup(resourceClassName, ctx);
                 if (layer != null) {
-                    resourceLayers.add(layer);
+                    resourceLayers.addAll(layer);
                 }
                 ResourceInjectionJndiInfo info = new ResourceInjectionJndiInfo(resourceLayers, resourceClassName, injectionPoint, jndiName);
                 //System.out.println(info);
@@ -561,10 +561,10 @@ public class DeploymentScanner implements AutoCloseable {
         return layer;
     }
 
-    private Layer lookup(String className, DeploymentScanContext ctx) {
-        Map<String, Layer> map = ctx.mapping.getConstantPoolClassInfos();
+    private Set<Layer> lookup(String className, DeploymentScanContext ctx) {
+        Map<String, Set<Layer>> map = ctx.mapping.getConstantPoolClassInfos();
 
-        Layer l = map.get(className);
+        Set<Layer> l = map.get(className);
         if (l == null) {
             int index = className.lastIndexOf(".");
             if (index != -1) {
@@ -584,7 +584,7 @@ public class DeploymentScanner implements AutoCloseable {
             }
         }
         if (l != null) {
-            ctx.layers.add(l);
+            ctx.layers.addAll(l);
         }
         return l;
     }
