@@ -80,6 +80,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "* Show configuration cloud"
+
+java -jar $jar show-configuration --cloud
+
+if [ $? -ne 0 ]; then
+    echo "Error, check log"
+    exit 1
+fi
+
 echo kitchensink
 test \
 "[bean-validation, cdi, ee-integration, ejb-lite, h2-driver, jaxrs, jpa, jsf]==>ee-core-profile-server,ejb-lite,h2-driver,jaxrs,jpa,jsf" \

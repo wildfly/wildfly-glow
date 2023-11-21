@@ -222,13 +222,8 @@ public final class Utils {
                 }
                 l.getFeaturePacks().add(fpid);
             }
-
+            Set<ProducerSpec> producers = fpDependencies.computeIfAbsent(fpid, (value) -> new HashSet<>());
             for (FeaturePackConfig cfg : fp.getSpec().getFeaturePackDeps()) {
-                Set<ProducerSpec> producers = fpDependencies.get(fpid);
-                if (producers == null) {
-                    producers = new HashSet<>();
-                    fpDependencies.put(fpid, producers);
-                }
                 FPID fpidDep = toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
                 producers.add(fpidDep.getProducer());
             }
