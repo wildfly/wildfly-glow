@@ -52,6 +52,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -66,6 +67,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.maven.plugin.logging.Log;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.UnresolvedMavenArtifactException;
+import org.wildfly.channel.VersionResult;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
@@ -203,6 +207,43 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(property = "org.wildfly.glow.verbose")
     private boolean verbose = false;
 
+        /**
+     * A list of channels used for resolving artifacts while provisioning.
+     * <p>
+     * Defining a channel:
+     *
+     * <pre>
+     * <channels>
+     *     <channel>
+     *         <manifest>
+     *             <groupId>org.wildfly.channels</groupId>
+     *             <artifactId>wildfly-30.0</artifactId>
+     *         </manifest>
+     *     </channel>
+     *     <channel>
+     *         <manifest>
+     *             <url>https://example.example.org/channel/30</url>
+     *         </manifest>
+     *     </channel>
+     * </channels>
+     * </pre>
+     * </p>
+     * <p>
+     * The {@code wildfly.channels} property can be used pass a comma delimited string for the channels. The channel
+     * can be a URL or a Maven GAV. If a Maven GAV is used, the groupId and artifactId are required.
+     * <br>
+     * Examples:
+     *
+     * <pre>
+     *     -Dorg.wildfly.glow.channels=&quot;https://channels.example.org/30&quot;
+     *     -Dorg.wildfly.glow.channels=&quot;https://channels.example.org/30,org.example.channel:updates-30&quot;
+     *     -Dorg.wildfly.glow.channels=&quot;https://channels.example.org/30,org.example.channel:updates-30:1.0.2&quot;
+     * </pre>
+     * </p>
+     */
+    @Parameter(alias = "channels", property = "org.wildfly.glow.channels")
+    List<ChannelConfiguration> channels;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // Make sure that the 'hidden' properties used by the Arguments class come from the Maven configuration
@@ -232,6 +273,27 @@ public class ScanMojo extends AbstractMojo {
             for (String s : project.getTestClasspathElements()) {
                 paths.add(new File(s).getAbsolutePath());
             }
+            MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+            if (channels != null && !channels.isEmpty()) {
+                getLog().debug("WildFly channel enabled, feature-pack versions are retrieved from channels (if stream known).");
+                try {
+                    ConfiguredChannels cr = new ConfiguredChannels(channels,
+                            repoSystem, repoSession, repositories,
+                            getLog(), true);
+                    for (FeaturePack fp : featurePacks) {
+                        try {
+                            VersionResult res = cr.getChannelSession().findLatestMavenArtifactVersion(fp.getGroupId(), fp.getArtifactId(),
+                                    fp.getExtension(), fp.getClassifier(), null);
+                            getLog().debug(fp.getGroupId() +":"+fp.getArtifactId() + ", Channel resolved version " + res.getVersion());
+                            fp.setVersion(res.getVersion());
+                        } catch (Exception ex) {
+                            getLog().debug("Got exception trying to resolve " + fp.getGroupId() +":"+fp.getArtifactId(), ex);
+                        }
+                    }
+                } catch (MalformedURLException | UnresolvedMavenArtifactException ex) {
+                    throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
+                }
+            }
             Arguments arguments = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
                     setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
@@ -242,8 +304,6 @@ public class ScanMojo extends AbstractMojo {
                     setJndiLayers(layersForJndi).
                     setVerbose(verbose || getLog().isDebugEnabled()).
                     setOutput(OutputFormat.PROVISIONING_XML).build();
-            MavenArtifactRepositoryManager artifactResolver
-                    = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
             ScanResults results = GlowSession.scan(artifactResolver,
                     arguments, writer);
             if (expectedDiscovery != null) {

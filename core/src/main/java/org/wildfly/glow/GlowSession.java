@@ -57,6 +57,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 
@@ -809,16 +810,34 @@ public class GlowSession {
         Map<FPID, FeaturePackConfig> map = new HashMap<>();
         Map<FPID, FPID> universeToGav = new HashMap<>();
         for (FeaturePackConfig cfg : input.getFeaturePackDeps()) {
-            FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
-            map.put(fpid, cfg);
-            universeToGav.put(cfg.getLocation().getFPID(), fpid);
+            FeaturePackLocation.FPID loc = null;
+            for (FeaturePackLocation.FPID f : fpDependencies.keySet()) {
+                if (cfg.getLocation().getProducer().equals(f.getProducer())) {
+                    loc = f;
+                    break;
+                }
+            }
+            if(loc == null) {
+                throw new ProvisioningException("Input fp "+ cfg.getLocation() + " not found in resolved feature-packs " + fpDependencies.keySet());
+            }
+            map.put(loc, cfg);
+            universeToGav.put(cfg.getLocation().getFPID(), loc);
+        }
+        Map<ProducerSpec, FeaturePackLocation.FPID> tmpFps = new HashMap<>();
+        FeaturePackLocation.FPID baseFPID = universeToGav.get(input.getFeaturePackDeps().iterator().next().getLocation().getFPID());
+        tmpFps.put(baseFPID.getProducer(), baseFPID);
+        for (Layer l : allBaseLayers) {
+            for(FPID fpid : l.getFeaturePacks()) {
+                tmpFps.put(fpid.getProducer(), fpid);
+            }
         }
         Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
-        // Add WildFly first.
-        FeaturePackLocation.FPID baseFPID = universeToGav.get(input.getFeaturePackDeps().iterator().next().getLocation().getFPID());
-        activeFeaturePacks.add(baseFPID);
-        for (Layer l : allBaseLayers) {
-            activeFeaturePacks.addAll(l.getFeaturePacks());
+        // Order follow the one from the input
+        for(FeaturePackConfig cfg : input.getFeaturePackDeps()) {
+            FeaturePackLocation.FPID fpid = tmpFps.get(cfg.getLocation().getProducer());
+            if (fpid != null) {
+                activeFeaturePacks.add(fpid);
+            }
         }
         // Remove dependencies that are not Main FP...
         //System.out.println("Active FP " + activeFeaturePacks);

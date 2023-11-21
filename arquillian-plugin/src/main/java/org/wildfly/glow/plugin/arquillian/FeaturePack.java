@@ -85,8 +85,10 @@ public class FeaturePack {
             builder.append(":").append(getClassifier() == null ? "" : getClassifier()).append(":")
                     .append(type == null ? "" : type);
         }
+        // For WildFly Channel we need the Maven GA to be ended by a ':' if no version.
+        builder.append(":");
         if (getVersion() != null) {
-            builder.append(":").append(getVersion());
+            builder.append(getVersion());
         }
         return builder.toString();
     }
