@@ -444,7 +444,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
 <span id="revnumber">version 1.0.0.Alpha9-SNAPSHOT,</span>
-<span id="revdate">2023-11-28T12:52:28Z</span>
+<span id="revdate">2023-11-28T17:23:36Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1388,14 +1388,14 @@ to add to the discovered set.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Can be <code>base-layer</code>, an aggregator, <code>default-base-layer</code>, the default base layer to include in all cases, <code>metadata-only</code> a layer that doesn&#8217;t bring feature, just metadata to help discovery.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if-expected-file-oidc"></a>org.wildfly.rule.no-configuration-if-expected-file-oidc</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do not propose configuration if a file is found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>/WEB-INF/oidc.json</code> is found, do not propose Cloud specific OIDC env variables.</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak"></a>org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Do not propose configuration if a file is found.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">.g.: <code>/WEB-INF/keycloak.json</code> is found, do not propose Cloud specific SAML env variables.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc"></a>org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do not propose configuration if a file is found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>/WEB-INF/oidc.json</code> is found, do not propose Cloud specific OIDC env variables.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.profile-ha"></a>org.wildfly.rule.profile-ha</p></td>
@@ -2070,7 +2070,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <p>org.wildfly:wildfly-galleon-pack:30.0.0.Final</p>
 </li>
 <li>
-<p>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</p>
+<p>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</p>
 </li>
 <li>
 <p>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</p>
@@ -2110,8 +2110,8 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">base-server</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/port-offset/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">batch-jberet</p></td>
@@ -2138,7 +2138,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Configure connection to a remote broker using MQ_SERVICE_PREFIX_MAPPING env variable.<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/messaging/2.0/module.yaml<br>
 <a href="#glow.org.wildfly.rule.kind">org.wildfly.rule.kind</a>=metadata-only<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cloud-server</p></td>
@@ -2156,8 +2156,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">datasources</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=java.sql,javax.sql<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/datasources/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">datasources-web-server</p></td>
@@ -2167,8 +2167,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">deployment-scanner</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/deployment-scanner/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ee-concurrency</p></td>
@@ -2202,8 +2202,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-http-invoker</p></td>
@@ -2220,16 +2220,16 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/elytron/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron-oidc-client</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/oidc/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-expected-file-oidc">org.wildfly.rule.no-configuration-if-expected-file-oidc</a>=/WEB-INF/oidc.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,OIDC<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">embedded-activemq</p></td>
@@ -2237,8 +2237,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-cardinality">org.wildfly.rule.add-on-cardinality</a>=1<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:messaging-activemq<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>-jms.xml,/META-INF/</strong>-jms.xml],/messaging-deployment/server/jms-destinations<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">grpc</p></td>
@@ -2321,15 +2321,15 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.persistence<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.persistence,jakarta.persistence.criteria<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/persistence.xml,/WEB-INF/classes/META-INF/persistence.xml]<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jsf</p></td>
@@ -2355,7 +2355,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.inclusion-mode">org.wildfly.rule.inclusion-mode</a>=all-dependencies<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-client-saml-ejb</p></td>
@@ -2368,26 +2368,26 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,KEYCLOAK-SAML<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">logging</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/json-logging/module.yaml,https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/logger-category/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.mail<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.mail.*<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">management</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/admin/2.0/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-datasource</p></td>
@@ -2418,8 +2418,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.jms<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.jms<br>
 <a href="#glow.org.wildfly.rule.expect-add-on-family">org.wildfly.rule.expect-add-on-family</a>=messaging<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">metrics</p></td>
@@ -2440,7 +2440,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/mp-config/module.yaml<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties]<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-fault-tolerance</p></td>
@@ -2658,8 +2658,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">resource-adapters</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/resource-adapters/module.yaml<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/ra.xml,/META-INF/ironjacamar.xml]<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">resteasy-spring</p></td>
@@ -2698,14 +2698,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">transactions</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.transaction<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.transaction<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">undertow</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/access-log-valve/module.yaml,https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/filters/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">undertow-https</p></td>
@@ -2724,8 +2724,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-console</p></td>
@@ -2743,8 +2743,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">webservices</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.jws,jakarta.jws.soap,jakarta.xml.ws.*<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.xml.ws.*<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 </tbody>
 </table>
@@ -3372,7 +3372,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <p>org.wildfly:wildfly-preview-feature-pack:30.0.0.Final</p>
 </li>
 <li>
-<p>org.wildfly.cloud:wildfly-preview-cloud-galleon-pack:5.0.1.Final</p>
+<p>org.wildfly.cloud:wildfly-preview-cloud-galleon-pack:5.0.2.Final</p>
 </li>
 <li>
 <p>org.wildfly:wildfly-datasources-preview-galleon-pack:6.0.0.Final</p>
@@ -3403,8 +3403,8 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">base-server</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/port-offset/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">batch-jberet</p></td>
@@ -3431,7 +3431,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Configure connection to a remote broker using MQ_SERVICE_PREFIX_MAPPING env variable.<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/messaging/2.0/module.yaml<br>
 <a href="#glow.org.wildfly.rule.kind">org.wildfly.rule.kind</a>=metadata-only<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">cloud-server</p></td>
@@ -3449,8 +3449,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">datasources</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=java.sql,javax.sql<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/datasources/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">datasources-web-server</p></td>
@@ -3460,8 +3460,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">deployment-scanner</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/deployment-scanner/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ee-concurrency</p></td>
@@ -3495,8 +3495,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-http-invoker</p></td>
@@ -3513,16 +3513,16 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/elytron/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron-oidc-client</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/oidc/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-expected-file-oidc">org.wildfly.rule.no-configuration-if-expected-file-oidc</a>=/WEB-INF/oidc.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,OIDC<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">embedded-activemq</p></td>
@@ -3530,8 +3530,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-cardinality">org.wildfly.rule.add-on-cardinality</a>=1<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:messaging-activemq<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>-jms.xml,/META-INF/</strong>-jms.xml],/messaging-deployment/server/jms-destinations<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">grpc</p></td>
@@ -3614,15 +3614,15 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.persistence<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.persistence,jakarta.persistence.criteria<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/persistence.xml,/WEB-INF/classes/META-INF/persistence.xml]<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jsf</p></td>
@@ -3648,7 +3648,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.inclusion-mode">org.wildfly.rule.inclusion-mode</a>=all-dependencies<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-client-saml-ejb</p></td>
@@ -3661,26 +3661,26 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,KEYCLOAK-SAML<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">logging</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/json-logging/module.yaml,https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/logger-category/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.mail<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.mail.*<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">management</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/admin/2.0/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-datasource</p></td>
@@ -3711,8 +3711,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.jms<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.jms<br>
 <a href="#glow.org.wildfly.rule.expect-add-on-family">org.wildfly.rule.expect-add-on-family</a>=messaging<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">metrics</p></td>
@@ -3733,7 +3733,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/mp-config/module.yaml<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties]<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-fault-tolerance</p></td>
@@ -3951,8 +3951,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">resource-adapters</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/resource-adapters/module.yaml<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/ra.xml,/META-INF/ironjacamar.xml]<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">resteasy-spring</p></td>
@@ -3991,14 +3991,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">transactions</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.transaction<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.transaction<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">undertow</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/access-log-valve/module.yaml,https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/filters/module.yaml<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">undertow-https</p></td>
@@ -4017,8 +4017,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
 <a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-console</p></td>
@@ -4036,8 +4036,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">webservices</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=jakarta.jws,jakarta.jws.soap,jakarta.xml.ws.*<br>
 <a href="#glow.org.wildfly.rule.class">org.wildfly.rule.class</a>=jakarta.xml.ws.*<br></p></td>
-<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final
-org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
+<td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
+org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 </tbody>
 </table>
@@ -4049,7 +4049,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.1.Final</pre></div></td>
 <div id="footer">
 <div id="footer-text">
 Version 1.0.0.Alpha9-SNAPSHOT<br>
-Last updated 2023-11-28 13:52:29 +0100
+Last updated 2023-11-28 18:23:37 +0100
 </div>
 </div>
 </body>
