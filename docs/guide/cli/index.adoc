@@ -1,0 +1,10 @@
+[[glow_cli]]
+## WildFly Glow Command Line
+
+* Download the latest WildFly Glow CLI zip file from github link:https://github.com/wildfly/wildfly-glow/releases[releases]
+* Unzip the file `wildfly-glow-<version>.zip`
+* cd `wildfly-glow-<version>`
+* To display the CLI help call: `./wildfly-glow`
+* To install the automatic CLI commands completion call: `source <(./wildfly-glow completion)`
+* To scan a first deployment call: `./wildfly-glow scan ./examples/kitchensink.war`
+

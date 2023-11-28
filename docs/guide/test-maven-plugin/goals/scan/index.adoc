@@ -1,1 +1,1 @@
-include::../../../../../arquillian-plugin/target/generated-sources/plugin/scan-mojo.adoc[]
+include::../../../../../../arquillian-plugin/target/generated-sources/plugin/scan-mojo.adoc[]
