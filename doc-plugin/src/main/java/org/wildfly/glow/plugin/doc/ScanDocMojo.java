@@ -92,25 +92,16 @@ public class ScanDocMojo extends AbstractMojo {
             UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
             Map<Layer, Map<String, String>> rules = new TreeMap<>();
             Set<String> ruleDescriptions = new TreeSet<>();
-            getRules("bare-metal", universeResolver, rules, ruleDescriptions);
-            Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-            getRules("cloud", universeResolver, cloudRules, ruleDescriptions);
-
             StringBuilder rulesBuilder = new StringBuilder();
-            rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
-
-            rulesBuilder.append(buildTable("bare-metal", rules, false));
-            rulesBuilder.append(buildTable("cloud", cloudRules, false));
-
-            rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
-
-            rulesBuilder.append(buildTable("bare-metal", rules, true));
-            rulesBuilder.append(buildTable("cloud", cloudRules, true));
-
             Properties properties = new Properties();
             try (FileInputStream in = new FileInputStream(Paths.get(rulesPropertiesFile).toFile())) {
                 properties.load(in);
             }
+
+            getRules("bare-metal", universeResolver, rules, ruleDescriptions);
+            Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
+            getRules("cloud", universeResolver, cloudRules, ruleDescriptions);
+
             rulesBuilder.append("== [[glow.table.rules]]Rules descriptions\n");
             rulesBuilder.append("[cols=\"1,2,1\"]\n");
             rulesBuilder.append("|===\n");
@@ -129,6 +120,17 @@ public class ScanDocMojo extends AbstractMojo {
                 rulesBuilder.append("|" + val + "\n");
             }
             rulesBuilder.append("|===\n");
+
+            rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
+
+            rulesBuilder.append(buildTable("bare-metal", rules, false));
+            rulesBuilder.append(buildTable("cloud", cloudRules, false));
+
+            rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
+
+            rulesBuilder.append(buildTable("bare-metal", rules, true));
+            rulesBuilder.append(buildTable("cloud", cloudRules, true));
+
             Files.writeString(Paths.get(generatedFile), rulesBuilder.toString());
         } catch (Exception ex) {
             throw new MojoExecutionException(ex);
@@ -142,8 +144,8 @@ public class ScanDocMojo extends AbstractMojo {
         rulesBuilder.append("\n#### Supported Galleon feature-packs \n");
         Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, preview);
         ProvisioningConfig pConfig = ProvisioningXmlParser.parse(provisioningXML);
-        for(FeaturePackConfig c : pConfig.getFeaturePackDeps()) {
-            rulesBuilder.append("* " + c.getLocation() +" \n");
+        for (FeaturePackConfig c : pConfig.getFeaturePackDeps()) {
+            rulesBuilder.append("* " + c.getLocation() + " \n");
         }
         rulesBuilder.append("\n#### [[glow.table." + context + "]]Galleon layers and associated discovery rules\n");
         rulesBuilder.append("[cols=\"25%,50%,25%\"]\n");
