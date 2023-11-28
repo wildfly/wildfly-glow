@@ -50,7 +50,7 @@ Include the `<discover-provisioning-info/>` element in the plugin configuration.
 
 # WildFly Glow documentation
 
-Work on online documentation is in progress.
+WildFly Glow [documentation](http://docs.wildfly.org/wildfly-glow/).
 
 # Steps to build the WildFly Glow command line
 
