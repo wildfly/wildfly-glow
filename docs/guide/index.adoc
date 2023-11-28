@@ -17,5 +17,5 @@ Jean-Francois Denise
 
 include::intro/index.adoc[]
 include::cli/index.adoc[]
-include::rules.adoc[]
 include::test-maven-plugin/index.adoc[]
+include::rules.adoc[]
