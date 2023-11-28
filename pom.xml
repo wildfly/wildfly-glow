@@ -474,6 +474,7 @@
         <module>core</module>
         <module>cli</module>
         <module>docs</module>
+        <module>doc-plugin</module>
         <module>maven-resolver</module>
         <module>tests</module>
     </modules>

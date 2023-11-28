@@ -53,17 +53,57 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/resources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/guide</directory>
+                                </resource>
+                            </resources>
+                            <overwrite>true</overwrite>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.wildfly.glow</groupId>
+                <artifactId>wildfly-glow-doc-plugin</artifactId>
+                <version>${project.version}</version>
+                <configuration>
+                    <generatedFile>${basedir}/target/resources/rules.adoc</generatedFile>
+                    <rulesPropertiesFile>${basedir}/rules.properties</rulesPropertiesFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scan-doc</id>
+                        <goals>
+                            <goal>scan-doc</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
                 <version>${version.org.asciidoctor}</version>
                 <executions>
                     <execution>
-                        <phase>process-resources</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>process-asciidoc</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${basedir}/guide</sourceDirectory>
+                            <sourceDirectory>${basedir}/target/resources</sourceDirectory>
                             <sourceDocumentName>index.adoc</sourceDocumentName>
                             <imagesDir>images</imagesDir>
                             <backend>html</backend>
@@ -81,25 +121,6 @@
                                 <project-branch>${docs.project.branch}</project-branch>
                                 <wildfly-major>${docs.wildfly.major}</wildfly-major>
                             </attributes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${version.org.apache.maven.plugins.assemble}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>scripts/assembly-docs.xml</descriptor>
-                            </descriptors>
-                            <tarLongFileMode>posix</tarLongFileMode>
                         </configuration>
                     </execution>
                 </executions>
