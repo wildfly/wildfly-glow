@@ -40,6 +40,8 @@ public class FeaturePacks {
     private static final String PROVISIONING_FILE_RADICAL = "/provisioning-";
     private static final String TECH_PREVIEW = "/tech-preview/";
 
+    public static final String URL_PROPERTY = "wildfly-glow-galleon-feature-packs-url";
+
     public static Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
         try {
             String rootURL = getFeaturePacksURL();
@@ -61,11 +63,11 @@ public class FeaturePacks {
     }
 
     public static String getFeaturePacksURL() throws Exception {
-        String rootURL = Utils.getConfigEntry("wildfly-glow-galleon-feature-packs-url");
-        if(rootURL == null) {
-            throw new Exception("No wildfly-glow-galleon-feature-packs-url entry found");
+        String rootURL = Utils.getConfigEntry(URL_PROPERTY);
+        if (rootURL == null) {
+            throw new Exception("No " + URL_PROPERTY + " entry found");
         }
-        if(!rootURL.endsWith("/")) {
+        if (!rootURL.endsWith("/")) {
             rootURL = rootURL + "/";
         }
         return rootURL;

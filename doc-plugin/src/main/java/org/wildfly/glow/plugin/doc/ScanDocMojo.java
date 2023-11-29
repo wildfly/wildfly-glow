@@ -76,61 +76,87 @@ public class ScanDocMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.remoteProjectRepositories}", readonly = true, required = true)
     List<RemoteRepository> repositories;
 
-    @Parameter(defaultValue = "${project.build.directory}/rules.adoc")
+    @Parameter(defaultValue = "rules.adoc")
     String generatedFile;
 
-    @Parameter(required = true)
+    @Parameter(defaultValue = "${project.build.directory}")
+    String targetDir;
+
+    @Parameter(required = false)
     String rulesPropertiesFile;
+
+    @Parameter(required = false, defaultValue = "true")
+    boolean generateRuleDescriptions;
+
+    @Parameter(required = false, defaultValue = "true")
+    boolean generateKnownFeaturePacks;
+
+    @Parameter(required = false)
+    String repoPath;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
-
-            //Typically under target
-            Path outputFolder = Paths.get(project.getBuild().getDirectory());
-            MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
-            UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
-            Map<Layer, Map<String, String>> rules = new TreeMap<>();
             StringBuilder rulesBuilder = new StringBuilder();
-            Properties properties = new Properties();
-            try (FileInputStream in = new FileInputStream(Paths.get(rulesPropertiesFile).toFile())) {
-                properties.load(in);
-            }
 
-            getRules("bare-metal", universeResolver, rules);
-            Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-            getRules("cloud", universeResolver, cloudRules);
-
-            rulesBuilder.append("== [[glow.table.rules]]Rules descriptions\n");
-            rulesBuilder.append("[cols=\"1,2,1\"]\n");
-            rulesBuilder.append("|===\n");
-            rulesBuilder.append("|Rule |Description |Value\n");
-            for (String k : LayerMetadata.getAllRules()) {
-                rulesBuilder.append("|[[glow." + k + "]]" + k + "\n");
-                String desc = properties.getProperty(k);
-                String val = properties.getProperty(k + ".value");
-                if (desc == null) {
-                    throw new Exception("Missing rule description for " + k + " in " + rulesPropertiesFile);
+            if (generateRuleDescriptions) {
+                Properties properties = new Properties();
+                try (FileInputStream in = new FileInputStream(Paths.get(rulesPropertiesFile).toFile())) {
+                    properties.load(in);
                 }
-                if (val == null) {
-                    throw new Exception("Missing rule example value for " + k + " in " + rulesPropertiesFile);
+
+                rulesBuilder.append("== [[glow.table.rules]]Rules descriptions\n");
+                rulesBuilder.append("[cols=\"1,2,1\"]\n");
+                rulesBuilder.append("|===\n");
+                rulesBuilder.append("|Rule |Description |Value\n");
+                for (String k : LayerMetadata.getAllRules()) {
+                    rulesBuilder.append("|[[glow." + k + "]]" + k + "\n");
+                    String desc = properties.getProperty(k);
+                    String val = properties.getProperty(k + ".value");
+                    if (desc == null) {
+                        throw new Exception("Missing rule description for " + k + " in " + rulesPropertiesFile);
+                    }
+                    if (val == null) {
+                        throw new Exception("Missing rule example value for " + k + " in " + rulesPropertiesFile);
+                    }
+                    rulesBuilder.append("|" + desc + "\n");
+                    rulesBuilder.append("|" + val + "\n");
                 }
-                rulesBuilder.append("|" + desc + "\n");
-                rulesBuilder.append("|" + val + "\n");
+                rulesBuilder.append("|===\n");
             }
-            rulesBuilder.append("|===\n");
+            if (generateKnownFeaturePacks) {
+                if (repoPath != null) {
+                    Path p = Paths.get(repoPath);
+                    String repoUrl = "file://" + p.toAbsolutePath();
+                    System.out.println("Using repo url " + repoUrl);
+                    System.setProperty(FeaturePacks.URL_PROPERTY, repoUrl);
+                }
+                try {
+                    //Typically under target
+                    Path outputFolder = Paths.get(project.getBuild().getDirectory());
+                    MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+                    UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
+                    Map<Layer, Map<String, String>> rules = new TreeMap<>();
 
-            rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
+                    getRules("bare-metal", universeResolver, rules);
+                    Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
+                    getRules("cloud", universeResolver, cloudRules);
+                    rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
 
-            rulesBuilder.append(buildTable("bare-metal", rules, false));
-            rulesBuilder.append(buildTable("cloud", cloudRules, false));
+                    rulesBuilder.append(buildTable("bare-metal", rules, false));
+                    rulesBuilder.append(buildTable("cloud", cloudRules, false));
 
-            rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
+                    rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
 
-            rulesBuilder.append(buildTable("bare-metal", rules, true));
-            rulesBuilder.append(buildTable("cloud", cloudRules, true));
-
-            Files.writeString(Paths.get(generatedFile), rulesBuilder.toString());
+                    rulesBuilder.append(buildTable("bare-metal", rules, true));
+                    rulesBuilder.append(buildTable("cloud", cloudRules, true));
+                } finally {
+                    System.clearProperty(FeaturePacks.URL_PROPERTY);
+                }
+            }
+            Path dir = Paths.get(targetDir);
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve(generatedFile), rulesBuilder.toString());
         } catch (Exception ex) {
             throw new MojoExecutionException(ex);
         }
