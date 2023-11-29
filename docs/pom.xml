@@ -75,27 +75,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.wildfly.glow</groupId>
-                <artifactId>wildfly-glow-doc-plugin</artifactId>
-                <version>${project.version}</version>
-                <configuration>
-                    <targetDir>${basedir}/target/resources</targetDir>
-                    <generatedFile>rules.adoc</generatedFile>
-                    <rulesPropertiesFile>${basedir}/rules.properties</rulesPropertiesFile>
-                    <generateRuleDescriptions>true</generateRuleDescriptions>
-                    <generateKnownFeaturePacks>false</generateKnownFeaturePacks>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>scan-doc</id>
-                        <goals>
-                            <goal>scan-doc</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
                 <version>${version.org.asciidoctor}</version>
