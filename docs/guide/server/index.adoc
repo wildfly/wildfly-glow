@@ -4,5 +4,5 @@
 The following documentation is defined by the link:https://github.com/wildfly/wildfly-galleon-feature-packs[WildFly Galleon feature-packs repository].
 It contains the known WildFly (and WildFly Preview) feature-packs and layers for the various execution contexts (`cloud` and `bare-metal`).
 
-* link:wildfly-galleon-feature-packs[Known feature-packs and layers]
+* link:http://docs.wildfly.org/wildfly-galleon-feature-packs/[Known feature-packs and layers]
 
