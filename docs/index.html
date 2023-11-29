@@ -444,7 +444,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
 <span id="revnumber">version 1.0.0.Alpha9-SNAPSHOT,</span>
-<span id="revdate">2023-11-28T17:23:36Z</span>
+<span id="revdate">2023-11-29T11:22:17Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1333,14 +1333,9 @@ to add to the discovered set.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>Server command line tools: jboss-cli, add-user, elytron-tool</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.add-on-fix-no-default-datasource"></a>org.wildfly.rule.add-on-fix-no-default-datasource</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This layer will fix a missing default datasource</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.add-on-fix-unbound-datasources"></a>org.wildfly.rule.add-on-fix-unbound-datasources</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fix an unbound datasource</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Env variable with <code>ITEM</code> value replaced by discovered JNDI path. e.g.: <code>JNDI env,MSSQLSERVER_JNDI=ITEM</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.add-on-fix-"></a>org.wildfly.rule.add-on-fix-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The rule fixes an error. The rule name must be suffixed with the type of error. Known error types: <code>no-default-datasource</code>, fix a missing default datasource, <code>unbound-datasources</code>, fix an unbound datasource</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No value for <code>no-default-datasource</code>. For <code>unbound-datasources</code>, env variable with <code>ITEM</code> value replaced by discovered JNDI path. e.g.: <code>JNDI env,MSSQLSERVER_JNDI=ITEM</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.annotations"></a>org.wildfly.rule.annotations</p></td>
@@ -1369,13 +1364,13 @@ to add to the discovered set.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.expected-file"></a>org.wildfly.rule.expected-file</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Expect the existence of files or directories.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expect the existence of files or directories. If multiple rules exist, the rule name can be extended with a suffix <code>&lt;rule name&gt;-&lt;suffix&gt;</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An array of file paths. e.g.: <code>[/META-INF/beans.xml,/WEB-INF/beans.xml]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak"></a>org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Layer not included if the expected file is not found,</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>keycloak-client-saml</code> is hidden if <code>/WEB-INF/keycloak.json</code> is not present.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.hidden-if"></a>org.wildfly.rule.hidden-if</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A conditional rule to hide a layer if the condition is <code>true</code>. This rule name is followed by the conditioned rule: <code>org.wildfly.rule.hidden-if-&lt;conditioned rule&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: rule <code>org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file=/WEB-INF/keycloak.json</code>, <code>keycloak-client-saml</code> layer is hidden if <code>/WEB-INF/keycloak.json</code> is not present.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.inclusion-mode"></a>org.wildfly.rule.inclusion-mode</p></td>
@@ -1388,54 +1383,29 @@ to add to the discovered set.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Can be <code>base-layer</code>, an aggregator, <code>default-base-layer</code>, the default base layer to include in all cases, <code>metadata-only</code> a layer that doesn&#8217;t bring feature, just metadata to help discovery.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak"></a>org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do not propose configuration if a file is found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">.g.: <code>/WEB-INF/keycloak.json</code> is found, do not propose Cloud specific SAML env variables.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if"></a>org.wildfly.rule.no-configuration-if</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A conditional rule. Do not propose configuration if the condition is <code>true</code>. This rule name is followed by the conditioned rule: <code>org.wildfly.rule.no-configuration-if-&lt;conditioned rule&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc=/WEB-INF/oidc.json</code>, if <code>/WEB-INF/oidc.json</code> is found, do not propose Cloud specific OIDC environment variables.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc"></a>org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Do not propose configuration if a file is found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>/WEB-INF/oidc.json</code> is found, do not propose Cloud specific OIDC env variables.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.not-expected-file"></a>org.wildfly.rule.not-expected-file</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Do not expect the existence of files or directories. If multiple rules exist, the rule name can be extended with a suffix <code>&lt;rule name&gt;-&lt;suffix&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An array of file paths. e.g.: <code>[/META-INF/beans.xml,/WEB-INF/beans.xml]</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.profile-ha"></a>org.wildfly.rule.profile-ha</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Counter part for an HA layer.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Inside <code>singleton-ha</code> layer, this rule references the <code>singleton-local</code>. It means that when <code>singleton-local</code> is discovered and ha profile is enabled, <code>singleton-ha</code> is included.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.profile-"></a>org.wildfly.rule.profile-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">References the counter part layer for the given profile. The rule name must be suffixed with the profile name. Known profile is 'ha'.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: Inside <code>singleton-ha</code> layer, this rule references the <code>org.wildfly.rule.profile-ha=singleton-local</code>. It means that when <code>singleton-local</code> is discovered and ha profile is enabled, <code>singleton-ha</code> is included.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match-mp-kafka-incoming"></a>org.wildfly.rule.properties-file-match-mp-kafka-incoming</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match"></a>org.wildfly.rule.properties-file-match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files. If multiple rules exist, the rule name can be extended with a suffix <code>&lt;rule name&gt;-&lt;suffix&gt;</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming..connector,smallrye-kafka</code></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match-mp-kafka-outgoing"></a>org.wildfly.rule.properties-file-match-mp-kafka-outgoing</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing..connector,smallrye-kafka</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match-mp-kafka-property"></a>org.wildfly.rule.properties-file-match-mp-kafka-property</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match-oas-filter"></a>org.wildfly.rule.properties-file-match-oas-filter</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.properties-file-match-oas-model-reader"></a>org.wildfly.rule.properties-file-match-oas-model-reader</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Match content inside an array of properties files.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">e.g.: <code>[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*</code></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.xml-path"></a>org.wildfly.rule.xml-path</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lookup of XML path inside a set of files.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Lookup of XML path inside a set of files. If multiple rules exist, the rule name can be extended with a suffix <code>&lt;rule name&gt;-&lt;suffix&gt;</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Array of files followed by expected path and value. e.g.: <code>[/WEB-INF/.xml,/META-INF/.xml],/datasources/datasource/driver,h2</code></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="glow.org.wildfly.rule.xml-path-xa"></a>org.wildfly.rule.xml-path-xa</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lookup of XML path inside a set of files.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Array of files followed by expected path and value. e.g.: <code>[/WEB-INF/.xml,/META-INF/.xml],/datasources/xa-datasource/driver,h2</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -1558,7 +1528,7 @@ to add to the discovered set.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1604,13 +1574,13 @@ to add to the discovered set.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-default-datasource</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,h2-database:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/datasource/driver,h2<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1671,7 +1641,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1719,7 +1689,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -1728,14 +1698,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mariadb<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1805,8 +1775,8 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:jaxrs<br>
 <a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=org.eclipse.microprofile.openapi.*<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/openapi.yml,/META-INF/openapi.yaml,/META-INF/openapi.json,/WEB-INF/classes/META-INF/openapi.yml,/WEB-INF/classes/META-INF/openapi.yaml,/WEB-INF/classes/META-INF/openapi.json]<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-filter">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-model-reader">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1819,9 +1789,9 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-reactive-messaging-kafka</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=reactive-messaging,kafka<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=all-dependencies<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-incoming">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-outgoing">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-property">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1854,7 +1824,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -1863,14 +1833,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mssqlserver-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mssqlserver<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1885,7 +1855,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -1894,14 +1864,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mysql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mysql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1922,7 +1892,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -1931,14 +1901,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">oracle-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,oracle<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -1951,7 +1921,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -1960,14 +1930,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">postgresql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,postgresql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2005,7 +1975,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">singleton-ha</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2035,7 +2005,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2201,7 +2171,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -2226,7 +2196,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron-oidc-client</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/oidc/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,OIDC<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
@@ -2258,13 +2228,13 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-default-datasource</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,h2-database:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/datasource/driver,h2<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2327,7 +2297,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -2352,7 +2322,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-client-saml</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.inclusion-mode">org.wildfly.rule.inclusion-mode</a>=all-dependencies<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
 org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
@@ -2365,7 +2335,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-saml</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/keycloak/2.0/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,KEYCLOAK-SAML<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
 org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
@@ -2394,7 +2364,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -2403,14 +2373,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mariadb<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2483,8 +2453,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:jaxrs<br>
 <a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=org.eclipse.microprofile.openapi.*<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/openapi.yml,/META-INF/openapi.yaml,/META-INF/openapi.json,/WEB-INF/classes/META-INF/openapi.yml,/WEB-INF/classes/META-INF/openapi.yaml,/WEB-INF/classes/META-INF/openapi.json]<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-filter">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-model-reader">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2497,9 +2467,9 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-reactive-messaging-kafka</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=reactive-messaging,kafka<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=all-dependencies<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-incoming">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-outgoing">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-property">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2532,7 +2502,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -2541,14 +2511,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mssqlserver-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mssqlserver<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2563,7 +2533,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -2572,14 +2542,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mysql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mysql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2600,7 +2570,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -2609,14 +2579,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">oracle-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,oracle<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2629,7 +2599,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -2638,14 +2608,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">postgresql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,postgresql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2685,7 +2655,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">singleton-ha</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2723,7 +2693,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -2860,7 +2830,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2906,13 +2876,13 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-default-datasource</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,h2-database:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/datasource/driver,h2<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -2973,7 +2943,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3021,7 +2991,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3030,14 +3000,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mariadb<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3107,8 +3077,8 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:jaxrs<br>
 <a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=org.eclipse.microprofile.openapi.*<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/openapi.yml,/META-INF/openapi.yaml,/META-INF/openapi.json,/WEB-INF/classes/META-INF/openapi.yml,/WEB-INF/classes/META-INF/openapi.yaml,/WEB-INF/classes/META-INF/openapi.json]<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-filter">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-model-reader">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3121,9 +3091,9 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-reactive-messaging-kafka</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=reactive-messaging,kafka<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=all-dependencies<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-incoming">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-outgoing">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-property">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3156,7 +3126,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3165,14 +3135,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mssqlserver-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mssqlserver<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3187,7 +3157,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3196,14 +3166,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mysql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mysql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3224,7 +3194,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3233,14 +3203,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">oracle-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,oracle<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3253,7 +3223,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3262,14 +3232,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">postgresql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,postgresql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3307,7 +3277,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">singleton-ha</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3337,7 +3307,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3494,7 +3464,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ejb-dist-cache</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=ejb-local-cache<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -3519,7 +3489,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">elytron-oidc-client</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/oidc/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-oidc</a>=/WEB-INF/oidc.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,OIDC<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
@@ -3551,13 +3521,13 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-default-datasource</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,h2-database:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">h2-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/datasource/driver,h2<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/WEB-INF/<strong>.xml,/META-INF/</strong>.xml],/datasources/xa-datasource/driver,h2<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3620,7 +3590,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">jpa-distributed</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=jpa<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -3645,7 +3615,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-client-saml</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.hidden-if">org.wildfly.rule.hidden-if-org.wildfly.rule.not-expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.inclusion-mode">org.wildfly.rule.inclusion-mode</a>=all-dependencies<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
 org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
@@ -3658,7 +3628,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">keycloak-saml</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/keycloak/2.0/module.yaml<br>
-<a href="#glow.org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
+<a href="#glow.org.wildfly.rule.no-configuration-if">org.wildfly.rule.no-configuration-if-org.wildfly.rule.expected-file-keycloak</a>=/WEB-INF/keycloak.json<br>
 <a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=/WEB-INF/web.xml,/web-app/login-config/auth-method,KEYCLOAK-SAML<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.keycloak:keycloak-saml-adapter-galleon-pack:23.0.0
 org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
@@ -3687,7 +3657,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MARIADB_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3696,14 +3666,14 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mariadb:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mariadb/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mariadb-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mariadb<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mariadb<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3776,8 +3746,8 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:jaxrs<br>
 <a href="#glow.org.wildfly.rule.annotations">org.wildfly.rule.annotations</a>=org.eclipse.microprofile.openapi.*<br>
 <a href="#glow.org.wildfly.rule.expected-file">org.wildfly.rule.expected-file</a>=[/META-INF/openapi.yml,/META-INF/openapi.yaml,/META-INF/openapi.json,/WEB-INF/classes/META-INF/openapi.yml,/WEB-INF/classes/META-INF/openapi.yaml,/WEB-INF/classes/META-INF/openapi.json]<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-filter">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-oas-model-reader">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-filter</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.filter,*<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-oas-model-reader</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.openapi.model.reader,*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3790,9 +3760,9 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">microprofile-reactive-messaging-kafka</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=reactive-messaging,kafka<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=all-dependencies<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-incoming">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-outgoing">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
-<a href="#glow.org.wildfly.rule.properties-file-match-mp-kafka-property">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-incoming</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.incoming.<strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-outgoing</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.outgoing.</strong>.connector,smallrye-kafka<br>
+<a href="#glow.org.wildfly.rule.properties-file-match">org.wildfly.rule.properties-file-match-mp-kafka-property</a>=[/META-INF/microprofile-config.properties,/WEB-INF/classes/META-INF/microprofile-config.properties],mp.messaging.connector.smallrye-kafka.*<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3825,7 +3795,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MSSQLSERVER_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3834,14 +3804,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mssqlserver:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mssqlserver/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mssqlserver-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mssqlserver<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mssqlserver<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3856,7 +3826,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,MYSQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3865,14 +3835,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,mysql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/mysql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mysql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,mysql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,mysql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3893,7 +3863,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,ORACLE_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3902,14 +3872,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,oracle:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/oracle/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">oracle-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,oracle<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,oracle<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3922,7 +3892,7 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-unbound-datasources">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-unbound-datasources</a>=JNDI env,POSTGRESQL_JNDI=<mark>ITEM</mark><br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
@@ -3931,14 +3901,14 @@ org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final</pre></div></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.add-on">org.wildfly.rule.add-on</a>=database,postgresql:default<br>
 <a href="#glow.org.wildfly.rule.add-on-depends-on">org.wildfly.rule.add-on-depends-on</a>=only:datasources<br>
 <a href="#glow.org.wildfly.rule.add-on-description">org.wildfly.rule.add-on-description</a>=Documentation in <a href="https://github.com/wildfly-extras/wildfly-datasources-galleon-pack" class="bare">https://github.com/wildfly-extras/wildfly-datasources-galleon-pack</a><br>
-<a href="#glow.org.wildfly.rule.add-on-fix-no-default-datasource">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
+<a href="#glow.org.wildfly.rule.add-on-fix-">org.wildfly.rule.add-on-fix-no-default-datasource</a>=<br>
 <a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/jfdenise/wildfly-datasources-galleon-pack/layers_metadata/doc/postgresql/env.yaml<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">postgresql-driver</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/datasource/driver,postgresql<br>
-<a href="#glow.org.wildfly.rule.xml-path-xa">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
+<a href="#glow.org.wildfly.rule.xml-path">org.wildfly.rule.xml-path-xa</a>=[/META-INF/<strong>.xml,/WEB-INF/</strong>.xml],/datasources/xa-datasource/driver,postgresql<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -3978,7 +3948,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">singleton-ha</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=singleton-local<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
 <tr>
@@ -4016,7 +3986,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">web-clustering</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#glow.org.wildfly.rule.configuration">org.wildfly.rule.configuration</a>=https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/jgroups/module.yaml<br>
-<a href="#glow.org.wildfly.rule.profile-ha">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
+<a href="#glow.org.wildfly.rule.profile-">org.wildfly.rule.profile-ha</a>=web-passivation<br></p></td>
 <td class="tableblock halign-left valign-top"><div class="literal"><pre>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.2.Final
 org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 </tr>
@@ -4049,7 +4019,7 @@ org.wildfly:wildfly-ee-galleon-pack:30.0.0.Final</pre></div></td>
 <div id="footer">
 <div id="footer-text">
 Version 1.0.0.Alpha9-SNAPSHOT<br>
-Last updated 2023-11-28 18:23:37 +0100
+Last updated 2023-11-29 12:22:28 +0100
 </div>
 </div>
 </body>
