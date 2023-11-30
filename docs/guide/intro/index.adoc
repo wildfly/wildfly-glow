@@ -15,7 +15,7 @@ WildFly Glow identifies the layers for you by scanning your application war (jar
 
 This application to Galleon layers mapping is based on rules contained in WildFly Galleon layers (Starting WildFly 29). 
 These rules express the Java types and artifacts (XML descriptors, properties files, ...) 
-that are bound to the usage of a given Galleon layer. An example of rule can be found in the link:[jaxrs] layer.
+that are bound to the usage of a given Galleon layer. An example of rule can be found in the link:https://github.com/wildfly/wildfly/blob/30.0.0.Final/ee-feature-pack/galleon-shared/src/main/resources/layers/standalone/jaxrs/layer-spec.xml#L8[jaxrs] layer.
 
 Once the layers are identified, the Galleon feature-packs that define them are selected and included.
 
