@@ -145,9 +145,9 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                                     if (content != null) {
                                         content = content.replaceAll("##ITEM##", uds.unboundDatasource);
                                     }
-                                    if(fix.isEnv()) {
+                                    if (fix.isEnv()) {
                                         Set<Env> envs = ret.get(l);
-                                        if(envs == null) {
+                                        if (envs == null) {
                                             envs = new HashSet<>();
                                             ret.put(l, envs);
                                         }
@@ -168,26 +168,25 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                     it.remove();
                 }
             }
-        } else {
-            Set<IdentifiedError> noDefaultDataspourceErrors = errors.get(NO_DEFAULT_DATASOURCE_ERROR);
-            if (noDefaultDataspourceErrors != null) {
-                for (IdentifiedError error : noDefaultDataspourceErrors) {
-                    for (Layer l : allBaseLayers) {
-                        if (l.getAddOn() != null) {
-                            Fix fix = l.getAddOn().getFixes().get(error.getId());
-                            if (fix != null) {
-                                String content = fix.getContent();
-                                if (fix.isEnv()) {
-                                    Set<Env> envs = ret.get(l);
-                                    if (envs == null) {
-                                        envs = new HashSet<>();
-                                        ret.put(l, envs);
-                                    }
-                                    envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
+        }
+        Set<IdentifiedError> noDefaultDataspourceErrors = errors.get(NO_DEFAULT_DATASOURCE_ERROR);
+        if (noDefaultDataspourceErrors != null) {
+            for (IdentifiedError error : noDefaultDataspourceErrors) {
+                for (Layer l : allBaseLayers) {
+                    if (l.getAddOn() != null) {
+                        Fix fix = l.getAddOn().getFixes().get(error.getId());
+                        if (fix != null) {
+                            String content = fix.getContent();
+                            if (fix.isEnv()) {
+                                Set<Env> envs = ret.get(l);
+                                if (envs == null) {
+                                    envs = new HashSet<>();
+                                    ret.put(l, envs);
                                 }
-                                String errorMessage = getAddOnFix(l.getAddOn(), content);
-                                error.setFixed(errorMessage);
+                                envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
                             }
+                            String errorMessage = getAddOnFix(l.getAddOn(), content);
+                            error.setFixed(errorMessage);
                         }
                     }
                 }

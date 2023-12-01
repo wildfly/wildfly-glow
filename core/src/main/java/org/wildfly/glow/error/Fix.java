@@ -73,7 +73,7 @@ public class Fix {
     }
 
     public boolean isEnv() {
-        return description.endsWith(" env");
+        return description != null && description.endsWith(" env");
     }
 
     public String getEnvName() {
