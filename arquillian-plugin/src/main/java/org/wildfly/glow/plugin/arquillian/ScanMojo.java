@@ -306,56 +306,61 @@ public class ScanMojo extends AbstractMojo {
                     setOutput(OutputFormat.PROVISIONING_XML).build();
             ScanResults results = GlowSession.scan(artifactResolver,
                     arguments, writer);
-            if (expectedDiscovery != null) {
-                String compact = results.getCompactInformation();
-                if (!expectedDiscovery.equals(compact)) {
-                    throw new MojoExecutionException("Error in glow discovery.\n"
-                            + "-Expected: " + expectedDiscovery + "\n"
-                            + "-Found   : " + compact);
-                }
-            }
-            if (results.getErrorSession().hasErrors()) {
-                if (expectedErrors.isEmpty()) {
-                    results.outputInformation(writer);
-                    throw new MojoExecutionException("An error has been reported and expected-errors has not been set.");
-                }
-                List<IdentifiedError> errors = new ArrayList<>();
-                for (IdentifiedError err : results.getErrorSession().getErrors()) {
-                    if(!err.isFixed()) {
-                        errors.add(err);
+            boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
+            if (skipTests) {
+                getLog().warn("Tests are disabled, not checking for expected discovered layers.");
+            } else {
+                if (expectedDiscovery != null) {
+                    String compact = results.getCompactInformation();
+                    if (!expectedDiscovery.equals(compact)) {
+                        throw new MojoExecutionException("Error in glow discovery.\n"
+                                + "-Expected: " + expectedDiscovery + "\n"
+                                + "-Found   : " + compact);
                     }
                 }
-                if (expectedErrors.size() != errors.size()) {
-                    List<String> descriptions = new ArrayList<>();
-                    for(IdentifiedError err : errors) {
-                        descriptions.add(err.getDescription());
+                if (results.getErrorSession().hasErrors()) {
+                    if (expectedErrors.isEmpty()) {
+                        results.outputInformation(writer);
+                        throw new MojoExecutionException("An error has been reported and expected-errors has not been set.");
                     }
-                    throw new MojoExecutionException("Number of expected errors mismatch. Expected "
-                            + expectedErrors.size() + " reported " + errors.size() + ".\n" +
-                                    "Reported Errors " + descriptions + "\n" +
-                                    "Expected Errors " + expectedErrors);
-                }
-                Iterator<IdentifiedError> it = errors.iterator();
-                while (it.hasNext()) {
-                    IdentifiedError err = it.next();
-                    if (expectedErrors.contains(err.getDescription())) {
-                        it.remove();
+                    List<IdentifiedError> errors = new ArrayList<>();
+                    for (IdentifiedError err : results.getErrorSession().getErrors()) {
+                        if (!err.isFixed()) {
+                            errors.add(err);
+                        }
                     }
-                }
-                it = errors.iterator();
-                if (it.hasNext()) {
-                    StringBuilder builder = new StringBuilder();
+                    if (expectedErrors.size() != errors.size()) {
+                        List<String> descriptions = new ArrayList<>();
+                        for (IdentifiedError err : errors) {
+                            descriptions.add(err.getDescription());
+                        }
+                        throw new MojoExecutionException("Number of expected errors mismatch. Expected "
+                                + expectedErrors.size() + " reported " + errors.size() + ".\n"
+                                + "Reported Errors " + descriptions + "\n"
+                                + "Expected Errors " + expectedErrors);
+                    }
+                    Iterator<IdentifiedError> it = errors.iterator();
                     while (it.hasNext()) {
                         IdentifiedError err = it.next();
-                        builder.append(err.getDescription()).append("\n");
+                        if (expectedErrors.contains(err.getDescription())) {
+                            it.remove();
+                        }
                     }
-                    throw new MojoExecutionException("The following errors are unexpected:\n" + builder.toString());
-                }
-                getLog().info("Expected errors found in glow scanning results. "
-                        + " The test execution should fix them (eg: add missing datasources)");
-            } else {
-                if (!expectedErrors.isEmpty()) {
-                    throw new MojoExecutionException("expected-errors contains errors but no error reported.");
+                    it = errors.iterator();
+                    if (it.hasNext()) {
+                        StringBuilder builder = new StringBuilder();
+                        while (it.hasNext()) {
+                            IdentifiedError err = it.next();
+                            builder.append(err.getDescription()).append("\n");
+                        }
+                        throw new MojoExecutionException("The following errors are unexpected:\n" + builder.toString());
+                    }
+                    getLog().info("Expected errors found in glow scanning results. "
+                            + " The test execution should fix them (eg: add missing datasources)");
+                } else {
+                    if (!expectedErrors.isEmpty()) {
+                        throw new MojoExecutionException("expected-errors contains errors but no error reported.");
+                    }
                 }
             }
             if (enableVerboseOutput || getLog().isDebugEnabled()) {
