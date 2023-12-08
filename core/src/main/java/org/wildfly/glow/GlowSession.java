@@ -48,17 +48,14 @@ import java.util.TreeSet;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
-import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.api.GalleonBuilder;
 import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.MavenArtifact;
 
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
-import org.wildfly.plugins.bootablejar.ArtifactLog;
 
 /**
  *
@@ -614,49 +611,50 @@ public class GlowSession {
                 Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" + vers + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
                 ret = targetJarFile;
                 Files.deleteIfExists(targetJarFile);
-                BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
-                        activeConfig, tmpDir.toAbsolutePath(),
-                        resolver,
-                        new MessageWriter() {
-                    @Override
-                    public void verbose(Throwable cause, CharSequence message) {
-                        if (writer.isVerbose()) {
-                            writer.trace(message);
-                        }
-                    }
-
-                    @Override
-                    public void print(Throwable cause, CharSequence message) {
-                        writer.info(message);
-                    }
-
-                    @Override
-                    public void error(Throwable cause, CharSequence message) {
-                        writer.error(message);
-                    }
-
-                    @Override
-                    public boolean isVerboseEnabled() {
-                        return writer.isVerbose();
-                    }
-
-                    @Override
-                    public void close() throws Exception {
-                    }
-
-                }, new ArtifactLog() {
-                    @Override
-                    public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                        writer.info("Found artifact " + a);
-                    }
-
-                    @Override
-                    public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                        if (writer.isVerbose()) {
-                            writer.trace("Found artifact " + a);
-                        }
-                    }
-                });
+                throw new Exception("Bootable JAR packaging is disabled for 1.0.0.Alpha12, will be re-introduced in WildFly Glow 1.0.0.Beta1");
+//                BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
+//                        activeConfig, tmpDir.toAbsolutePath(),
+//                        resolver,
+//                        new MessageWriter() {
+//                    @Override
+//                    public void verbose(Throwable cause, CharSequence message) {
+//                        if (writer.isVerbose()) {
+//                            writer.trace(message);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void print(Throwable cause, CharSequence message) {
+//                        writer.info(message);
+//                    }
+//
+//                    @Override
+//                    public void error(Throwable cause, CharSequence message) {
+//                        writer.error(message);
+//                    }
+//
+//                    @Override
+//                    public boolean isVerboseEnabled() {
+//                        return writer.isVerbose();
+//                    }
+//
+//                    @Override
+//                    public void close() throws Exception {
+//                    }
+//
+//                }, new ArtifactLog() {
+//                    @Override
+//                    public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+//                        writer.info("Found artifact " + a);
+//                    }
+//
+//                    @Override
+//                    public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+//                        if (writer.isVerbose()) {
+//                            writer.trace("Found artifact " + a);
+//                        }
+//                    }
+//                });
             }
         } finally {
             if (tmpDir != null) {
