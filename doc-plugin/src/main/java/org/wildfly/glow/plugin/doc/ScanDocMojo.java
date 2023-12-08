@@ -34,7 +34,6 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
 import org.jboss.galleon.universe.FeaturePackLocation;
-import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,13 +43,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
-import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.LayerMetadata;
 import org.wildfly.glow.Utils;
@@ -136,20 +134,22 @@ public class ScanDocMojo extends AbstractMojo {
                     Path outputFolder = Paths.get(project.getBuild().getDirectory());
                     MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
                     UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
+                    GalleonBuilder provider = new GalleonBuilder();
+                    provider.addArtifactResolver(artifactResolver);
                     Map<Layer, Map<String, String>> rules = new TreeMap<>();
 
-                    getRules("bare-metal", universeResolver, rules);
+                    getRules(provider, "bare-metal", universeResolver, rules);
                     Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-                    getRules("cloud", universeResolver, cloudRules);
+                    getRules(provider,"cloud", universeResolver, cloudRules);
                     rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
 
-                    rulesBuilder.append(buildTable("bare-metal", rules, false));
-                    rulesBuilder.append(buildTable("cloud", cloudRules, false));
+                    rulesBuilder.append(buildTable(provider,"bare-metal", rules, false));
+                    rulesBuilder.append(buildTable(provider,"cloud", cloudRules, false));
 
                     rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
 
-                    rulesBuilder.append(buildTable("bare-metal", rules, true));
-                    rulesBuilder.append(buildTable("cloud", cloudRules, true));
+                    rulesBuilder.append(buildTable(provider, "bare-metal", rules, true));
+                    rulesBuilder.append(buildTable(provider, "cloud", cloudRules, true));
                 } finally {
                     System.clearProperty(FeaturePacks.URL_PROPERTY);
                 }
@@ -162,15 +162,17 @@ public class ScanDocMojo extends AbstractMojo {
         }
     }
 
-    private String buildTable(String context, Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
+    private String buildTable(GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
 
         StringBuilder rulesBuilder = new StringBuilder();
         rulesBuilder.append("\n### " + context + "\n");
         rulesBuilder.append("\n#### Supported Galleon feature-packs \n");
         Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, preview);
-        ProvisioningConfig pConfig = ProvisioningXmlParser.parse(provisioningXML);
-        for (FeaturePackConfig c : pConfig.getFeaturePackDeps()) {
-            rulesBuilder.append("* " + c.getLocation() + " \n");
+        try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
+            GalleonProvisioningConfig pConfig = p.loadProvisioningConfig(provisioningXML);
+            for (GalleonFeaturePackConfig c : pConfig.getFeaturePackDeps()) {
+                rulesBuilder.append("* " + c.getLocation() + " \n");
+            }
         }
         rulesBuilder.append("\n#### [[glow.table." + context + "]]Galleon layers and associated discovery rules\n");
         rulesBuilder.append("[cols=\"25%,50%,25%\"]\n");
@@ -196,23 +198,20 @@ public class ScanDocMojo extends AbstractMojo {
         return rulesBuilder.toString();
     }
 
-    private void getRules(String context, UniverseResolver universeResolver,
+    private void getRules(GalleonBuilder provider, String context, UniverseResolver universeResolver,
             Map<Layer, Map<String, String>> rules) throws Exception {
-        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(context,
-                null, null, GlowMessageWriter.DEFAULT, false)) {
-            Map<String, Layer> all;
+        Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, false);
+        Map<String, Layer> all;
+        try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
+            GalleonProvisioningConfig config = p.loadProvisioningConfig(provisioningXML);
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
-            try {
-                all = Utils.getAllLayers(universeResolver, layout, fpDependencies);
-            } finally {
-                layout.close();
-            }
+            all = Utils.getAllLayers(config, universeResolver, p, fpDependencies);
+        }
 
-            for (Layer l : all.values()) {
-                if (!l.getProperties().isEmpty()) {
-                    Map<String, String> props = rules.computeIfAbsent(l, (value) -> new TreeMap<>());
-                    props.putAll(l.getProperties());
-                }
+        for (Layer l : all.values()) {
+            if (!l.getProperties().isEmpty()) {
+                Map<String, String> props = rules.computeIfAbsent(l, (value) -> new TreeMap<>());
+                props.putAll(l.getProperties());
             }
         }
     }

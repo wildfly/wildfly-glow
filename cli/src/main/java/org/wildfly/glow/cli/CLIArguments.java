@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import static org.wildfly.glow.GlowSession.STANDALONE_PROFILE;
@@ -305,17 +305,18 @@ public class CLIArguments extends Arguments {
         System.out.println(builder);
     }
 
-    public static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies, String context, String serverVersion, Map<String, Layer> allLayers,
-            LayerMapping mapping, ProvisioningConfig fps, boolean isLatest, boolean techPreview) throws Exception {
+    public static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
+            String context, String serverVersion, Map<String, Layer> allLayers,
+            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview) throws Exception {
         StringBuilder builder = new StringBuilder();
         builder.append("Execution context: ").append(context).append("\n");
         builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
         builder.append("Tech Preview: ").append(techPreview).append("\n");
         Set<FeaturePackLocation.ProducerSpec> topLevel = new LinkedHashSet<>();
-        for(FeaturePackConfig fp : fps.getFeaturePackDeps()) {
+        for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
             topLevel.add(fp.getLocation().getProducer());
         }
-        for(FeaturePackConfig fp : fps.getFeaturePackDeps()) {
+        for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
             builder.append("\nFeature-pack: ").append("@|bold ").append(fp.getLocation().getFPID()).append("|@\n");
             builder.append("Contained layers: ");
             Set<String> layers = new TreeSet<>();

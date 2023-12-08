@@ -17,7 +17,6 @@
 
 package org.wildfly.glow;
 
-import org.jboss.galleon.config.FeaturePackConfig;
 import org.wildfly.glow.error.ErrorLevel;
 import org.wildfly.glow.error.IdentifiedError;
 
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 
 public class ScanResultsPrinter {
 
@@ -83,7 +83,7 @@ public class ScanResultsPrinter {
         writer.info("galleon discovery");
         StringBuilder builder = new StringBuilder();
         builder.append("- feature-packs").append("\n");
-        for (FeaturePackConfig fp : scanResults.getProvisioningConfig().getFeaturePackDeps()) {
+        for (GalleonFeaturePackConfig fp : scanResults.getProvisioningConfig().getFeaturePackDeps()) {
             builder.append("   ").append(fp.getLocation()).append("\n");
         }
         builder.append("- layers").append("\n");

@@ -84,6 +84,10 @@ echo "* Show configuration cloud"
 
 java -jar $jar show-configuration --cloud
 
+echo "* Show add-ons"
+
+java -jar $jar show-add-ons
+
 if [ $? -ne 0 ]; then
     echo "Error, check log"
     exit 1

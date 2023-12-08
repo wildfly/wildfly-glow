@@ -20,9 +20,6 @@ package org.wildfly.glow.cli;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.GlowSession;
@@ -37,8 +34,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.xml.ProvisioningXmlParser;
+
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.UniverseResolver;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Version;
@@ -87,14 +87,20 @@ public class GlowCLI {
         if (dumpInfos || arguments.isDisplayConfigurationInfo()) {
             MavenRepoManager resolver = MavenResolver.newMavenResolver();
             UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
-            try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(arguments.getExecutionContext(),
-                    null, arguments.getVersion(), GlowMessageWriter.DEFAULT, arguments.isTechPreview())) {
-                Map<String, Layer> all;
-                try {
-                    all = Utils.getAllLayers(universeResolver, layout, new HashMap<>());
-                } finally {
-                    layout.close();
+            GalleonBuilder provider = new GalleonBuilder();
+            provider.addArtifactResolver(resolver);
+            Provisioning provisioning = null;
+            try {
+                GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, GlowMessageWriter.DEFAULT);
+                if (config == null) {
+                    Path provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    provisioning = provider.newProvisioningBuilder(provisioningXML).build();
+                    config = provisioning.loadProvisioningConfig(provisioningXML);
+                } else {
+                    provisioning = provider.newProvisioningBuilder(config).build();
                 }
+
+                Map<String, Layer> all = Utils.getAllLayers(config, universeResolver, provisioning, new HashMap<>());
                 Set<String> profiles = Utils.getAllProfiles(all);
                 LayerMapping mapping = Utils.buildMapping(all, Collections.emptySet());
                 if (dumpInfos) {
@@ -102,12 +108,13 @@ public class GlowCLI {
                 } else {
                     boolean isLatest = arguments.getVersion() == null;
                     String serverVersion = isLatest ? FeaturePacks.getLatestVersion() : arguments.getVersion();
-                    Path fps = FeaturePacks.getFeaturePacks(serverVersion, arguments.getExecutionContext(), arguments.isTechPreview());
-                    ProvisioningConfig config = ProvisioningXmlParser.parse(fps);
                     CLIArguments.dumpConfiguration(null, arguments.getExecutionContext(), serverVersion, all, mapping, config, isLatest, arguments.isTechPreview());
                 }
             } finally {
                 IoUtils.recursiveDelete(OFFLINE_CONTENT);
+                if (provisioning != null) {
+                    provisioning.close();
+                }
             }
             return;
         }
@@ -116,11 +123,12 @@ public class GlowCLI {
             GlowSession.goOffline(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
         } else {
             //Temp
-            ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
-            if (arguments.getOutput() == null) {
-                scanResults.outputInformation();
-            } else {
-                scanResults.outputConfig(Paths.get("server"), null);
+            try (ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT)) {
+                if (arguments.getOutput() == null) {
+                    scanResults.outputInformation();
+                } else {
+                    scanResults.outputConfig(Paths.get("server"), null);
+                }
             }
         }
     }

@@ -32,14 +32,7 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.jboss.galleon.ProvisioningDescriptionException;
-import org.jboss.galleon.config.ConfigModel;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
 import org.jboss.galleon.maven.plugin.util.MavenArtifactRepositoryManager;
-import org.jboss.galleon.universe.FeaturePackLocation;
-import org.jboss.galleon.xml.ProvisioningXmlParser;
-import org.jboss.galleon.xml.ProvisioningXmlWriter;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.GlowSession;
@@ -50,7 +43,6 @@ import org.wildfly.glow.ScanResults;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -67,9 +59,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.maven.plugin.logging.Log;
-import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.channel.UnresolvedMavenArtifactException;
 import org.wildfly.channel.VersionResult;
+import org.jboss.galleon.ProvisioningException;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.GalleonFeaturePack;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.Channel;
+import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.UniverseResolver;
+import org.jboss.galleon.universe.maven.MavenChannel;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
@@ -133,10 +136,11 @@ public class ScanMojo extends AbstractMojo {
     String configName;
 
     /**
-     * List of feature-packs that are scanned and injected in the generated provisioning.xml.
+     * List of feature-packs that are scanned and injected in the generated
+     * provisioning.xml.
      */
     @Parameter(required = false, alias = "feature-packs")
-    List<FeaturePack> featurePacks = Collections.emptyList();
+    List<GalleonFeaturePack> featurePacks = Collections.emptyList();
 
     /**
      * Enable verbose output (containing identified errors, suggestions, ...).
@@ -145,7 +149,8 @@ public class ScanMojo extends AbstractMojo {
     boolean enableVerboseOutput = false;
 
     /**
-     * GroupId:ArtifactId of dependencies that contain test classes to scan for Arquillian deployments.
+     * GroupId:ArtifactId of dependencies that contain test classes to scan for
+     * Arquillian deployments.
      */
     @Parameter(alias = "dependencies-to-scan", property = "org.wildfly.glow.dependencies-to-scan")
     private List<String> dependenciesToScan = Collections.emptyList();
@@ -166,8 +171,9 @@ public class ScanMojo extends AbstractMojo {
     Set<String> layersForJndi = Collections.emptySet();
 
     /**
-     * All executions sharing the same aggregate have their provisioning.xml merged inside a
-     * single one. Make sure to have config-name parameter fo each execution sharing the same aggregates.
+     * All executions sharing the same aggregate have their provisioning.xml
+     * merged inside a single one. Make sure to have config-name parameter fo
+     * each execution sharing the same aggregates.
      */
     @Parameter(alias = "aggregate", property = "org.wildfly.glow.aggregate")
     String aggregate;
@@ -183,23 +189,26 @@ public class ScanMojo extends AbstractMojo {
     String surefireExecutionForIncludedClasses;
 
     /**
-     * A string identical to what this plugin output. It is used to compare what the plugin has discovered vs what is expected.
+     * A string identical to what this plugin output. It is used to compare what
+     * the plugin has discovered vs what is expected.
      */
     @Parameter(alias = "expected-discovery", property = "org.wildfly.glow.expected-discovery")
     String expectedDiscovery;
 
     /**
-     * System properties to set. For example, you can set org.wildfly.glow.manual.layers system property to a list of
-     * layers to add to the discovered set.
+     * System properties to set. For example, you can set
+     * org.wildfly.glow.manual.layers system property to a list of layers to add
+     * to the discovered set.
      */
     @Parameter
     private Map<String, String> systemPropertyVariables = Collections.emptyMap();
 
     /**
-     * Expects error to be found by glow (eg: missing datasource, ...) that will get fixed by the test.
-     * If an error is found and this parameter contains expected errors, the errors are ignored. If no error is found
-     * and this parameter contains errors, an exception is thrown.
-     * If this parameter is null (the default) and an error is found, an exception is thrown.
+     * Expects error to be found by glow (eg: missing datasource, ...) that will
+     * get fixed by the test. If an error is found and this parameter contains
+     * expected errors, the errors are ignored. If no error is found and this
+     * parameter contains errors, an exception is thrown. If this parameter is
+     * null (the default) and an error is found, an exception is thrown.
      */
     @Parameter(alias = "expected-errors", property = "org.wildfly.glow.expected-errors")
     private List<String> expectedErrors = Collections.emptyList();
@@ -273,21 +282,61 @@ public class ScanMojo extends AbstractMojo {
             for (String s : project.getTestClasspathElements()) {
                 paths.add(new File(s).getAbsolutePath());
             }
-            MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+            MavenArtifactRepositoryManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
             if (channels != null && !channels.isEmpty()) {
                 getLog().debug("WildFly channel enabled, feature-pack versions are retrieved from channels (if stream known).");
                 try {
                     ConfiguredChannels cr = new ConfiguredChannels(channels,
                             repoSystem, repoSession, repositories,
                             getLog(), true);
-                    for (FeaturePack fp : featurePacks) {
+                    UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
+                    for (GalleonFeaturePack fp : featurePacks) {
+                        if (fp.getLocation() == null && (fp.getGroupId() == null || fp.getArtifactId() == null)) {
+                            throw new IllegalArgumentException("Feature-pack location or Maven GAV is missing");
+                        }
+                        String groupId;
+                        String artifactId;
+                        String loc = fp.getLocation();
+                        if (loc == null) {
+                            groupId = fp.getGroupId();
+                            artifactId = fp.getArtifactId();
+                        } else {
+                            // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
+                            if (!FeaturePackLocation.fromString(loc).hasUniverse()) {
+                                long numSeparators = loc.chars().filter(ch -> ch == ':').count();
+                                if (numSeparators <= 1) {
+                                    loc += ":";
+                                }
+                            }
+                            FeaturePackLocation location = FeaturePackLocation.fromString(loc);
+                            if (location.isMavenCoordinates()) {
+                                String[] coordinates = loc.split(":");
+                                groupId = coordinates[0];
+                                artifactId = coordinates[1];
+                            } else {
+                                Channel c = universeResolver.getChannel(location);
+                                MavenChannel mc = (MavenChannel) c;
+                                groupId = mc.getFeaturePackGroupId();
+                                artifactId = mc.getFeaturePackArtifactId();
+                            }
+                        }
                         try {
-                            VersionResult res = cr.getChannelSession().findLatestMavenArtifactVersion(fp.getGroupId(), fp.getArtifactId(),
+                            VersionResult res = cr.getChannelSession().findLatestMavenArtifactVersion(groupId, artifactId,
                                     fp.getExtension(), fp.getClassifier(), null);
-                            getLog().debug(fp.getGroupId() +":"+fp.getArtifactId() + ", Channel resolved version " + res.getVersion());
-                            fp.setVersion(res.getVersion());
+                            getLog().debug(fp.getGroupId() + ":" + fp.getArtifactId() + ", Channel resolved version " + res.getVersion());
+                            if (fp.getLocation() == null) {
+                                fp.setVersion(res.getVersion());
+                            } else {
+                                FeaturePackLocation l = FeaturePackLocation.fromString(loc);
+                                FeaturePackLocation resolved = new FeaturePackLocation(l.getUniverse(),
+                                        l.getProducerName(),
+                                        l.getChannelName(),
+                                        l.getFrequency(),
+                                        res.getVersion());
+                                fp.setLocation(resolved.toString());
+                            }
                         } catch (Exception ex) {
-                            getLog().debug("Got exception trying to resolve " + fp.getGroupId() +":"+fp.getArtifactId(), ex);
+                            getLog().debug("Got exception trying to resolve " + fp.getGroupId() + ":" + fp.getArtifactId(), ex);
                         }
                     }
                 } catch (MalformedURLException | UnresolvedMavenArtifactException ex) {
@@ -297,15 +346,15 @@ public class ScanMojo extends AbstractMojo {
             Arguments arguments = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
                     setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
-                    setProvisoningXML(buildInputConfig(outputFolder)).
+                    setProvisoningXML(buildInputConfig(outputFolder, artifactResolver)).
                     setUserEnabledAddOns(addOns).
                     setConfigName(configName).
                     setSuggest((enableVerboseOutput || getLog().isDebugEnabled())).
                     setJndiLayers(layersForJndi).
                     setVerbose(verbose || getLog().isDebugEnabled()).
                     setOutput(OutputFormat.PROVISIONING_XML).build();
-            ScanResults results = GlowSession.scan(artifactResolver,
-                    arguments, writer);
+            try (ScanResults results = GlowSession.scan(artifactResolver,
+                    arguments, writer)) {
             boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
             if (skipTests) {
                 getLog().warn("Tests are disabled, not checking for expected discovered layers.");
@@ -363,30 +412,34 @@ public class ScanMojo extends AbstractMojo {
                     }
                 }
             }
-            if (enableVerboseOutput || getLog().isDebugEnabled()) {
-                results.outputInformation(writer);
-            } else {
-                results.outputCompactInformation(writer);
-            }
+                if (enableVerboseOutput || getLog().isDebugEnabled()) {
+                    results.outputInformation(writer);
+                } else {
+                    results.outputCompactInformation(writer);
+                }
 
-            Path provisioningFile = outputFolder.resolve("provisioning.xml");
-            if (aggregate != null && Files.exists(provisioningFile)) {
-                ProvisioningConfig pConfig = ProvisioningXmlParser.parse(provisioningFile);
-                ProvisioningConfig.Builder builder = ProvisioningConfig.builder(pConfig);
-                ConfigModel.Builder modelBuilder = ConfigModel.builder("standalone", configName);
-                modelBuilder.includeLayer(results.getBaseLayer().getName());
-                for (Layer l : results.getDecorators()) {
-                    modelBuilder.includeLayer(l.getName());
+                Path provisioningFile = outputFolder.resolve("provisioning.xml");
+                if (aggregate != null && Files.exists(provisioningFile)) {
+                    try (Provisioning provisioning = new GalleonBuilder().addArtifactResolver(artifactResolver).newProvisioningBuilder(provisioningFile).build()) {
+                        GalleonProvisioningConfig parsed = provisioning.loadProvisioningConfig(provisioningFile);
+                        GalleonProvisioningConfig.Builder builder = GalleonProvisioningConfig.builder(parsed);
+                        GalleonConfigurationWithLayersBuilder config = GalleonConfigurationWithLayersBuilder.builder("standalone", configName);
+                        config.includeLayer(results.getBaseLayer().getName());
+                        for (Layer l : results.getDecorators()) {
+                            config.includeLayer(l.getName());
+                        }
+                        for (Layer l : results.getExcludedLayers()) {
+                            config.excludeLayer(l.getName());
+                        }
+                        builder.addConfig(config.build());
+                        for (GalleonConfigurationWithLayers c : parsed.getDefinedConfigs()) {
+                            builder.addConfig(c);
+                        }
+                        provisioning.storeProvisioningConfig(builder.build(), provisioningFile);
+                    }
+                } else {
+                    results.outputConfig(outputFolder, null);
                 }
-                for (Layer l : results.getExcludedLayers()) {
-                    modelBuilder.excludeLayer(l.getName());
-                }
-                builder.addConfig(modelBuilder.build());
-                try (FileWriter fileWriter = new FileWriter(provisioningFile.toFile())) {
-                    ProvisioningXmlWriter.getInstance().write(builder.build(), fileWriter);
-                }
-            } else {
-                results.outputConfig(outputFolder, null);
             }
         } catch (Exception ex) {
             if (ex instanceof MojoExecutionException) {
@@ -425,7 +478,7 @@ public class ScanMojo extends AbstractMojo {
         }
         Path lst = outputFolder.resolve(TEST_PATHS);
         Files.write(lst, pathList.toString().getBytes());
-        if(enableVerboseOutput) {
+        if (enableVerboseOutput) {
             getLog().info("SCANNER: Test elements: " + pathList);
             getLog().info("SCANNER: Classes: " + classesLst);
         }
@@ -437,7 +490,7 @@ public class ScanMojo extends AbstractMojo {
                 enableVerboseOutput,
                 reducedCp,
                 getLog());
-        if(enableVerboseOutput) {
+        if (enableVerboseOutput) {
             getLog().info("SCANNER: classpath: " + cp);
             getLog().info("SCANNER: bootstrap classpath: " + reducedCp);
         }
@@ -463,7 +516,6 @@ public class ScanMojo extends AbstractMojo {
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT);
         return builder.start();
     }
-
 
     private static void collectCpPaths(String javaHome, ClassLoader cl, StringBuilder buf,
             boolean enableVerboseOutput,
@@ -503,22 +555,24 @@ public class ScanMojo extends AbstractMojo {
         }
     }
 
-    private Path buildInputConfig(Path outputFolder) throws ProvisioningDescriptionException, IOException, XMLStreamException {
-        ProvisioningConfig.Builder inBuilder = ProvisioningConfig.builder();
+    private Path buildInputConfig(Path outputFolder, MavenArtifactRepositoryManager artifactResolver) throws ProvisioningException, IOException, XMLStreamException {
+        GalleonProvisioningConfig.Builder inBuilder = GalleonProvisioningConfig.builder();
         // Build config
-        for (FeaturePack fp : featurePacks) {
-            FeaturePackConfig.Builder builder = FeaturePackConfig.builder(FeaturePackLocation.
-                    fromString(fp.getMavenCoords()));
+        for (GalleonFeaturePack fp : featurePacks) {
+            GalleonFeaturePackConfig.Builder builder = GalleonFeaturePackConfig.builder(FeaturePackLocation.
+                    fromString(fp.getLocation() == null ? fp.getMavenCoords() : fp.getLocation()));
             builder.includeAllPackages(fp.getIncludedPackages());
-            FeaturePackConfig cfg = builder.build();
+            GalleonFeaturePackConfig cfg = builder.build();
             inBuilder.addFeaturePackDep(cfg);
         }
-        ProvisioningConfig in = inBuilder.build();
-        Path p = outputFolder.resolve("glow-in-provisioning.xml");
-        try (FileWriter fileWriter = new FileWriter(p.toFile())) {
-            ProvisioningXmlWriter.getInstance().write(in, fileWriter);
+        GalleonProvisioningConfig conf = inBuilder.build();
+        GalleonBuilder provider = new GalleonBuilder();
+        provider.addArtifactResolver(artifactResolver);
+        try (Provisioning provisioning = provider.newProvisioningBuilder(conf).build()) {
+            Path p = outputFolder.resolve("glow-in-provisioning.xml");
+            provisioning.storeProvisioningConfig(conf, p);
+            return p;
         }
-        return p;
     }
 
     private List<Path> retrieveDeployments(List<String> testArtifacts, Path classesRootFolder, Path outputFolder) throws Exception {

@@ -18,29 +18,17 @@
 package org.wildfly.glow;
 
 import org.jboss.galleon.Constants;
-import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.ProvisioningException;
-import org.jboss.galleon.config.ConfigModel;
-import org.jboss.galleon.config.FeaturePackConfig;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
-import org.jboss.galleon.layout.ProvisioningLayoutFactory;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
-import org.jboss.galleon.xml.ProvisioningXmlWriter;
 import org.wildfly.glow.error.ErrorIdentificationSession;
 import org.wildfly.glow.error.IdentifiedError;
 import org.wildfly.glow.windup.WindupSupport;
-import org.wildfly.plugins.bootablejar.ArtifactLog;
 import org.wildfly.plugins.bootablejar.BootableJarSupport;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,6 +48,12 @@ import java.util.TreeSet;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.UniverseResolver;
 
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 
@@ -73,6 +67,7 @@ public class GlowSession {
     public static final Path OFFLINE_CONTENT = Paths.get("glow-offline-content");
     public static final Path OFFLINE_DOCS_DIR = OFFLINE_CONTENT.resolve("docs");
     public static final Path OFFLINE_FEATURE_PACKS_DIR = OFFLINE_CONTENT.resolve("feature-packs");
+    public static final Path OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR = OFFLINE_CONTENT.resolve("feature-pack-dependencies");
     public static final String STANDALONE_PROFILE = "standalone";
 
     private final MavenRepoManager resolver;
@@ -98,10 +93,26 @@ public class GlowSession {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);
         }
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
-
-        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(arguments.getExecutionContext(),
-                arguments.getProvisioningXML(), arguments.getVersion(), writer, arguments.isTechPreview())) {
-            Utils.exportOffline(universeResolver, layout);
+        GalleonBuilder provider = new GalleonBuilder();
+        provider.addArtifactResolver(resolver);
+        Provisioning provisioning = null;
+        try {
+            GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, writer);
+            if (config == null) {
+                Path provisioningXML = arguments.getProvisioningXML();
+                if (provisioningXML == null) {
+                    provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                }
+                provisioning = provider.newProvisioningBuilder(provisioningXML).build();
+                config = provisioning.loadProvisioningConfig(provisioningXML);
+            } else {
+                provisioning = provider.newProvisioningBuilder(config).build();
+            }
+            Utils.exportOffline(provisioning, config, universeResolver);
+        } finally {
+            if (provisioning != null) {
+                provisioning.close();
+            }
         }
         Files.deleteIfExists(OFFLINE_ZIP);
         ZipUtils.zip(OFFLINE_CONTENT, OFFLINE_ZIP);
@@ -116,7 +127,6 @@ public class GlowSession {
         return session.scan();
     }
 
-
     public ScanResults scan() throws Exception {
 
         Set<Layer> layers = new LinkedHashSet<>();
@@ -129,16 +139,26 @@ public class GlowSession {
             Files.createDirectories(OFFLINE_CONTENT);
             ZipUtils.unzip(OFFLINE_ZIP, OFFLINE_CONTENT);
         }
-
-        ProvisioningLayoutFactory factory = ProvisioningLayoutFactory.getInstance();
-        ProvisioningConfig pConfig = Utils.buildProvisioningConfig(factory, arguments.getExecutionContext(),
-                arguments.getProvisioningXML(), arguments.getVersion(), writer, arguments.isTechPreview());
-        try (ProvisioningLayout<FeaturePackLayout> layout = factory.newConfigLayout(pConfig)) {
+        GalleonBuilder provider = new GalleonBuilder();
+        provider.addArtifactResolver(resolver);
+        Provisioning provisioning = null;
+        GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, writer);
+        try {
+            if (config == null) {
+                Path provisioningXML = arguments.getProvisioningXML();
+                if (provisioningXML == null) {
+                    provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                }
+                provisioning = provider.newProvisioningBuilder(provisioningXML).build();
+                config = provisioning.loadProvisioningConfig(provisioningXML);
+            } else {
+                provisioning = provider.newProvisioningBuilder(config).build();
+            }
 
             // BUILD MODEL
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all
-                    = Utils.getAllLayers(universeResolver, layout, fpDependencies);
+                    = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
             LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles());
             if (mapping.getDefaultBaseLayer() == null) {
                 throw new IllegalArgumentException("No base layer found, WildFly Glow doesn't support WildFly server version. "
@@ -170,9 +190,8 @@ public class GlowSession {
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
                         //System.out.println("SCAN " + d);
-                        try (DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan())) {
-                            deploymentScanner.scan(mapping, layers, all, errorSession);
-                        }
+                        DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan());
+                        deploymentScanner.scan(mapping, layers, all, errorSession);
                     }
                 } else {
                     for (Path d : arguments.getBinaries()) {
@@ -441,7 +460,7 @@ public class GlowSession {
                 envs.addAll(stronglySuggestConfigFixes.get(l));
             }
             // Identify the active feature-packs.
-            ProvisioningConfig activeConfig = buildProvisioningConfig(pConfig, layout,
+            GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
                     universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName());
 
             Suggestions suggestions = new Suggestions(suggestedConfigurations,
@@ -452,6 +471,7 @@ public class GlowSession {
                     excludedLayers,
                     baseLayer,
                     decorators,
+                    provisioning,
                     activeConfig,
                     allEnabledAddOns,
                     disabledAddOns,
@@ -465,6 +485,7 @@ public class GlowSession {
     }
 
     OutputContent outputConfig(ScanResults scanResults, Path target, String dockerImageName) throws Exception {
+        Provisioning provisioning = scanResults.getProvisioning();
         if (arguments.getOutput() == null) {
             throw new IllegalStateException("No output format set");
         }
@@ -501,9 +522,7 @@ public class GlowSession {
         } else {
             Files.createDirectories(target);
             Path prov = target.resolve("provisioning.xml");
-            try (FileWriter fileWriter = new FileWriter(prov.toFile())) {
-                ProvisioningXmlWriter.getInstance().write(scanResults.getProvisioningConfig(), fileWriter);
-            }
+            provisioning.storeProvisioningConfig(scanResults.getProvisioningConfig(),prov);
             files.put(OutputContent.OutputFile.PROVISIONING_XML_FILE, prov.toAbsolutePath());
         }
         StringBuilder envFileContent = new StringBuilder();
@@ -555,7 +574,7 @@ public class GlowSession {
         return scanResultsPrinter.getCompactInformation(arguments, scanResults);
     }
 
-    private Path provisionServer(List<Path> binaries, ProvisioningConfig activeConfig,
+    private Path provisionServer(List<Path> binaries, GalleonProvisioningConfig activeConfig,
             MavenRepoManager resolver, OutputFormat format, boolean isCloud, Path target) throws Exception {
         Path tmpDir = null;
         Path originalTarget = target;
@@ -592,49 +611,50 @@ public class GlowSession {
                 Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" + vers + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
                 ret = targetJarFile;
                 Files.deleteIfExists(targetJarFile);
-                BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
-                        activeConfig, tmpDir.toAbsolutePath(),
-                        resolver,
-                        new MessageWriter() {
-                    @Override
-                    public void verbose(Throwable cause, CharSequence message) {
-                        if (writer.isVerbose()) {
-                            writer.trace(message);
-                        }
-                    }
-
-                    @Override
-                    public void print(Throwable cause, CharSequence message) {
-                        writer.info(message);
-                    }
-
-                    @Override
-                    public void error(Throwable cause, CharSequence message) {
-                        writer.error(message);
-                    }
-
-                    @Override
-                    public boolean isVerboseEnabled() {
-                        return writer.isVerbose();
-                    }
-
-                    @Override
-                    public void close() throws Exception {
-                    }
-
-                }, new ArtifactLog() {
-                    @Override
-                    public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                        writer.info("Found artifact " + a);
-                    }
-
-                    @Override
-                    public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
-                        if (writer.isVerbose()) {
-                            writer.trace("Found artifact " + a);
-                        }
-                    }
-                }, null);
+                throw new Exception("Bootable JAR packaging is disabled for 1.0.0.Alpha12, will be re-introduced in WildFly Glow 1.0.0.Beta1");
+//                BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
+//                        activeConfig, tmpDir.toAbsolutePath(),
+//                        resolver,
+//                        new MessageWriter() {
+//                    @Override
+//                    public void verbose(Throwable cause, CharSequence message) {
+//                        if (writer.isVerbose()) {
+//                            writer.trace(message);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void print(Throwable cause, CharSequence message) {
+//                        writer.info(message);
+//                    }
+//
+//                    @Override
+//                    public void error(Throwable cause, CharSequence message) {
+//                        writer.error(message);
+//                    }
+//
+//                    @Override
+//                    public boolean isVerboseEnabled() {
+//                        return writer.isVerbose();
+//                    }
+//
+//                    @Override
+//                    public void close() throws Exception {
+//                    }
+//
+//                }, new ArtifactLog() {
+//                    @Override
+//                    public void info(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+//                        writer.info("Found artifact " + a);
+//                    }
+//
+//                    @Override
+//                    public void debug(FeaturePackLocation.FPID fpid, MavenArtifact a) {
+//                        if (writer.isVerbose()) {
+//                            writer.trace("Found artifact " + a);
+//                        }
+//                    }
+//                });
             }
         } finally {
             if (tmpDir != null) {
@@ -799,20 +819,20 @@ public class GlowSession {
         }
     }
 
-    private static ProvisioningConfig buildProvisioningConfig(ProvisioningConfig input, ProvisioningLayout<FeaturePackLayout> layout,
+    private static GalleonProvisioningConfig buildProvisioningConfig(GalleonProvisioningConfig input,
             UniverseResolver universeResolver, Set<Layer> allBaseLayers,
             Layer baseLayer,
             Set<Layer> decorators,
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String configName) throws ProvisioningException {
-        ProvisioningConfig.Builder activeConfig = ProvisioningConfig.builder();
-        Map<FPID, FeaturePackConfig> map = new HashMap<>();
+        Map<FPID, GalleonFeaturePackConfig> map = new HashMap<>();
         Map<FPID, FPID> universeToGav = new HashMap<>();
-        for (FeaturePackConfig cfg : input.getFeaturePackDeps()) {
+        for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
             FeaturePackLocation.FPID loc = null;
+            FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
             for (FeaturePackLocation.FPID f : fpDependencies.keySet()) {
-                if (cfg.getLocation().getProducer().equals(f.getProducer())) {
+                if (fpid.getProducer().equals(f.getProducer())) {
                     loc = f;
                     break;
                 }
@@ -833,8 +853,9 @@ public class GlowSession {
         }
         Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
         // Order follow the one from the input
-        for(FeaturePackConfig cfg : input.getFeaturePackDeps()) {
-            FeaturePackLocation.FPID fpid = tmpFps.get(cfg.getLocation().getProducer());
+        for(GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
+            FeaturePackLocation.FPID gav = universeToGav.get(cfg.getLocation().getFPID());
+            FeaturePackLocation.FPID fpid = tmpFps.get(gav.getProducer());
             if (fpid != null) {
                 activeFeaturePacks.add(fpid);
             }
@@ -857,26 +878,38 @@ public class GlowSession {
             }
         }
         activeFeaturePacks.removeAll(toRemove);
+        GalleonProvisioningConfig.Builder activeConfigBuilder = GalleonProvisioningConfig.builder();
+        //List<GalleonFeaturePack> activeFPs = new ArrayList<>();
         for (FeaturePackLocation.FPID fpid : activeFeaturePacks) {
+            GalleonFeaturePackConfig.Builder fpBuilder = GalleonFeaturePackConfig.builder(fpid.getLocation());
+            fpBuilder.setInheritConfigs(false);
+            fpBuilder.setInheritPackages(false);
             // The input config included packages is to cover some wildfly tests corner cases.
-            FeaturePackConfig inCfg = map.get(fpid);
-            FeaturePackConfig.Builder cfgBuilder = FeaturePackConfig.builder(fpid.getLocation()).
-                    setInheritConfigs(false).setInheritPackages(false);
-            cfgBuilder.includeAllPackages(inCfg.getIncludedPackages());
-            activeConfig.addFeaturePackDep(cfgBuilder.build());
+            GalleonFeaturePackConfig inCfg = map.get(fpid);
+            fpBuilder.includeAllPackages(inCfg.getIncludedPackages());
+
+            //GalleonFeaturePack activeFP = new GalleonFeaturePack();
+            //activeFP.setLocation(fpid.getLocation().toString());
+            //activeFPs.add(activeFP);
+            activeConfigBuilder.addFeaturePackDep(fpBuilder.build());
         }
-        ConfigModel.Builder builder = ConfigModel.builder("standalone", configName);
-        builder.includeLayer(baseLayer.getName());
-        for (Layer decorator : decorators) {
-            builder.includeLayer(decorator.getName());
+        //ProvisioningContext activeContext = provisioning.buildProvisioningContext(activeFPs);
+
+        GalleonConfigurationWithLayersBuilder configBuilder = GalleonConfigurationWithLayersBuilder.builder("standalone", configName);
+        configBuilder.includeLayer(baseLayer.getName());
+        for (Layer l : decorators) {
+            configBuilder.includeLayer(l.getName());
         }
-        for (Layer ex : excludedLayers) {
-            builder.excludeLayer(ex.getName());
+        for (Layer l : excludedLayers) {
+            configBuilder.excludeLayer(l.getName());
         }
-        activeConfig.addConfig(builder.build());
-        activeConfig.addOption(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-        activeConfig.addOption("jboss-fork-embedded", "true");
-        return activeConfig.build();
+        activeConfigBuilder.addConfig(configBuilder.build());
+
+        Map<String, String> options = new HashMap<>();
+        options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
+        options.put("jboss-fork-embedded", "true");
+        activeConfigBuilder.addOptions(options);
+        return activeConfigBuilder.build();
     }
 
     // Only use the default base layer

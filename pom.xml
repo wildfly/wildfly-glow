@@ -28,7 +28,7 @@
         <version.org.apache.maven>3.8.6</version.org.apache.maven>
         <version.org.apache.maven.checkstyle>3.0.0</version.org.apache.maven.checkstyle>
         <version.org.apache.maven.resolver>1.6.3</version.org.apache.maven.resolver>
-        <version.org.jboss.galleon>5.2.2.Final</version.org.jboss.galleon>
+        <version.org.jboss.galleon>6.0.0.Beta1</version.org.jboss.galleon>
          <version.org.wildfly.channel>1.0.5.Final</version.org.wildfly.channel>
         <version.org.jboss.logging.slf4j-jboss-logging>1.2.1.Final</version.org.jboss.logging.slf4j-jboss-logging>
         <version.org.wildfly.galleon-plugins>6.5.3.Final</version.org.wildfly.galleon-plugins>
@@ -280,7 +280,7 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.galleon</groupId>
-                <artifactId>galleon-core</artifactId>
+                <artifactId>galleon-api</artifactId>
                 <version>${version.org.jboss.galleon}</version>
             </dependency>
             <dependency>

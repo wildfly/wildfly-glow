@@ -17,26 +17,16 @@
 package org.wildfly.glow.cli.commands;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.jboss.galleon.config.ProvisioningConfig;
-import org.jboss.galleon.layout.FeaturePackLayout;
-import org.jboss.galleon.layout.ProvisioningLayout;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
-import org.jboss.galleon.xml.ProvisioningXmlParser;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
-import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.Utils;
 import org.wildfly.glow.cli.CLIArguments;
-import org.wildfly.glow.maven.MavenResolver;
 
 import picocli.CommandLine;
 
@@ -60,30 +50,25 @@ public class ShowConfigurationCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        print("Wildfly Glow is retrieving know provisioning configuration...");
-        MavenRepoManager resolver = MavenResolver.newMavenResolver();
-        UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
+        print("Wildfly Glow is retrieving known provisioning configuration...");
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;
         }
-        try (ProvisioningLayout<FeaturePackLayout> layout = Utils.buildLayout(context,
-                provisioningXml.orElse(null), wildflyServerVersion.orElse(null), GlowMessageWriter.DEFAULT, wildflyPreview.orElse(false))) {
-            Map<String, Layer> all;
-            Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
-            try {
-                all = Utils.getAllLayers(universeResolver, layout, fpDependencies);
-            } finally {
-                layout.close();
+        String finalContext = context;
+        boolean isLatest = wildflyServerVersion.isEmpty();
+        String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
+        CommandsUtils.ProvisioningConsumer consumer = new CommandsUtils.ProvisioningConsumer() {
+            @Override
+            public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
+                    LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
+                String configStr = CLIArguments.dumpConfiguration(fpDependencies, finalContext, vers, all,
+                        mapping, provisioning, isLatest, wildflyPreview.orElse(false));
+                print(configStr);
             }
-            LayerMapping mapping = Utils.buildMapping(all, Collections.emptySet());
-            boolean isLatest = wildflyServerVersion.isEmpty();
-            String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
-            Path fps = FeaturePacks.getFeaturePacks(vers, context, wildflyPreview.orElse(false));
-            ProvisioningConfig config = ProvisioningXmlParser.parse(fps);
-            String configStr = CLIArguments.dumpConfiguration(fpDependencies, context, vers, all, mapping, config, isLatest, wildflyPreview.orElse(false));
-            print(configStr);
-        }
+        };
+        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
+
         return 0;
     }
 }
