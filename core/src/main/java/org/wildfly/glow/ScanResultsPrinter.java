@@ -213,7 +213,7 @@ public class ScanResultsPrinter {
             }
         } else {
             if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !suggestedConfigs.isEmpty()) {
-                writer.info("Some suggestions have been found. You could enable suggestions with --suggest option.");
+                writer.info("Some suggestions have been found. You could enable suggestions with --suggest option (if using the WildFly Glow CLI) or <suggest>true</suggest> (if using the WildFly Maven Plugin).");
             }
         }
     }

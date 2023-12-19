@@ -17,5 +17,6 @@ Jean-Francois Denise
 
 include::intro/index.adoc[]
 include::cli/index.adoc[]
+include::wildfly-maven-plugin/index.adoc[]
 include::test-maven-plugin/index.adoc[]
 include::server/index.adoc[]

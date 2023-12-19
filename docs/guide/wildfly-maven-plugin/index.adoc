@@ -1,0 +1,232 @@
+[[glow_wildfly_maven_plugin]]
+## WildFly Maven Plugin integration
+
+WildFly Glow has been integrated in WildFly Maven Plugin `5.x` starting with `5.0.0.Alpha2` version.
+
+When using version 4.2 of the link:http://github.com/wildfly/wildfly-maven-plugin[WildFly Maven Plugin] 
+you must specify the WildFly Galleon Feature-packs and Galleon Layers to use to provision WIldFly. 
+For example, a plugin configuration extract to provision WildFly for cloud with support to connect to `postgresql` database.
+
+[source,xml,subs=attributes+]
+----
+<plugin>
+    <groupId>org.wildfly.plugins</groupId>
+    <artifactId>wildfly-maven-plugin</artifactId>
+    <version>4.2.0.Final</version>
+    <configuration>
+        <feature-packs>
+            <feature-pack>
+                <location>org.wildfly:wildfly-galleon-pack:30.0.1.Final</location>
+            </feature-pack>
+            <feature-pack>
+                <location>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.0.Final</location>
+            </feature-pack>
+            <feature-pack>
+                <location>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final</location>
+            </feature-pack>
+        </feature-packs>
+        <layers>
+            <layer>jaxrs-server</layer>
+            <layer>postgresql-datasource</layer>
+        </layers>
+        <runtime-name>ROOT.war</runtime-name>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>package</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+The set of Feature-packs versions that are compatible with WildFly and the set of Galleon Layers that are required to properly execute your application 
+must be known and added to the configuration. This does create some complexity.
+
+The integration of WildFly Glow in the WildFly Maven plugin allows to delegate to the plugin the provisioning configuration. The plugin scans your deployment 
+and provision a server based on what has been discovered.
+
+The plugin configuration becomes:
+
+[source,xml,subs=attributes+]
+----
+<plugin>
+    <groupId>org.wildfly.plugins</groupId>
+    <artifactId>wildfly-maven-plugin</artifactId>
+    <version>5.0.0.Beta1</version>
+    <configuration>
+        <discover-provisioning-info/>
+        <runtime-name>ROOT.war</runtime-name>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>package</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+When executing the plugin with such configuration, the set of discovered Feature-packs and Layers are used to provision the WildFly server. 
+In addition, provisioning information is displayed and the file 
+`target/glow-scan/provisioning.xml` is generated. This allows you to see what the plugin has discovered 
+and that it is in line with what you are expecting.
+
+### Specifying a WildFly version
+
+By default the latest WildFly version is used, you can specify a given WildFly version (starting with WildFly 29.0.0.Final). To do so extend 
+the `discover-provisioning-info` element:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <version>30.0.0.Final</version>
+</discover-provisioning-info>
+----
+
+### Adding add-ons
+
+If your application requires some additional features not discovered in your deployment, you can specify add-ons:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <add-ons>
+        <add-on>ssl</add-on>
+        <add-on>openapi</add-on>
+    </add-ons>
+</discover-provisioning-info>
+----
+
+According to what has been discovered in your deployment, the plugin can suggest a set of add-ons that would make sense for your application. 
+You should see the following message being displayed:
+
+----
+Some suggestions have been found. You could enable suggestions with --suggest option (if using the WildFly Glow CLI) or <suggest>true</suggest> (if using the WildFly Maven Plugin).
+----
+
+To print the suggestions, evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <suggest>true</suggest>
+</discover-provisioning-info>
+----
+
+Note: In order to find-out the set of possible add-ons you could add, you could also use 
+the WildFly Glow CLI command line that offers a command to list the available add-ons for a given WildFly version.
+
+### Configuring add-ons
+
+It can happen that the added add-on(s) require some environment variables to be set at server execution time. The plugin 
+will display the set of expected environment variables (and values) that you should set when starting the server. 
+For example, when adding the `postgresql` add-on, the following warning is displayed:
+
+----
+strongly suggested configuration
+postgresql-datasource:
+ - POSTGRESQL_DATABASE=Defines the database name to be used in the datasource’s `connection-url` property.
+ - POSTGRESQL_JNDI=java:jboss/datasources/PostgreSQLDS
+ - POSTGRESQL_PASSWORD=Defines the password for the datasource.
+ - POSTGRESQL_USER=Defines the username for the datasource.
+----
+ 
+### Specifying the cloud execution context
+
+If the application you are building targets a cloud execution extend the `discover-provisioning-info` element:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <context>cloud</context>
+</discover-provisioning-info>
+----
+
+When cloud is enabled, some extra Galleon Feature-packs and Galleon Layers will be added to provision 
+a WildFly server that properly executes on OpenShift or Kubernetes.
+
+### HA (High Availability) support
+
+High availability support implies that some Galleon Layers are included and some are excluded in order to provision a valid HA 
+server.
+
+For example, to provision an HA server to run distributed ejb, when using WildFly Maven Plugin 4.2, you would have to specify:
+
+[source,xml,subs=attributes+]
+----
+<layers>
+    <layer>jaxrs-server</layer>
+    <layer>ejb-lite</layer>
+    <layer>ejb-dist-cache</layer>
+</layers>
+<excluded-layers>
+    <layer>ejb-local-cache</layer>
+</excluded-layers>
+----
+
+In this example, the local ejb infinispan cache is excluded and the ejb infinispan distributed one is added.
+
+WildFly Glow handles that for you, simply evolve the `discover-provisioning-info` element with the `ha` profile:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <profile>ha</profile>
+</discover-provisioning-info>
+----
+
+The Galleon Layers inclusions and exclusions are automatically handled.
+
+### Dry-run
+
+You can configure the plugin to just scan the deployment and not provision a server:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info></discover-provisioning-info>
+<dry-run>true</dry-run>
+----
+
+### Error handling
+
+Some errors can be discovered by the plugin during deployment scanning. For example an `add-on` is required and must be added. 
+If some errors are found the plugin execution is aborted and you need to take an action (e.g.: add the missing `add-on`). 
+In some cases, it can appear that the error is actually not problematic and can be ignored, to do so, evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <failsOnError>false</failsOnError>
+</discover-provisioning-info>
+----
+
+### Support for WildFly Preview
+
+If you are targeting deployment to the WildFly Preview server, evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <preview>true</preview>
+</discover-provisioning-info>
+----
+
+### Specifying additional Galleon Layers
+
+In case your application is requiring some extras Galleon Layers due to the fact that some API usages are hidden in your implementation (e.g.: 
+Java reflection, usage of JNDI API), you can evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <layersForJndi>
+        <layer>mail</layer>
+    </layersForJndi>
+</discover-provisioning-info>
+----
+
+In this example, the `mail` Galleon Layer is added.
+
