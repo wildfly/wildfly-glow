@@ -3,38 +3,38 @@
 
 WildFly Glow is an evolution of the WildFly link:https://docs.wildfly.org/galleon/[Galleon] provisioning tooling. 
 
-The goal of this project is to offer tooling allowing to identify the set of Galleon feature-packs and layers that are required 
+The goal of this project is to offer tooling allowing to identify the set of Galleon Feature-packs and Layers that are required 
 by your application. The entry-point of this discovery is your application.
 
-### Automatic identification of WildFly Galleon layers
+### Automatic identification of WildFly Galleon Layers
 
 Today, in order to trim a WildFly server to fit the application requirements, you have to first identify the 
-set of WildFly Galleon link:https://docs.wildfly.org/30/Galleon_Guide.html#wildfly_galleon_layers[layers] to use.
+set of WildFly Galleon link:https://docs.wildfly.org/30/Galleon_Guide.html#wildfly_galleon_layers[Layers] to use.
 
-WildFly Glow identifies the layers for you by scanning your application war (jar or ear) files. 
+WildFly Glow identifies the Layers for you by scanning your application war (jar or ear) files. 
 
-This application to Galleon layers mapping is based on rules contained in WildFly Galleon layers (Starting WildFly 29). 
+This application to Galleon Layers mapping is based on rules contained in WildFly Galleon Layers (Starting WildFly 29). 
 These rules express the Java types and artifacts (XML descriptors, properties files, ...) 
-that are bound to the usage of a given Galleon layer. An example of rule can be found in the link:https://github.com/wildfly/wildfly/blob/30.0.0.Final/ee-feature-pack/galleon-shared/src/main/resources/layers/standalone/jaxrs/layer-spec.xml#L8[jaxrs] layer.
+that are bound to the usage of a given Galleon Layer. An example of rule can be found in the link:https://github.com/wildfly/wildfly/blob/30.0.0.Final/ee-feature-pack/galleon-shared/src/main/resources/layers/standalone/jaxrs/layer-spec.xml#L8[jaxrs] Layer.
 
-Once the layers are identified, the Galleon feature-packs that define them are selected and included.
+Once the Layers are identified, the Galleon Feature-packs that define them are selected and included.
 
-### Centralized knowledge of WildFly Galleon feature-packs.
+### Centralized knowledge of WildFly Galleon Feature-packs.
 
-WildFly can be extended with additional Galleon feature-packs (e.g.: datasources, gRPC, keycloak, cloud, myfaces, resteasy-spring, ...).
+WildFly can be extended with additional Galleon Feature-packs (e.g.: datasources, gRPC, keycloak, cloud, myfaces, resteasy-spring, ...).
 
-WildFly Glow has, per WildFly version, the knowledge of some compatible Galleon feature-packs (this information is stored in 
+WildFly Glow has, per WildFly version, the knowledge of some compatible Galleon Feature-packs (this information is stored in 
 link:https://github.com/wildfly/wildfly-galleon-feature-packs/tree/release[this] github project).
 
-In order for these extras feature-packs to be recognized by WildFly Glow, they must have their defined layers annotated with rules.
+In order for these extras Feature-packs to be recognized by WildFly Glow, they must have their defined Layers annotated with rules.
 
-### Going beyond discovered Galleon layers
+### Going beyond discovered Galleon Layers
 
-WildFly Glow does more than identifying Galleon feature-packs and layers.
+WildFly Glow does more than identifying Galleon Feature-packs and Layers.
 
 #### Provisioning
 
-WildFly Glow tooling allows you to provision WildFly server, WildFly Bootable JAR or produce a Docker image.
+WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR or produce a Docker image.
 
 #### WildFly additional features discovery
 
@@ -51,14 +51,14 @@ to connect to the DB of your choice (postgresql, mysql, ...).
 
 ### WildFly Glow tooling
 
-WildFly Glow tooling is composed of 2 main parts:
+WildFly Glow tooling is composed of 3 parts:
 
 * A Command Line interface (`wildfly-glow` CLI) that scan your deployment and can provision a WildFly server, a WildFly Bootable JAR and 
 a Docker image (to be deployed on Kubernetes). From the CLI you can discover the list of available `add-ons`, the list of WildFly server versions 
 you can use (the latest WildFly major release being the default).
 
 * An integration with the WildFly Maven plugin (Starting 5.0.0.Alpha2) `package` goal, to provision a WildFly server without specifying 
-feature-packs and layers.
+Feature-packs and Layers.
 
-* A Maven plugin to scan Arquillian deployments in your tests.
+* A Maven plugin to scan Arquillian deployments in your tests and produce a `provisioning.xml` file that can be consumed by WildFly provisioning tooling.
 

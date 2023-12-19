@@ -443,29 +443,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.0.0.Alpha10-SNAPSHOT,</span>
-<span id="revdate">2023-11-30T11:13:57Z</span>
+<span id="revnumber">version 1.0.0.Alpha13-SNAPSHOT,</span>
+<span id="revdate">2023-12-19T15:37:56Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#glow_introduction">1. Introduction</a>
 <ul class="sectlevel2">
-<li><a href="#_automatic_identification_of_wildfly_galleon_layers">1.1. Automatic identification of WildFly Galleon layers</a></li>
-<li><a href="#_centralized_knowledge_of_wildfly_galleon_feature_packs">1.2. Centralized knowledge of WildFly Galleon feature-packs.</a></li>
-<li><a href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon layers</a></li>
+<li><a href="#_automatic_identification_of_wildfly_galleon_layers">1.1. Automatic identification of WildFly Galleon Layers</a></li>
+<li><a href="#_centralized_knowledge_of_wildfly_galleon_feature_packs">1.2. Centralized knowledge of WildFly Galleon Feature-packs.</a></li>
+<li><a href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon Layers</a></li>
 <li><a href="#_wildfly_glow_tooling">1.4. WildFly Glow tooling</a></li>
 </ul>
 </li>
 <li><a href="#glow_cli">2. WildFly Glow Command Line</a></li>
-<li><a href="#_glow_arquillian_maven_plugin">3. Glow Arquillian Maven plugin</a>
+<li><a href="#glow_wildfly_maven_plugin">3. WildFly Maven Plugin integration</a>
 <ul class="sectlevel2">
-<li><a href="#_goals_overview">3.1. Goals overview</a></li>
-<li><a href="#_help">3.2. help</a></li>
-<li><a href="#_scan">3.3. scan</a></li>
+<li><a href="#_specifying_a_wildfly_version">3.1. Specifying a WildFly version</a></li>
+<li><a href="#_adding_add_ons">3.2. Adding add-ons</a></li>
+<li><a href="#_configuring_add_ons">3.3. Configuring add-ons</a></li>
+<li><a href="#_specifying_the_cloud_execution_context">3.4. Specifying the cloud execution context</a></li>
+<li><a href="#_ha_high_availability_support">3.5. HA (High Availability) support</a></li>
+<li><a href="#_dry_run">3.6. Dry-run</a></li>
+<li><a href="#_error_handling">3.7. Error handling</a></li>
+<li><a href="#_support_for_wildfly_preview">3.8. Support for WildFly Preview</a></li>
+<li><a href="#_specifying_additional_galleon_layers">3.9. Specifying additional Galleon Layers</a></li>
 </ul>
 </li>
-<li><a href="#glow_server">4. Support for latest WildFly</a></li>
+<li><a href="#_wildfly_glow_arquillian_maven_plugin">4. WildFly Glow Arquillian Maven plugin</a>
+<ul class="sectlevel2">
+<li><a href="#_selecting_a_surefire_execution_to_scan">4.1. Selecting a surefire execution to scan</a></li>
+<li><a href="#_aggregating_multiple_server_configurations_in_the_same_provisioning_xml">4.2. Aggregating multiple server configurations in the same provisioning.xml</a></li>
+<li><a href="#_retrieving_the_test_classes_from_maven_dependencies">4.3. Retrieving the test classes from Maven dependencies</a></li>
+<li><a href="#_a_pom_xml_file_extract">4.4. A pom.xml file extract</a></li>
+<li><a href="#_goals_overview">4.5. Goals overview</a></li>
+<li><a href="#_help">4.6. help</a></li>
+<li><a href="#_scan">4.7. scan</a></li>
+</ul>
+</li>
+<li><a href="#glow_server">5. Support for latest WildFly</a></li>
 </ul>
 </div>
 </div>
@@ -484,49 +501,49 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>WildFly Glow is an evolution of the WildFly <a href="https://docs.wildfly.org/galleon/">Galleon</a> provisioning tooling.</p>
 </div>
 <div class="paragraph">
-<p>The goal of this project is to offer tooling allowing to identify the set of Galleon feature-packs and layers that are required
+<p>The goal of this project is to offer tooling allowing to identify the set of Galleon Feature-packs and Layers that are required
 by your application. The entry-point of this discovery is your application.</p>
 </div>
 <div class="sect2">
-<h3 id="_automatic_identification_of_wildfly_galleon_layers"><a class="anchor" href="#_automatic_identification_of_wildfly_galleon_layers"></a><a class="link" href="#_automatic_identification_of_wildfly_galleon_layers">1.1. Automatic identification of WildFly Galleon layers</a></h3>
+<h3 id="_automatic_identification_of_wildfly_galleon_layers"><a class="anchor" href="#_automatic_identification_of_wildfly_galleon_layers"></a><a class="link" href="#_automatic_identification_of_wildfly_galleon_layers">1.1. Automatic identification of WildFly Galleon Layers</a></h3>
 <div class="paragraph">
 <p>Today, in order to trim a WildFly server to fit the application requirements, you have to first identify the
-set of WildFly Galleon <a href="https://docs.wildfly.org/30/Galleon_Guide.html#wildfly_galleon_layers">layers</a> to use.</p>
+set of WildFly Galleon <a href="https://docs.wildfly.org/30/Galleon_Guide.html#wildfly_galleon_layers">Layers</a> to use.</p>
 </div>
 <div class="paragraph">
-<p>WildFly Glow identifies the layers for you by scanning your application war (jar or ear) files.</p>
+<p>WildFly Glow identifies the Layers for you by scanning your application war (jar or ear) files.</p>
 </div>
 <div class="paragraph">
-<p>This application to Galleon layers mapping is based on rules contained in WildFly Galleon layers (Starting WildFly 29).
+<p>This application to Galleon Layers mapping is based on rules contained in WildFly Galleon Layers (Starting WildFly 29).
 These rules express the Java types and artifacts (XML descriptors, properties files, &#8230;&#8203;)
-that are bound to the usage of a given Galleon layer. An example of rule can be found in the <a href="https://github.com/wildfly/wildfly/blob/30.0.0.Final/ee-feature-pack/galleon-shared/src/main/resources/layers/standalone/jaxrs/layer-spec.xml#L8">jaxrs</a> layer.</p>
+that are bound to the usage of a given Galleon Layer. An example of rule can be found in the <a href="https://github.com/wildfly/wildfly/blob/30.0.0.Final/ee-feature-pack/galleon-shared/src/main/resources/layers/standalone/jaxrs/layer-spec.xml#L8">jaxrs</a> Layer.</p>
 </div>
 <div class="paragraph">
-<p>Once the layers are identified, the Galleon feature-packs that define them are selected and included.</p>
+<p>Once the Layers are identified, the Galleon Feature-packs that define them are selected and included.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_centralized_knowledge_of_wildfly_galleon_feature_packs"><a class="anchor" href="#_centralized_knowledge_of_wildfly_galleon_feature_packs"></a><a class="link" href="#_centralized_knowledge_of_wildfly_galleon_feature_packs">1.2. Centralized knowledge of WildFly Galleon feature-packs.</a></h3>
+<h3 id="_centralized_knowledge_of_wildfly_galleon_feature_packs"><a class="anchor" href="#_centralized_knowledge_of_wildfly_galleon_feature_packs"></a><a class="link" href="#_centralized_knowledge_of_wildfly_galleon_feature_packs">1.2. Centralized knowledge of WildFly Galleon Feature-packs.</a></h3>
 <div class="paragraph">
-<p>WildFly can be extended with additional Galleon feature-packs (e.g.: datasources, gRPC, keycloak, cloud, myfaces, resteasy-spring, &#8230;&#8203;).</p>
+<p>WildFly can be extended with additional Galleon Feature-packs (e.g.: datasources, gRPC, keycloak, cloud, myfaces, resteasy-spring, &#8230;&#8203;).</p>
 </div>
 <div class="paragraph">
-<p>WildFly Glow has, per WildFly version, the knowledge of some compatible Galleon feature-packs (this information is stored in
+<p>WildFly Glow has, per WildFly version, the knowledge of some compatible Galleon Feature-packs (this information is stored in
 <a href="https://github.com/wildfly/wildfly-galleon-feature-packs/tree/release">this</a> github project).</p>
 </div>
 <div class="paragraph">
-<p>In order for these extras feature-packs to be recognized by WildFly Glow, they must have their defined layers annotated with rules.</p>
+<p>In order for these extras Feature-packs to be recognized by WildFly Glow, they must have their defined Layers annotated with rules.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_going_beyond_discovered_galleon_layers"><a class="anchor" href="#_going_beyond_discovered_galleon_layers"></a><a class="link" href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon layers</a></h3>
+<h3 id="_going_beyond_discovered_galleon_layers"><a class="anchor" href="#_going_beyond_discovered_galleon_layers"></a><a class="link" href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon Layers</a></h3>
 <div class="paragraph">
-<p>WildFly Glow does more than identifying Galleon feature-packs and layers.</p>
+<p>WildFly Glow does more than identifying Galleon Feature-packs and Layers.</p>
 </div>
 <div class="sect3">
 <h4 id="_provisioning"><a class="anchor" href="#_provisioning"></a><a class="link" href="#_provisioning">1.3.1. Provisioning</a></h4>
 <div class="paragraph">
-<p>WildFly Glow tooling allows you to provision WildFly server, WildFly Bootable JAR or produce a Docker image.</p>
+<p>WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR or produce a Docker image.</p>
 </div>
 </div>
 <div class="sect3">
@@ -549,7 +566,7 @@ to connect to the DB of your choice (postgresql, mysql, &#8230;&#8203;).</p>
 <div class="sect2">
 <h3 id="_wildfly_glow_tooling"><a class="anchor" href="#_wildfly_glow_tooling"></a><a class="link" href="#_wildfly_glow_tooling">1.4. WildFly Glow tooling</a></h3>
 <div class="paragraph">
-<p>WildFly Glow tooling is composed of 2 main parts:</p>
+<p>WildFly Glow tooling is composed of 3 parts:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -560,10 +577,10 @@ you can use (the latest WildFly major release being the default).</p>
 </li>
 <li>
 <p>An integration with the WildFly Maven plugin (Starting 5.0.0.Alpha2) <code>package</code> goal, to provision a WildFly server without specifying
-feature-packs and layers.</p>
+Feature-packs and Layers.</p>
 </li>
 <li>
-<p>A Maven plugin to scan Arquillian deployments in your tests.</p>
+<p>A Maven plugin to scan Arquillian deployments in your tests and produce a <code>provisioning.xml</code> file that can be consumed by WildFly provisioning tooling.</p>
 </li>
 </ul>
 </div>
@@ -598,23 +615,488 @@ feature-packs and layers.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_glow_arquillian_maven_plugin"><a class="anchor" href="#_glow_arquillian_maven_plugin"></a><a class="link" href="#_glow_arquillian_maven_plugin">3. Glow Arquillian Maven plugin</a></h2>
+<h2 id="glow_wildfly_maven_plugin"><a class="anchor" href="#glow_wildfly_maven_plugin"></a><a class="link" href="#glow_wildfly_maven_plugin">3. WildFly Maven Plugin integration</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This chapter is dedicated to the Maven plugin that can be used to use WildFly Glow. Maven
-coordinates of the Maven plugin artifact are</p>
+<p>WildFly Glow has been integrated in WildFly Maven Plugin <code>5.x</code> starting with <code>5.0.0.Alpha2</code> version.</p>
+</div>
+<div class="paragraph">
+<p>When using version 4.2 of the <a href="http://github.com/wildfly/wildfly-maven-plugin">WildFly Maven Plugin</a>
+you must specify the WildFly Galleon Feature-packs and Galleon Layers to use to provision WIldFly.
+For example, a plugin configuration extract to provision WildFly for cloud with support to connect to <code>postgresql</code> database.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.plugins<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>4.2.0.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;feature-packs&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;feature-pack&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;location&gt;</span>org.wildfly:wildfly-galleon-pack:30.0.1.Final<span style="color:#070;font-weight:bold">&lt;/location&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/feature-pack&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;feature-pack&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;location&gt;</span>org.wildfly.cloud:wildfly-cloud-galleon-pack:5.0.0.Final<span style="color:#070;font-weight:bold">&lt;/location&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/feature-pack&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;feature-pack&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;location&gt;</span>org.wildfly:wildfly-datasources-galleon-pack:6.0.0.Final<span style="color:#070;font-weight:bold">&lt;/location&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/feature-pack&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/feature-packs&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;layers&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>jaxrs-server<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>postgresql-datasource<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/layers&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;runtime-name&gt;</span>ROOT.war<span style="color:#070;font-weight:bold">&lt;/runtime-name&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>package<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The set of Feature-packs versions that are compatible with WildFly and the set of Galleon Layers that are required to properly execute your application
+must be known and added to the configuration. This does create some complexity.</p>
+</div>
+<div class="paragraph">
+<p>The integration of WildFly Glow in the WildFly Maven plugin allows to delegate to the plugin the provisioning configuration. The plugin scans your deployment
+and provision a server based on what has been discovered.</p>
+</div>
+<div class="paragraph">
+<p>The plugin configuration becomes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.plugins<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>5.0.0.Beta1<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;discover-provisioning-info</span><span style="color:#070;font-weight:bold">/&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;runtime-name&gt;</span>ROOT.war<span style="color:#070;font-weight:bold">&lt;/runtime-name&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>package<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When executing the plugin with such configuration, the set of discovered Feature-packs and Layers are used to provision the WildFly server.
+In addition, provisioning information is displayed and the file
+<code>target/glow-scan/provisioning.xml</code> is generated. This allows you to see what the plugin has discovered
+and that it is in line with what you are expecting.</p>
+</div>
+<div class="sect2">
+<h3 id="_specifying_a_wildfly_version"><a class="anchor" href="#_specifying_a_wildfly_version"></a><a class="link" href="#_specifying_a_wildfly_version">3.1. Specifying a WildFly version</a></h3>
+<div class="paragraph">
+<p>By default the latest WildFly version is used, you can specify a given WildFly version (starting with WildFly 29.0.0.Final). To do so extend
+the <code>discover-provisioning-info</code> element:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>30.0.0.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_adding_add_ons"><a class="anchor" href="#_adding_add_ons"></a><a class="link" href="#_adding_add_ons">3.2. Adding add-ons</a></h3>
+<div class="paragraph">
+<p>If your application requires some additional features not discovered in your deployment, you can specify add-ons:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;add-ons&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;add-on&gt;</span>ssl<span style="color:#070;font-weight:bold">&lt;/add-on&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;add-on&gt;</span>openapi<span style="color:#070;font-weight:bold">&lt;/add-on&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/add-ons&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>According to what has been discovered in your deployment, the plugin can suggest a set of add-ons that would make sense for your application.
+You should see the following message being displayed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Some suggestions have been found. You could enable suggestions with --suggest option (if using the WildFly Glow CLI) or &lt;suggest&gt;true&lt;/suggest&gt; (if using the WildFly Maven Plugin).</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To print the suggestions, evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;suggest&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/suggest&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note: In order to find-out the set of possible add-ons you could add, you could also use
+the WildFly Glow CLI command line that offers a command to list the available add-ons for a given WildFly version.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuring_add_ons"><a class="anchor" href="#_configuring_add_ons"></a><a class="link" href="#_configuring_add_ons">3.3. Configuring add-ons</a></h3>
+<div class="paragraph">
+<p>It can happen that the added add-on(s) require some environment variables to be set at server execution time. The plugin
+will display the set of expected environment variables (and values) that you should set when starting the server.
+For example, when adding the <code>postgresql</code> add-on, the following warning is displayed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>strongly suggested configuration
+postgresql-datasource:
+ - POSTGRESQL_DATABASE=Defines the database name to be used in the datasource’s `connection-url` property.
+ - POSTGRESQL_JNDI=java:jboss/datasources/PostgreSQLDS
+ - POSTGRESQL_PASSWORD=Defines the password for the datasource.
+ - POSTGRESQL_USER=Defines the username for the datasource.</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_specifying_the_cloud_execution_context"><a class="anchor" href="#_specifying_the_cloud_execution_context"></a><a class="link" href="#_specifying_the_cloud_execution_context">3.4. Specifying the cloud execution context</a></h3>
+<div class="paragraph">
+<p>If the application you are building targets a cloud execution extend the <code>discover-provisioning-info</code> element:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;context&gt;</span>cloud<span style="color:#070;font-weight:bold">&lt;/context&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When cloud is enabled, some extra Galleon Feature-packs and Galleon Layers will be added to provision
+a WildFly server that properly executes on OpenShift or Kubernetes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ha_high_availability_support"><a class="anchor" href="#_ha_high_availability_support"></a><a class="link" href="#_ha_high_availability_support">3.5. HA (High Availability) support</a></h3>
+<div class="paragraph">
+<p>High availability support implies that some Galleon Layers are included and some are excluded in order to provision a valid HA
+server.</p>
+</div>
+<div class="paragraph">
+<p>For example, to provision an HA server to run distributed ejb, when using WildFly Maven Plugin 4.2, you would have to specify:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;layers&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>jaxrs-server<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>ejb-lite<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>ejb-dist-cache<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/layers&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;excluded-layers&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>ejb-local-cache<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/excluded-layers&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the local ejb infinispan cache is excluded and the ejb infinispan distributed one is added.</p>
+</div>
+<div class="paragraph">
+<p>WildFly Glow handles that for you, simply evolve the <code>discover-provisioning-info</code> element with the <code>ha</code> profile:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;profile&gt;</span>ha<span style="color:#070;font-weight:bold">&lt;/profile&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Galleon Layers inclusions and exclusions are automatically handled.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dry_run"><a class="anchor" href="#_dry_run"></a><a class="link" href="#_dry_run">3.6. Dry-run</a></h3>
+<div class="paragraph">
+<p>You can configure the plugin to just scan the deployment and not provision a server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span><span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;dry-run&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/dry-run&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_error_handling"><a class="anchor" href="#_error_handling"></a><a class="link" href="#_error_handling">3.7. Error handling</a></h3>
+<div class="paragraph">
+<p>Some errors can be discovered by the plugin during deployment scanning. For example an <code>add-on</code> is required and must be added.
+If some errors are found the plugin execution is aborted and you need to take an action (e.g.: add the missing <code>add-on</code>).
+In some cases, it can appear that the error is actually not problematic and can be ignored, to do so, evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;failsOnError&gt;</span>false<span style="color:#070;font-weight:bold">&lt;/failsOnError&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_support_for_wildfly_preview"><a class="anchor" href="#_support_for_wildfly_preview"></a><a class="link" href="#_support_for_wildfly_preview">3.8. Support for WildFly Preview</a></h3>
+<div class="paragraph">
+<p>If you are targeting deployment to the WildFly Preview server, evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;preview&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/preview&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_specifying_additional_galleon_layers"><a class="anchor" href="#_specifying_additional_galleon_layers"></a><a class="link" href="#_specifying_additional_galleon_layers">3.9. Specifying additional Galleon Layers</a></h3>
+<div class="paragraph">
+<p>In case your application is requiring some extras Galleon Layers due to the fact that some API usages are hidden in your implementation (e.g.:
+Java reflection, usage of JNDI API), you can evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;layersForJndi&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;layer&gt;</span>mail<span style="color:#070;font-weight:bold">&lt;/layer&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/layersForJndi&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the <code>mail</code> Galleon Layer is added.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_wildfly_glow_arquillian_maven_plugin"><a class="anchor" href="#_wildfly_glow_arquillian_maven_plugin"></a><a class="link" href="#_wildfly_glow_arquillian_maven_plugin">4. WildFly Glow Arquillian Maven plugin</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Maven coordinates of the Maven plugin artifact are:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Alpha10-SNAPSHOT<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Alpha13-SNAPSHOT<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>This Maven plugin is dedicated to help you automate WildFly provisioning when
+using <a href="https://github.com/wildfly/wildfly-arquillian">Arquillian</a>.</p>
+</div>
+<div class="paragraph">
+<p>The plugin should be run during test build phase, after the tests have been compiled but prior to any
+WildFly provisioning plugin (<a href="http://github.com/wildfly/galleon">Galleon Maven plugin</a>,
+<a href="http://github.com/wildfly/wildfly-maven-plugin">WildFly Maven plugin</a> or <a href="http://github.com/wildfly-extras/wildfly-jar-maven-plugin">WildFly Bootable JAR Maven plugin</a>) execution.</p>
+</div>
+<div class="paragraph">
+<p>The tests deployments (returned by static methods annotated with the <code>@org.jboss.arquillian.container.test.api.Deployment</code> annotation),
+are scanned by the plugin to discover the set of Galleon Layers.
+It then generates the <code>target/glow-scan/provisioning.xml</code> file containing what has been discovered. This file can then be consumed
+by provisioning tooling to do the actual server provisioning.</p>
+</div>
+<div class="paragraph">
+<p>In order to validate that what the scanning has discovered is expected, you can configure the <code>wildfly-glow-arquillian-plugin</code>
+maven plugin to contain the element <code>&lt;expected-discovery&gt;</code>. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code>&lt;expected-discovery&gt;[cdi, ee-integration, ejb, ejb-lite, elytron-oidc-client, naming, servlet]==&gt;ee-core-profile-server,ejb,elytron-oidc-client&lt;/expected-discovery&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The left part of the arrow contains the list of the discovered Layers according to the scanning.
+The right part is what will get provisioned. Composed of a base Layer (always <code>ee-core-profile-server</code>) and
+a list of the discovered Layers that has been cleaned-up to avoid to include dependencies.</p>
+</div>
+<div class="paragraph">
+<p>BTW: The <a href="https://github.com/wildfly/wildfly/tree/main/testsuite/integration">WildFly integration tests</a> contain
+a lot of examples of WildFly Glow scanning executions that you can use as a starting-point.</p>
+</div>
+<div class="paragraph">
+<p>In case the test depends on some not discoverable features, you have the ability to explicitly add <code>add-ons</code> to enrich
+the set of provisioned Layers (using the <code>&lt;add-ons&gt;</code> configuration element).</p>
+</div>
+<div class="paragraph">
+<p>In addition, it can happen that some errors are identified by WildFly Glow.
+Some need to be fixed, some could be fine in the context of the tests. Errors that are fine in the context of the test
+can be ignored using the <code>&lt;expected-errors&gt;</code> element.</p>
+</div>
+<div class="paragraph">
+<p>Known WildFly Glow discovered errors:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>jakarta.naming.Context or InitialContext lookup</code>: In case some lookup is present in the test code
+that could hide the usage of a Layer not discovered. You can configure the plugin with <code>&lt;add-layers-for-jndi&gt;</code>
+to add the Layers that are required (if any) and hidden.</p>
+</li>
+<li>
+<p><code>ambiguous resource injection</code>: An un-typed resource injection could hide a required Layer.
+You can configure the plugin with <code>&lt;add-layers-for-jndi&gt;</code> to list the Layers that are required (if any) and hidden.</p>
+</li>
+<li>
+<p><code>an add-on of the messaging family is expected by the messaging-activemq layer</code>. One of embedded or remoting messaging add-on is required.</p>
+</li>
+<li>
+<p><code>unbound datasources error: &lt;name of ds&gt;</code>: A datasource is expected but not found in the deployment.
+That is generally an error to ignore, the test itself should add the datasource during the setup.</p>
+</li>
+<li>
+<p><code>no default datasource found error</code>: It has been identified that a default datasource is required.
+That can be fixed by adding the add-on <code>h2-database:default</code>.</p>
+</li>
+</ul>
+</div>
 <div class="sect2">
-<h3 id="_goals_overview"><a class="anchor" href="#_goals_overview"></a><a class="link" href="#_goals_overview">3.1. Goals overview</a></h3>
+<h3 id="_selecting_a_surefire_execution_to_scan"><a class="anchor" href="#_selecting_a_surefire_execution_to_scan"></a><a class="link" href="#_selecting_a_surefire_execution_to_scan">4.1. Selecting a surefire execution to scan</a></h3>
+<div class="paragraph">
+<p>You can select a given surefire execution to scan. To do so add the following element to the plugin configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;surefireExecutionForIncludedClasses&gt;</span>ts.surefire.clustering.microprofile<span style="color:#070;font-weight:bold">&lt;/surefireExecutionForIncludedClasses&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the tests executed by the surefire execution with id <code>ts.surefire.clustering.microprofile</code> are scanned.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_aggregating_multiple_server_configurations_in_the_same_provisioning_xml"><a class="anchor" href="#_aggregating_multiple_server_configurations_in_the_same_provisioning_xml"></a><a class="link" href="#_aggregating_multiple_server_configurations_in_the_same_provisioning_xml">4.2. Aggregating multiple server configurations in the same provisioning.xml</a></h3>
+<div class="paragraph">
+<p>You can express an aggregate name that will be used to aggregate all discovery of multiple plugin executions inside the same provisioning.xml file.
+Each execution of the plugin is creating a server configuration (e.g.: standalone.xml, standalone-ha.xml, &#8230;&#8203;) inside the same provisioning.xml file.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="paragraph">
+<p>Execution 1 plugin configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;aggregate&gt;</span>wildfly-server<span style="color:#070;font-weight:bold">&lt;/aggregate&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;config-name&gt;</span>standalone-full-ha.xml<span style="color:#070;font-weight:bold">&lt;/config-name&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Execution 2 plugin configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;aggregate&gt;</span>wildfly-server<span style="color:#070;font-weight:bold">&lt;/aggregate&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;config-name&gt;</span>standalone.xml<span style="color:#070;font-weight:bold">&lt;/config-name&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example the generated provisioning.xml will be located in the <code>target/wildfly-server-glow/</code> directory.
+The server configurations named <code>standalone.xml</code> and <code>standalone-full-ha.xml</code> will be generated and added to the same provisioning.xml file.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_retrieving_the_test_classes_from_maven_dependencies"><a class="anchor" href="#_retrieving_the_test_classes_from_maven_dependencies"></a><a class="link" href="#_retrieving_the_test_classes_from_maven_dependencies">4.3. Retrieving the test classes from Maven dependencies</a></h3>
+<div class="paragraph">
+<p>By default the compiled test classes are scanned. In case the classes are coming from Maven dependencies,
+the dependencies coordinates (<code>groupId:artifactId</code>) can be configured in the plugin. The version being retrieved from the Maven dependencies:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependenciesToScan&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>org.foo:some-tests<span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/dependenciesToScan&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_a_pom_xml_file_extract"><a class="anchor" href="#_a_pom_xml_file_extract"></a><a class="link" href="#_a_pom_xml_file_extract">4.4. A pom.xml file extract</a></h3>
+<div class="paragraph">
+<p>In this extract, WildFly 30.0.1.Final is used, the <code>ssl</code> add-on is enabled, expected discovery and expected errors are configured.
+The WildFly Maven Plugin is used to provision the server used by tests.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml">...
+<span style="color:#070;font-weight:bold">&lt;build&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Alpha12<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;feature-packs&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;feature-pack&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-galleon-pack<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;version&gt;</span>30.0.1.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/feature-pack&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/feature-packs&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;add-ons&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;add-on&gt;</span>ssl<span style="color:#070;font-weight:bold">&lt;/add-on&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/add-ons&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;expected-errors&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;error&gt;</span>an add-on of the messaging family is expected by the messaging-activemq layer<span style="color:#070;font-weight:bold">&lt;/error&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;error&gt;</span>ambiguous resource injection. Enable verbose output to see the locations.<span style="color:#070;font-weight:bold">&lt;/error&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;error&gt;</span>jakarta.naming.Context or InitialContext lookup. Enable verbose output to see the locations.<span style="color:#070;font-weight:bold">&lt;/error&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/expected-errors&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;expected-discovery&gt;</span>[cdi, ee-concurrency, ee-integration, elytron, messaging-activemq, naming, servlet, undertow, undertow-https]==<span style="color:#F00;background-color:#FAA">&gt;</span>ee-core-profile-server,ee-concurrency,messaging-activemq,undertow-https<span style="color:#070;font-weight:bold">&lt;/expected-discovery&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;id&gt;</span>scan<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>scan<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;phase&gt;</span>test-compile<span style="color:#070;font-weight:bold">&lt;/phase&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.plugins<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>5.0.0.Alpha2<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;overwrite-provisioned-server&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/overwrite-provisioned-server&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;provisioning-dir&gt;</span>${project.build.directory}/wildfly<span style="color:#070;font-weight:bold">&lt;/provisioning-dir&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;provisioning-file&gt;</span>${project.build.directory}/glow-scan/provisioning.xml<span style="color:#070;font-weight:bold">&lt;/provisioning-file&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;id&gt;</span>test-provisioning<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>provision<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;phase&gt;</span>test-compile<span style="color:#070;font-weight:bold">&lt;/phase&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/build&gt;</span>
+...</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_goals_overview"><a class="anchor" href="#_goals_overview"></a><a class="link" href="#_goals_overview">4.5. Goals overview</a></h3>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -633,16 +1115,16 @@ coordinates of the Maven plugin artifact are</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_help"><a class="anchor" href="#_help"></a><a class="link" href="#_help">3.2. help</a></h3>
+<h3 id="_help"><a class="anchor" href="#_help"></a><a class="link" href="#_help">4.6. help</a></h3>
 <div class="sect3">
-<h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">3.2.1. wildfly-glow-arquillian:help</a></h4>
+<h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.6.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Alpha10-SNAPSHOT:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Alpha13-SNAPSHOT:help</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_description"><a class="anchor" href="#_description"></a><a class="link" href="#_description">3.2.2. Description</a></h4>
+<h4 id="_description"><a class="anchor" href="#_description"></a><a class="link" href="#_description">4.6.2. Description</a></h4>
 <div class="paragraph">
 <p>Display help information on wildfly-glow-arquillian-plugin.<br>
 Call <code>mvn wildfly-glow-arquillian:help -Ddetail=true
@@ -650,7 +1132,7 @@ Call <code>mvn wildfly-glow-arquillian:help -Ddetail=true
 </div>
 </div>
 <div class="sect3">
-<h4 id="_attributes"><a class="anchor" href="#_attributes"></a><a class="link" href="#_attributes">3.2.3. Attributes</a></h4>
+<h4 id="_attributes"><a class="anchor" href="#_attributes"></a><a class="link" href="#_attributes">4.6.3. Attributes</a></h4>
 <div class="ulist">
 <ul>
 <li>
@@ -710,7 +1192,7 @@ goals will be displayed.<br>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_parameter_details"><a class="anchor" href="#_parameter_details"></a><a class="link" href="#_parameter_details">3.2.4. Parameter Details</a></h4>
+<h4 id="_parameter_details"><a class="anchor" href="#_parameter_details"></a><a class="link" href="#_parameter_details">4.6.4. Parameter Details</a></h4>
 <div class="paragraph">
 <p><a id="detail"></a> <strong>detail</strong><br>
 If <code>true</code>, display all settable properties for each
@@ -793,22 +1275,22 @@ The maximum length of a display line, should be positive.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_scan"><a class="anchor" href="#_scan"></a><a class="link" href="#_scan">3.3. scan</a></h3>
+<h3 id="_scan"><a class="anchor" href="#_scan"></a><a class="link" href="#_scan">4.7. scan</a></h3>
 <div class="sect3">
-<h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">3.3.1. wildfly-glow-arquillian:scan</a></h4>
+<h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.7.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Alpha10-SNAPSHOT:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Alpha13-SNAPSHOT:scan</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_description_2"><a class="anchor" href="#_description_2"></a><a class="link" href="#_description_2">3.3.2. Description</a></h4>
+<h4 id="_description_2"><a class="anchor" href="#_description_2"></a><a class="link" href="#_description_2">4.7.2. Description</a></h4>
 <div class="paragraph">
 <p>(no description)</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_attributes_2"><a class="anchor" href="#_attributes_2"></a><a class="link" href="#_attributes_2">3.3.3. Attributes</a></h4>
+<h4 id="_attributes_2"><a class="anchor" href="#_attributes_2"></a><a class="link" href="#_attributes_2">4.7.3. Attributes</a></h4>
 <div class="ulist">
 <ul>
 <li>
@@ -975,7 +1457,7 @@ to add to the discovered set.<br></p></td>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_parameter_details_2"><a class="anchor" href="#_parameter_details_2"></a><a class="link" href="#_parameter_details_2">3.3.4. Parameter Details</a></h4>
+<h4 id="_parameter_details_2"><a class="anchor" href="#_parameter_details_2"></a><a class="link" href="#_parameter_details_2">4.7.4. Parameter Details</a></h4>
 <div class="paragraph">
 <p><a id="addOns"></a> <strong>addOns</strong><br>
 Execution add-ons.</p>
@@ -1286,16 +1768,16 @@ to add to the discovered set.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="glow_server"><a class="anchor" href="#glow_server"></a><a class="link" href="#glow_server">4. Support for latest WildFly</a></h2>
+<h2 id="glow_server"><a class="anchor" href="#glow_server"></a><a class="link" href="#glow_server">5. Support for latest WildFly</a></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The following documentation is defined by the <a href="https://github.com/wildfly/wildfly-galleon-feature-packs">WildFly Galleon feature-packs repository</a>.
-It contains the known WildFly (and WildFly Preview) feature-packs and layers for the various execution contexts (<code>cloud</code> and <code>bare-metal</code>).</p>
+<p>The following documentation is defined by the <a href="https://github.com/wildfly/wildfly-galleon-feature-packs">WildFly Galleon Feature-packs repository</a>.
+It contains the known WildFly (and WildFly Preview) Feature-packs and Layers for the various execution contexts (<code>cloud</code> and <code>bare-metal</code>).</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="http://docs.wildfly.org/wildfly-galleon-feature-packs/">Known feature-packs and layers</a></p>
+<p><a href="http://docs.wildfly.org/wildfly-galleon-feature-packs/">Known Feature-packs and Layers</a></p>
 </li>
 </ul>
 </div>
@@ -1304,8 +1786,8 @@ It contains the known WildFly (and WildFly Preview) feature-packs and layers for
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.0.0.Alpha10-SNAPSHOT<br>
-Last updated 2023-11-30 12:13:58 +0100
+Version 1.0.0.Alpha13-SNAPSHOT<br>
+Last updated 2023-12-19 16:37:58 +0100
 </div>
 </div>
 </body>

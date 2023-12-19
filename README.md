@@ -13,13 +13,10 @@ with some metadata allowing to bound the Galleon Layer to the content of your de
 WildFly Glow scans the content of your deployment (Java API in use, XML descriptors, properties files, ...) and attempt to match this content with the rules located 
 inside the Galleon Layers. If a rule matches, the Galeon Layer is a candidate for inclusion.
 
-WildFly Galleon Feature-pack is not the only Feature-pack containing annotated Galleon Layers. The following Galleon Feature-packs are supported by Glow:
+WildFly Galleon Feature-pack is not the only Feature-pack containing annotated Galleon Layers. WildFly Glow has the knowledge 
+of the Galleon feature-packs that are compatible with a WildFly version.
 
-* [WildFly cloud](https://github.com/wildfly-extras/wildfly-cloud-galleon-pack) Galleon Feature-pack.
-* [WildFly datasources](https://github.com/wildfly-extras/wildfly-datasources-galleon-pack) Galleon Feature-pack.
-* [WildFly GRPC](https://github.com/wildfly-extras/wildfly-grpc-feature-pack) Galleon Feature-pack.
-
-N.B.: Some more Galleon Feature-packs are in the process of being annotated to be supported by WildFly Glow.
+The set of supported Galleon Feature-packs can be found in the [WildFly Galleon feature-packs repository documentation](http://docs.wildfly.org/wildfly-galleon-feature-packs/).
 
 To identify the Galleon Layers your application requires, WildFly Glow retrieves Galleon Feature-packs from [WildFly Galleon Feature-packs](https://github.com/wildfly/wildfly-galleon-feature-packs/tree/release) repository. 
 By default the latest WildFly version is used.
@@ -34,6 +31,10 @@ In addition, WildFly Glow allows you to specify an execution profile. Non HA (Hi
 The WildFly Glow command line help contains the information on how to configure WildFly Glow 
 to adjust the provisioned WildFly server (execution context, profile, add-ons, WildFly server version, ...).
 
+# WildFly Glow documentation
+
+WildFly Glow [documentation](http://docs.wildfly.org/wildfly-glow/).
+
 # Using the WildFly Glow CLI
 
 * Download the latest WildFly Glow CLI zip file from github [releases](https://github.com/wildfly/wildfly-glow/releases)
@@ -45,12 +46,8 @@ to adjust the provisioned WildFly server (execution context, profile, add-ons, W
 
 # WildFly Glow integration in the WildFly Maven Plugin
 
-* Starting version 5.0.0.Alpha2, the [WildFly Maven plugin](https://github.com/wildfly/wildfly-maven-plugin) allows to discover Galleon Feature-packs and Layers.
+Starting version 5.0.0.Alpha2, the [WildFly Maven plugin](https://github.com/wildfly/wildfly-maven-plugin) allows to discover Galleon Feature-packs and Layers.
 Include the `<discover-provisioning-info/>` element in the plugin configuration. For exising plugin configuration, replace the `<feature-packs>` and `<layers>` elements with the `<discover-provisioning-info/>` element. 
-
-# WildFly Glow documentation
-
-WildFly Glow [documentation](http://docs.wildfly.org/wildfly-glow/).
 
 # Steps to build the WildFly Glow command line
 

@@ -1,7 +1,6 @@
-## Glow Arquillian Maven plugin
+## WildFly Glow Arquillian Maven plugin
 
-This chapter is dedicated to the Maven plugin that can be used to use WildFly Glow. Maven
-coordinates of the Maven plugin artifact are
+Maven coordinates of the Maven plugin artifact are:
 
 [source,xml,subs=attributes+]
 ----
@@ -10,6 +9,171 @@ coordinates of the Maven plugin artifact are
     <artifactId>glow-arquillian-plugin</artifactId>
     <version>{revnumber}</version>
 </dependency>
+----
+
+This Maven plugin is dedicated to help you automate WildFly provisioning when 
+using link:https://github.com/wildfly/wildfly-arquillian[Arquillian].
+
+The plugin should be run during test build phase, after the tests have been compiled but prior to any 
+WildFly provisioning plugin (link:http://github.com/wildfly/galleon[Galleon Maven plugin], 
+link:http://github.com/wildfly/wildfly-maven-plugin[WildFly Maven plugin] or link:http://github.com/wildfly-extras/wildfly-jar-maven-plugin[WildFly Bootable JAR Maven plugin]) execution.
+
+The tests deployments (returned by static methods annotated with the `@org.jboss.arquillian.container.test.api.Deployment` annotation), 
+are scanned by the plugin to discover the set of Galleon Layers. 
+It then generates the `target/glow-scan/provisioning.xml` file containing what has been discovered. This file can then be consumed 
+by provisioning tooling to do the actual server provisioning.
+
+In order to validate that what the scanning has discovered is expected, you can configure the `wildfly-glow-arquillian-plugin` 
+maven plugin to contain the element `<expected-discovery>`. For example:
+
+```
+<expected-discovery>[cdi, ee-integration, ejb, ejb-lite, elytron-oidc-client, naming, servlet]==>ee-core-profile-server,ejb,elytron-oidc-client</expected-discovery>
+```
+
+The left part of the arrow contains the list of the discovered Layers according to the scanning. 
+The right part is what will get provisioned. Composed of a base Layer (always `ee-core-profile-server`) and  
+a list of the discovered Layers that has been cleaned-up to avoid to include dependencies.
+
+BTW: The link:https://github.com/wildfly/wildfly/tree/main/testsuite/integration[WildFly integration tests] contain 
+a lot of examples of WildFly Glow scanning executions that you can use as a starting-point.
+
+In case the test depends on some not discoverable features, you have the ability to explicitly add `add-ons` to enrich 
+the set of provisioned Layers (using the `<add-ons>` configuration element).
+
+In addition, it can happen that some errors are identified by WildFly Glow. 
+Some need to be fixed, some could be fine in the context of the tests. Errors that are fine in the context of the test 
+can be ignored using the `<expected-errors>` element.
+
+Known WildFly Glow discovered errors:
+
+* `jakarta.naming.Context or InitialContext lookup`: In case some lookup is present in the test code 
+that could hide the usage of a Layer not discovered. You can configure the plugin with `<add-layers-for-jndi>` 
+to add the Layers that are required (if any) and hidden.
+
+* `ambiguous resource injection`: An un-typed resource injection could hide a required Layer. 
+You can configure the plugin with `<add-layers-for-jndi>` to list the Layers that are required (if any) and hidden.
+
+* `an add-on of the messaging family is expected by the messaging-activemq layer`. One of embedded or remoting messaging add-on is required.
+
+* `unbound datasources error: <name of ds>`: A datasource is expected but not found in the deployment. 
+That is generally an error to ignore, the test itself should add the datasource during the setup.
+
+* `no default datasource found error`: It has been identified that a default datasource is required. 
+That can be fixed by adding the add-on `h2-database:default`.
+
+### Selecting a surefire execution to scan
+
+You can select a given surefire execution to scan. To do so add the following element to the plugin configuration:
+
+[source,xml,subs=attributes+]
+----
+<surefireExecutionForIncludedClasses>ts.surefire.clustering.microprofile</surefireExecutionForIncludedClasses>
+----
+
+In this example, the tests executed by the surefire execution with id `ts.surefire.clustering.microprofile` are scanned.
+
+### Aggregating multiple server configurations in the same provisioning.xml
+
+You can express an aggregate name that will be used to aggregate all discovery of multiple plugin executions inside the same provisioning.xml file.
+Each execution of the plugin is creating a server configuration (e.g.: standalone.xml, standalone-ha.xml, ...) inside the same provisioning.xml file.
+
+For example:
+
+Execution 1 plugin configuration:
+
+[source,xml,subs=attributes+]
+----
+<aggregate>wildfly-server</aggregate>
+<config-name>standalone-full-ha.xml</config-name>
+----
+
+Execution 2 plugin configuration:
+
+[source,xml,subs=attributes+]
+----
+<aggregate>wildfly-server</aggregate>
+<config-name>standalone.xml</config-name>
+----
+
+In this example the generated provisioning.xml will be located in the `target/wildfly-server-glow/` directory. 
+The server configurations named `standalone.xml` and `standalone-full-ha.xml` will be generated and added to the same provisioning.xml file.
+
+### Retrieving the test classes from Maven dependencies
+
+By default the compiled test classes are scanned. In case the classes are coming from Maven dependencies, 
+the dependencies coordinates (`groupId:artifactId`) can be configured in the plugin. The version being retrieved from the Maven dependencies:
+
+[source,xml,subs=attributes+]
+----
+<dependenciesToScan>
+    <dependency>org.foo:some-tests</dependency>
+</dependenciesToScan>
+----
+
+### A pom.xml file extract
+
+In this extract, WildFly 30.0.1.Final is used, the `ssl` add-on is enabled, expected discovery and expected errors are configured.
+The WildFly Maven Plugin is used to provision the server used by tests.
+
+[source,xml,subs=attributes+]
+----
+...
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.wildfly.glow</groupId>
+            <artifactId>wildfly-glow-arquillian-plugin</artifactId>
+            <version>1.0.0.Alpha12</version>
+            <configuration>
+                <feature-packs>
+                    <feature-pack>
+                        <groupId>org.wildfly</groupId>
+                        <artifactId>wildfly-galleon-pack</artifactId>
+                        <version>30.0.1.Final</version>
+                    </feature-pack>
+                </feature-packs>
+                <add-ons>
+                    <add-on>ssl</add-on>
+                </add-ons>
+                <expected-errors>
+                    <error>an add-on of the messaging family is expected by the messaging-activemq layer</error>
+                    <error>ambiguous resource injection. Enable verbose output to see the locations.</error>
+                    <error>jakarta.naming.Context or InitialContext lookup. Enable verbose output to see the locations.</error>
+                </expected-errors>
+                <expected-discovery>[cdi, ee-concurrency, ee-integration, elytron, messaging-activemq, naming, servlet, undertow, undertow-https]==>ee-core-profile-server,ee-concurrency,messaging-activemq,undertow-https</expected-discovery>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>scan</id>
+                    <goals>
+                        <goal>scan</goal>
+                    </goals>
+                    <phase>test-compile</phase>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.wildfly.plugins</groupId>
+            <artifactId>wildfly-maven-plugin</artifactId>
+            <version>5.0.0.Alpha2</version>
+            <configuration>
+                <overwrite-provisioned-server>true</overwrite-provisioned-server>
+                <provisioning-dir>${project.build.directory}/wildfly</provisioning-dir>
+                <provisioning-file>${project.build.directory}/glow-scan/provisioning.xml</provisioning-file>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>test-provisioning</id>
+                    <goals>
+                        <goal>provision</goal>
+                    </goals>
+                    <phase>test-compile</phase>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+...
 ----
 
 include::goals/index.adoc[]

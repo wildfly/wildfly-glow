@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>org.wildfly.plugins</groupId>
-            <artifactId>wildfly-jar-maven-plugin-core</artifactId>
+            <artifactId>wildfly-plugin-tools</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
