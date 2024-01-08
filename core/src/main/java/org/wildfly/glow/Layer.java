@@ -35,6 +35,7 @@ public class Layer implements Comparable<Layer> {
     private final String name;
     private final Set<Layer> dependencies = new TreeSet<>();
     private final Map<String, String> properties = new HashMap<>();
+    private final Map<LayerMapping.RULE, Set<String>> matchingRules = new HashMap<>();
     private final Set<FPID> featurePacks = new HashSet<>();
     private AddOn addOn;
     private final Set<String> bringDatasources = new TreeSet<>();
@@ -95,6 +96,13 @@ public class Layer implements Comparable<Layer> {
      */
     public Map<String, String> getProperties() {
         return properties;
+    }
+
+    /**
+     * @return the matching rules
+     */
+    public Map<LayerMapping.RULE, Set<String>> getMatchingRules() {
+        return matchingRules;
     }
 
     /**

@@ -209,6 +209,7 @@ public class GlowSession {
                         throw new IllegalArgumentException("Layer '" + foundLayer + "' manually added has already been discovered in the deployment. It must be removed.");
                     }
                     layers.add(foundLayer);
+                    LayerMapping.addRule(LayerMapping.RULE.EXPLICIT, foundLayer, null);
                 }
             }
 
@@ -222,11 +223,13 @@ public class GlowSession {
                         throw new IllegalArgumentException("Layer '" + layer + "' added due to JNDI lookup has already been discovered in the deployment. It must be removed.");
                     }
                     layers.add(foundLayer);
+                    LayerMapping.addRule(LayerMapping.RULE.EXPLICIT, foundLayer, null);
                 }
             }
 
             Map<Layer, Set<Layer>> ret = findBaseLayer(mapping, all);
             Layer baseLayer = ret.keySet().iterator().next();
+            LayerMapping.addRule(LayerMapping.RULE.BASE_LAYER, baseLayer, null);
             // We create a set of all fine grain layers from the basic layers
             // Needed to identify layers that could be required to be excluded due to profile.
             Set<Layer> allBaseLayers = new TreeSet<>();
@@ -243,6 +246,7 @@ public class GlowSession {
                     for (Layer l : addOn.getLayers()) {
                         if (!l.isBanned()) {
                             layers.add(l);
+                            LayerMapping.addRule(LayerMapping.RULE.ADD_ON, l, null);
                             allBaseLayers.add(l);
                             Set<Layer> dependencies = all.get(l.getName()).getDependencies();
                             layers.addAll(dependencies);
@@ -261,6 +265,7 @@ public class GlowSession {
                             if (enabled) {
                                 layers.add(layer);
                                 allBaseLayers.add(layer);
+                                LayerMapping.addRule(LayerMapping.RULE.ADD_ON_REQUIRED_DEPENDENCIES_FOUND, layer, null);
                             } else {
                                 possibleAddOns.add(addOn);
                             }
@@ -274,6 +279,7 @@ public class GlowSession {
                             if (enabled) {
                                 layers.add(layer);
                                 allBaseLayers.add(layer);
+                                LayerMapping.addRule(LayerMapping.RULE.ADD_ON_REQUIRED_DEPENDENCIES_FOUND, layer, null);
                             } else {
                                 possibleAddOns.add(addOn);
                             }
@@ -284,6 +290,7 @@ public class GlowSession {
                     if (enabled && !layer.isBanned()) {
                         layers.add(layer);
                         allBaseLayers.add(layer);
+                        LayerMapping.addRule(LayerMapping.RULE.ADD_ON_ALWAYS_INCLUDED, layer, null);
                     } else {
                         possibleAddOns.add(addOn);
                     }
@@ -296,6 +303,7 @@ public class GlowSession {
                     if (allBaseLayers.containsAll(layer.getDependencies())) {
                         layers.add(layer);
                         allBaseLayers.add(layer);
+                        LayerMapping.addRule(LayerMapping.RULE.ADD_ON_REQUIRED_DEPENDENCIES_FOUND, layer, null);
                     }
                 }
             }
@@ -305,6 +313,7 @@ public class GlowSession {
                     if (allBaseLayers.containsAll(mapping.getLayersIncludedIfSomeDeps().get(layer))) {
                         layers.add(layer);
                         allBaseLayers.add(layer);
+                        LayerMapping.addRule(LayerMapping.RULE.ADD_ON_REQUIRED_DEPENDENCIES_FOUND, layer, null);
                     }
                 }
             }
@@ -312,6 +321,7 @@ public class GlowSession {
             for (Layer layer : all.values()) {
                 if (layer.isIsAutomaticInjection() && !layer.isBanned()) {
                     allBaseLayers.add(layer);
+                    LayerMapping.addRule(LayerMapping.RULE.ALWAYS_INCLUDED, layer, null);
                 }
             }
             // END DISCOVERY
@@ -336,7 +346,9 @@ public class GlowSession {
                 Layer toInclude = mapping.getActiveProfilesLayers().get(l.getName());
                 if (toInclude != null) {
                     profileLayers.add(toInclude);
+                    LayerMapping.addRule(LayerMapping.RULE.PROFILE_INCLUDED, toInclude, null);
                     excludedLayers.add(l);
+                    LayerMapping.addRule(LayerMapping.RULE.PROFILE_EXCLUDED, l, null);
                 }
             }
             // Order is important. Decorators must be added first.

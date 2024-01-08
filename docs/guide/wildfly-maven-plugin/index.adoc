@@ -230,3 +230,28 @@ Java reflection, usage of JNDI API), you can evolve the `discover-provisioning-i
 
 In this example, the `mail` Galleon Layer is added.
 
+### Excluding archives
+
+In case your application packages some jars, you can exclude such jars from the scanning. To do so evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <excludedArchives>
+        <archive>foo.jar</archive>
+        <archive>example*</archive>
+    </excludedArchives>
+</discover-provisioning-info>
+----
+
+### Printing matching rules
+
+You can print the rules that selected the Galleon Layers. To do so set the `<verbose>` argument. 
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <verbose>true</verbose>
+</discover-provisioning-info>
+----
+

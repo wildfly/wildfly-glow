@@ -168,19 +168,25 @@ public class DeploymentScanner implements AutoCloseable {
                 Set<Layer> l = ctx.mapping.getAnnotations().get(ai.name().toString());
                 if (l != null) {
                     ctx.layers.addAll(l);
+                    LayerMapping.addRule(LayerMapping.RULE.ANNOTATION,l, ai.name().toString());
                     //System.out.println("Find an annotation " + ai.name().toString() + " layer being " + l);
                 } else {
                     l = ctx.mapping.getAnnotations().get(ai.name().packagePrefix());
                     if (l != null) {
                         ctx.layers.addAll(l);
                         //System.out.println("Find an annotation " + ai.name().packagePrefix() + " layer being " + l);
+                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATION, l, ai.name().packagePrefix());
                     } else {
                         // Pattern?
                         for (String s : ctx.mapping.getAnnotations().keySet()) {
                             if (Utils.isPattern(s)) {
                                 Pattern p = Pattern.compile(s);
                                 if (p.matcher(ai.name().toString()).matches()) {
-                                    ctx.layers.addAll(ctx.mapping.getAnnotations().get(s));
+                                    Set<Layer> layers = ctx.mapping.getAnnotations().get(s);
+                                    if  (layers != null) {
+                                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATION, layers, s);
+                                        ctx.layers.addAll(layers);
+                                    }
                                 }
                             }
                         }
@@ -555,6 +561,7 @@ public class DeploymentScanner implements AutoCloseable {
                 layer = l;
                 // System.out.print("Layer " + l.getName() + " is included by JNDI name " + jndiName);
                 ctx.layers.add(l);
+                LayerMapping.addRule(LayerMapping.RULE.BRING_DATASOURCE, l, jndiName);
             }
             // TODO, add the rule to layers that bring a jndi resource (eg: mail).
         }
@@ -570,6 +577,9 @@ public class DeploymentScanner implements AutoCloseable {
             if (index != -1) {
                 String pkgPrefix = className.substring(0, index);
                 l = map.get(pkgPrefix);
+                if (l != null) {
+                    LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE,l, pkgPrefix);
+                }
             }
             if (l == null) {
                 // Pattern?
@@ -579,9 +589,14 @@ public class DeploymentScanner implements AutoCloseable {
                         if (p.matcher(className).matches()) {
                             l = map.get(s);
                         }
+                        if (l != null) {
+                            LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE,l, s);
+                        }
                     }
                 }
             }
+        } else {
+            LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE, l, className);
         }
         if (l != null) {
             ctx.layers.addAll(l);
@@ -627,14 +642,17 @@ public class DeploymentScanner implements AutoCloseable {
                                     PatternOrValue key = parsedRule.getValueParts().get(0);
                                     // Check matches key
                                     boolean match = key.equalsOrMatches(prop);
+                                    PatternOrValue value = null;
                                     if (match && parsedRule.getValueParts().size() == 2) {
-                                        PatternOrValue value = parsedRule.getValueParts().get(1);
+                                        value = parsedRule.getValueParts().get(1);
                                         if (value != null) {
                                             match = value.equalsOrMatches(props.getProperty(prop));
                                         }
                                     }
                                     if (match) {
                                         consumer.accept(l);
+                                        LayerMapping.addRule(LayerMapping.RULE.PROPERTIES_FILE, l,
+                                                path.toString() + "==>" + prop + (value != null ? "==" + props.getProperty(prop) : ""));
                                     }
                                 }
                             }
@@ -644,11 +662,13 @@ public class DeploymentScanner implements AutoCloseable {
                     ParsedRule parsedRule = inspector.extractParsedRule(val);
                     parsedRule.iterateMatchedPaths((path, values) -> {
                         consumer.accept(l);
+                        LayerMapping.addRule(LayerMapping.RULE.EXPECTED_FILE, l, path.toString());
                     });
                 } else if (k.startsWith(LayerMetadata.NOT_EXPECTED_FILE)) {
                     ParsedRule parsedRule = inspector.extractParsedRule(val);
                     List<Path> paths = parsedRule.getMatchedPaths();
                     if (paths.size() == 0) {
+                        LayerMapping.addRule(LayerMapping.RULE.NOT_EXPECTED_FILE, l, val);
                         consumer.accept(l);
                     }
                 }

@@ -18,6 +18,7 @@
 package org.wildfly.glow;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -28,7 +29,23 @@ import java.util.TreeSet;
  * @author jdenise
  */
 public class LayerMapping {
-
+    public enum RULE {
+        ADD_ON,
+        ADD_ON_REQUIRED_DEPENDENCIES_FOUND,
+        ADD_ON_ALWAYS_INCLUDED,
+        ALWAYS_INCLUDED,
+        ANNOTATION,
+        BASE_LAYER,
+        BRING_DATASOURCE,
+        EXPECTED_FILE,
+        EXPLICIT,
+        JAVA_TYPE,
+        NOT_EXPECTED_FILE,
+        PROFILE_INCLUDED,
+        PROFILE_EXCLUDED,
+        PROPERTIES_FILE,
+        XML_PATH
+    }
     private final Map<String, Set<Layer>> constantPoolClassInfos = new HashMap<>();
     private final Map<String, Set<Layer>> annotations = new HashMap<>();
     private final Map<String, Layer> activeProfilesLayers = new HashMap<>();
@@ -173,4 +190,21 @@ public class LayerMapping {
     public static boolean isCondition(String k) {
         return k.startsWith(LayerMetadata.HIDDEN_IF) || k.startsWith(LayerMetadata.NO_CONFIGURATION_IF);
     }
+
+    public static void addRule(RULE rule, Set<Layer> layers, String c) {
+        for (Layer ll : layers) {
+            Set<String> set = ll.getMatchingRules().computeIfAbsent(rule, (value) -> new HashSet<>());
+            if (c != null) {
+                set.add(c);
+            }
+        }
+    }
+
+    public static void addRule(RULE rule, Layer l, String c) {
+        Set<String> set = l.getMatchingRules().computeIfAbsent(rule, (value) -> new HashSet<>());
+        if (c != null) {
+            set.add(c);
+        }
+    }
+
 }

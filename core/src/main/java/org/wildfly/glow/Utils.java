@@ -109,12 +109,14 @@ public final class Utils {
                         if (pattern.matcher(content).matches()) {
                             //System.out.println("RULE " + split[2] + "matched");
                             consumer.accept(layer);
+                            LayerMapping.addRule(LayerMapping.RULE.XML_PATH, layer, p.toString() + "==>" + expression + "==" + content);
                             break;
                         }
                     }
                 } else {
                     //System.out.println("RULE " + xpathExpression + " matched");
                     consumer.accept(layer);
+                    LayerMapping.addRule(LayerMapping.RULE.XML_PATH, layer, p.toString() + "==>" + expression);
                 }
             }
         }
