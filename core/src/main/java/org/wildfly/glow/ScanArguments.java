@@ -69,6 +69,8 @@ public interface ScanArguments {
 
     boolean isTechPreview();
 
+    boolean isVerbose();
+
     Set<Pattern> getExcludeArchivesFromScan();
 
     default Builder createScanArgumentsBuilder() {

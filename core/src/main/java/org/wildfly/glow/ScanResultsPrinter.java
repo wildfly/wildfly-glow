@@ -98,7 +98,23 @@ public class ScanResultsPrinter {
             }
         }
         writer.info(builder);
-
+        if (arguments.isVerbose()) {
+            StringBuilder rulesBuilder = new StringBuilder();
+            rulesBuilder.append("\nlayers inclusion rules").append("\n");
+            rulesBuilder.append("* ").append(scanResults.getBaseLayer()).append("\n");
+            for (LayerMapping.RULE rule : scanResults.getBaseLayer().getMatchingRules().keySet()) {
+                Set<String> str = scanResults.getBaseLayer().getMatchingRules().get(rule);
+                rulesBuilder.append("  - ").append(rule).append((str == null || str.isEmpty()) ? "" : ": " + str).append("\n");
+            }
+            for (Layer l : scanResults.getDecorators()) {
+                rulesBuilder.append("* ").append(l.getName()).append("\n");
+                for (LayerMapping.RULE rule : l.getMatchingRules().keySet()) {
+                    Set<String> str = l.getMatchingRules().get(rule);
+                    rulesBuilder.append("  - ").append(rule).append((str == null || str.isEmpty()) ? "" : ": " + str).append("\n");
+                }
+            }
+            writer.info(rulesBuilder.toString());
+        }
         if (!scanResults.getEnabledAddOns().isEmpty()) {
             writer.info("enabled add-ons");
             StringBuilder addOnsBuilder = new StringBuilder();
