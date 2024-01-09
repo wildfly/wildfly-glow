@@ -21,7 +21,7 @@
         <version.info.picocli>4.7.5</version.info.picocli>
         <version.org.ow2.asm>9.5</version.org.ow2.asm>
         <version.biz.aQute.bnd>6.4.0</version.biz.aQute.bnd>
-        <version.org.wildfly.plugins.wildfly-plugin-tools>1.0.0.Beta1</version.org.wildfly.plugins.wildfly-plugin-tools>
+        <version.org.wildfly.plugins.wildfly-plugin-tools>1.0.0.Beta2</version.org.wildfly.plugins.wildfly-plugin-tools>
         <version.com.puppycrawl.tools.checkstyle>8.18</version.com.puppycrawl.tools.checkstyle>
         <version.com.fasterxml.jackson.core>2.14.2</version.com.fasterxml.jackson.core>
         <version.io.smallrye.jandex>3.0.3</version.io.smallrye.jandex>
@@ -250,12 +250,6 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-plugin-tools</artifactId>
                 <version>${version.org.wildfly.plugins.wildfly-plugin-tools}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>*</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.wildfly.galleon-plugins</groupId>
