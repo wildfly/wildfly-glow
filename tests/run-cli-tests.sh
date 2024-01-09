@@ -116,6 +116,30 @@ test \
 "" \
 cloud
 
+echo Provision a server
+java -jar $jar scan examples/war/kitchensink.war --provision=SERVER
+
+if [ $? -ne 0 ]; then
+    echo "Error, check log"
+    exit 1
+fi
+
+echo Provision a bootable JAR
+java -jar $jar scan examples/war/kitchensink.war --provision=BOOTABLE_JAR
+
+if [ $? -ne 0 ]; then
+    echo "Error, check log"
+    exit 1
+fi
+
+echo Produce a provisioning.xml
+java -jar $jar scan examples/war/kitchensink.war --provision=PROVISIONING_XML
+
+if [ $? -ne 0 ]; then
+    echo "Error, check log"
+    exit 1
+fi
+
 if [ "$test_failure" -eq 1 ]; then
   echo "There were test failures! See the above output for details."
   exit 1
