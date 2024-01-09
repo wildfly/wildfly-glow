@@ -76,4 +76,9 @@ public interface Constants {
 
     String WILDFLY_GLOW = "wildfly-glow";
 
+    String PROVISION_OUTPUT_DIR_OPTION = "--output-dir";
+
+    String PROVISION_OUTPUT_DIR_OPTION_SHORT = "-d";
+
+    String PROVISION_OUTPUT_DIR_LABEL = "<output directory>";
 }
