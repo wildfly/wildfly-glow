@@ -87,6 +87,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
     Optional<OutputFormat> provision;
 
+    @CommandLine.Option(names = {Constants.PROVISION_OUTPUT_DIR_OPTION_SHORT, Constants.PROVISION_OUTPUT_DIR_OPTION}, paramLabel = Constants.PROVISION_OUTPUT_DIR_LABEL)
+    Optional<String> provisionOutputDir;
+
     @CommandLine.Option(names = {Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT, Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION},
             split = ",", paramLabel = Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL)
     Set<String> excludeArchivesFromScan = new HashSet<>();
@@ -179,11 +182,13 @@ public class ScanCommand extends AbstractCommand {
         } else {
             print();
             String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
-            Path target = Paths.get("server-" + vers);
+            Path target = Paths.get(provisionOutputDir.orElse("server-" + vers));
             IoUtils.recursiveDelete(target);
             switch (provision.get()) {
                 case BOOTABLE_JAR: {
-                    target = Paths.get("");
+                    if (provisionOutputDir.isEmpty()) {
+                        target = Paths.get("");
+                    }
                     print("@|bold Building WildFly Bootable JAR file...|@");
                     break;
                 }
