@@ -44,15 +44,6 @@
                 <groupId>org.wildfly.glow</groupId>
                 <artifactId>wildfly-glow-arquillian-plugin</artifactId>
                 <version>${project.version}</version>
-                <configuration>
-                    <feature-packs>
-                        <feature-pack>
-                            <groupId>org.wildfly</groupId>
-                            <artifactId>wildfly-galleon-pack</artifactId>
-                            <version>29.0.1.Final</version>
-                        </feature-pack>
-                    </feature-packs>
-                </configuration>
                 <executions>
                     <execution>
                         <id>scan</id>
@@ -61,6 +52,24 @@
                         </goals>
                         <phase>test-compile</phase>
                         <configuration>
+                            <enable-verbose-output>true</enable-verbose-output>
+                            <expected-discovery>[]==>ee-core-profile-server</expected-discovery>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>scan-custom</id>
+                        <goals>
+                            <goal>scan</goal>
+                        </goals>
+                        <phase>test-compile</phase>
+                        <configuration>
+                            <feature-packs>
+                                <feature-pack>
+                                    <groupId>org.wildfly</groupId>
+                                    <artifactId>wildfly-galleon-pack</artifactId>
+                                    <version>29.0.1.Final</version>
+                                </feature-pack>
+                            </feature-packs>
                             <enable-verbose-output>true</enable-verbose-output>
                             <expected-discovery>[]==>ee-core-profile-server</expected-discovery>
                         </configuration>

@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +74,7 @@ import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.MavenChannel;
+import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
@@ -138,6 +140,7 @@ public class ScanMojo extends AbstractMojo {
     /**
      * List of feature-packs that are scanned and injected in the generated
      * provisioning.xml.
+     * This option can't be used when  {@code server-version} or {@code preview} or {@code context} are used.
      */
     @Parameter(required = false, alias = "feature-packs")
     List<GalleonFeaturePack> featurePacks = Collections.emptyList();
@@ -156,10 +159,10 @@ public class ScanMojo extends AbstractMojo {
     private List<String> dependenciesToScan = Collections.emptyList();
 
     /**
-     * Execution profiles.
+     * Execution profile.
      */
-    @Parameter(alias = "profiles", required = false, property = "org.wildfly.glow.profiles")
-    Set<String> profiles = Collections.emptySet();
+    @Parameter(alias = "profile", required = false, property = "org.wildfly.glow.profile")
+    private String profile;
 
     /**
      * Do not lookup deployments to scan.
@@ -216,7 +219,7 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(property = "org.wildfly.glow.verbose")
     private boolean verbose = false;
 
-        /**
+    /**
      * A list of channels used for resolving artifacts while provisioning.
      * <p>
      * Defining a channel:
@@ -253,8 +256,41 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(alias = "channels", property = "org.wildfly.glow.channels")
     List<ChannelConfiguration> channels;
 
+    /**
+     * A WildFly server version. The latest version is the default, only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "server-version", property = "org.wildfly.glow.server-version")
+    private String serverVersion;
+
+    /**
+     * Use WildFly Preview server, only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "preview-server", property = "org.wildfly.glow.preview-server")
+    private boolean previewServer;
+
+    /**
+     * Execution context, can be {@code cloud} or {@code bare-metal}, default value is {@code bare-metal},
+     * only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "context", property = "org.wildfly.glow.context")
+    private String context;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        // Check configuration
+        if (!featurePacks.isEmpty()) {
+            if (serverVersion != null) {
+                throw new MojoExecutionException("server-version can't be set when feature-packs have been set.");
+            }
+            if (context != null) {
+                throw new MojoExecutionException("context can't be set when feature-packs have been set.");
+            }
+            if (previewServer) {
+                throw new MojoExecutionException("preview-server can't be set when feature-packs have been set.");
+            }
+        }
+
         // Make sure that the 'hidden' properties used by the Arguments class come from the Maven configuration
         HiddenPropertiesAccessor.setOverrides(systemPropertyVariables);
         try {
@@ -343,16 +379,29 @@ public class ScanMojo extends AbstractMojo {
                     throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
                 }
             }
-            Arguments arguments = Arguments.scanBuilder().
+            Set<String> profiles = new HashSet<>();
+            if (profile != null) {
+                profiles.add(profile);
+            }
+            ScanArguments.Builder argumentsBuilder = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
                     setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
-                    setProvisoningXML(buildInputConfig(outputFolder, artifactResolver)).
                     setUserEnabledAddOns(addOns).
                     setConfigName(configName).
                     setSuggest((enableVerboseOutput || getLog().isDebugEnabled())).
                     setJndiLayers(layersForJndi).
                     setVerbose(verbose || getLog().isDebugEnabled()).
-                    setOutput(OutputFormat.PROVISIONING_XML).build();
+                    setOutput(OutputFormat.PROVISIONING_XML).
+                    setTechPreview(previewServer).
+                    setExecutionProfiles(profiles).
+                    setExecutionContext(context).setVersion(serverVersion);
+
+            if (!featurePacks.isEmpty()) {
+                argumentsBuilder.setProvisoningXML(buildInputConfig(outputFolder, artifactResolver));
+            }
+
+            Arguments arguments = argumentsBuilder.build();
+
             try (ScanResults results = GlowSession.scan(artifactResolver,
                     arguments, writer)) {
             boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
