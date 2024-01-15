@@ -255,3 +255,16 @@ You can print the rules that selected the Galleon Layers. To do so set the `<ver
 </discover-provisioning-info>
 ----
 
+An example of output:
+
+----
+...
+layers inclusion rules
+* ee-core-profile-server
+  - BASE_LAYER
+* ee-concurrency
+  - JAVA_TYPE: [jakarta.enterprise.concurren.*]
+* undertow-https
+  - ADD_ON
+...
+----

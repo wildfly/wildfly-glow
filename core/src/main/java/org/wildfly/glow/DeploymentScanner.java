@@ -175,7 +175,7 @@ public class DeploymentScanner implements AutoCloseable {
                     if (l != null) {
                         ctx.layers.addAll(l);
                         //System.out.println("Find an annotation " + ai.name().packagePrefix() + " layer being " + l);
-                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATION, l, ai.name().packagePrefix());
+                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATION, l, ai.name().packagePrefix() + ".*");
                     } else {
                         // Pattern?
                         for (String s : ctx.mapping.getAnnotations().keySet()) {
@@ -578,7 +578,7 @@ public class DeploymentScanner implements AutoCloseable {
                 String pkgPrefix = className.substring(0, index);
                 l = map.get(pkgPrefix);
                 if (l != null) {
-                    LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE,l, pkgPrefix);
+                    LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE,l, pkgPrefix + ".*");
                 }
             }
             if (l == null) {
