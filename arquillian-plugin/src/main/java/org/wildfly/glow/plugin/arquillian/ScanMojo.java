@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +74,7 @@ import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.MavenChannel;
+import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
@@ -138,15 +140,10 @@ public class ScanMojo extends AbstractMojo {
     /**
      * List of feature-packs that are scanned and injected in the generated
      * provisioning.xml.
+     * This option can't be used when  {@code server-version} or {@code preview} or {@code context} are used.
      */
     @Parameter(required = false, alias = "feature-packs")
     List<GalleonFeaturePack> featurePacks = Collections.emptyList();
-
-    /**
-     * Enable verbose output (containing identified errors, suggestions, ...).
-     */
-    @Parameter(alias = "enable-verbose-output", property = "org.wildfly.glow.enable-verbose-output")
-    boolean enableVerboseOutput = false;
 
     /**
      * GroupId:ArtifactId of dependencies that contain test classes to scan for
@@ -156,10 +153,10 @@ public class ScanMojo extends AbstractMojo {
     private List<String> dependenciesToScan = Collections.emptyList();
 
     /**
-     * Execution profiles.
+     * Execution profile.
      */
-    @Parameter(alias = "profiles", required = false, property = "org.wildfly.glow.profiles")
-    Set<String> profiles = Collections.emptySet();
+    @Parameter(alias = "profile", required = false, property = "org.wildfly.glow.profile")
+    private String profile;
 
     /**
      * Do not lookup deployments to scan.
@@ -213,10 +210,13 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(alias = "expected-errors", property = "org.wildfly.glow.expected-errors")
     private List<String> expectedErrors = Collections.emptyList();
 
+    /**
+     * Enable verbose output (containing identified errors, suggestions, ...).
+     */
     @Parameter(property = "org.wildfly.glow.verbose")
     private boolean verbose = false;
 
-        /**
+    /**
      * A list of channels used for resolving artifacts while provisioning.
      * <p>
      * Defining a channel:
@@ -253,8 +253,48 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(alias = "channels", property = "org.wildfly.glow.channels")
     List<ChannelConfiguration> channels;
 
+    /**
+     * A WildFly server version. The latest version is the default, only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "server-version", property = "org.wildfly.glow.server-version")
+    private String serverVersion;
+
+    /**
+     * Use WildFly Preview server, only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "preview-server", property = "org.wildfly.glow.preview-server")
+    private boolean previewServer;
+
+    /**
+     * Execution context, can be {@code cloud} or {@code bare-metal}, default value is {@code bare-metal},
+     * only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "context", property = "org.wildfly.glow.context")
+    private String context;
+
+    /**
+     * By default the execution is aborted when unknown errors are reported. You can disable the check done for errors by
+     * setting this option to true.
+     */
+    @Parameter(alias = "check-errors", property = "org.wildfly.glow.check-errors")
+    private boolean checkErrors = true;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        // Check configuration
+        if (!featurePacks.isEmpty()) {
+            if (serverVersion != null) {
+                throw new MojoExecutionException("server-version can't be set when feature-packs have been set.");
+            }
+            if (context != null) {
+                throw new MojoExecutionException("context can't be set when feature-packs have been set.");
+            }
+            if (previewServer) {
+                throw new MojoExecutionException("preview-server can't be set when feature-packs have been set.");
+            }
+        }
+
         // Make sure that the 'hidden' properties used by the Arguments class come from the Maven configuration
         HiddenPropertiesAccessor.setOverrides(systemPropertyVariables);
         try {
@@ -343,76 +383,110 @@ public class ScanMojo extends AbstractMojo {
                     throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
                 }
             }
-            Arguments arguments = Arguments.scanBuilder().
+            Set<String> profiles = new HashSet<>();
+            if (profile != null) {
+                profiles.add(profile);
+            }
+            ScanArguments.Builder argumentsBuilder = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
                     setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
-                    setProvisoningXML(buildInputConfig(outputFolder, artifactResolver)).
                     setUserEnabledAddOns(addOns).
                     setConfigName(configName).
-                    setSuggest((enableVerboseOutput || getLog().isDebugEnabled())).
+                    setSuggest((verbose || getLog().isDebugEnabled())).
                     setJndiLayers(layersForJndi).
                     setVerbose(verbose || getLog().isDebugEnabled()).
-                    setOutput(OutputFormat.PROVISIONING_XML).build();
+                    setOutput(OutputFormat.PROVISIONING_XML).
+                    setTechPreview(previewServer).
+                    setExecutionContext(context).setVersion(serverVersion);
+
+            if (!featurePacks.isEmpty()) {
+                argumentsBuilder.setProvisoningXML(buildInputConfig(outputFolder, artifactResolver));
+            }
+
+            Arguments arguments = argumentsBuilder.build();
+
             try (ScanResults results = GlowSession.scan(artifactResolver,
                     arguments, writer)) {
-            boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
-            if (skipTests) {
-                getLog().warn("Tests are disabled, not checking for expected discovered layers.");
-            } else {
-                if (expectedDiscovery != null) {
-                    String compact = results.getCompactInformation();
-                    if (!expectedDiscovery.equals(compact)) {
-                        throw new MojoExecutionException("Error in glow discovery.\n"
-                                + "-Expected: " + expectedDiscovery + "\n"
-                                + "-Found   : " + compact);
-                    }
-                }
-                if (results.getErrorSession().hasErrors()) {
-                    if (expectedErrors.isEmpty()) {
-                        results.outputInformation(writer);
-                        throw new MojoExecutionException("An error has been reported and expected-errors has not been set.");
-                    }
-                    List<IdentifiedError> errors = new ArrayList<>();
-                    for (IdentifiedError err : results.getErrorSession().getErrors()) {
-                        if (!err.isFixed()) {
-                            errors.add(err);
+                boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
+                if (skipTests) {
+                    getLog().warn("Tests are disabled, not checking for expected discovered layers.");
+                } else {
+                    if (expectedDiscovery != null) {
+                        String compact = results.getCompactInformation();
+                        if (!expectedDiscovery.equals(compact)) {
+                            throw new MojoExecutionException("Error in glow discovery.\n"
+                                    + "-Expected: " + expectedDiscovery + "\n"
+                                    + "-Found   : " + compact);
                         }
                     }
-                    if (expectedErrors.size() != errors.size()) {
-                        List<String> descriptions = new ArrayList<>();
-                        for (IdentifiedError err : errors) {
-                            descriptions.add(err.getDescription());
+                    if (results.getErrorSession().hasErrors()) {
+                        boolean errorsFound = false;
+                        if (expectedErrors.isEmpty()) {
+                            results.outputInformation(writer);
+                            errorsFound = true;
+                            String msg = "An error has been reported and expected-errors has not been set.";
+                            if (checkErrors) {
+                                throw new MojoExecutionException(msg);
+                            } else {
+                                getLog().warn(msg);
+                                return;
+                            }
                         }
-                        throw new MojoExecutionException("Number of expected errors mismatch. Expected "
-                                + expectedErrors.size() + " reported " + errors.size() + ".\n"
-                                + "Reported Errors " + descriptions + "\n"
-                                + "Expected Errors " + expectedErrors);
-                    }
-                    Iterator<IdentifiedError> it = errors.iterator();
-                    while (it.hasNext()) {
-                        IdentifiedError err = it.next();
-                        if (expectedErrors.contains(err.getDescription())) {
-                            it.remove();
+                        List<IdentifiedError> errors = new ArrayList<>();
+                        for (IdentifiedError err : results.getErrorSession().getErrors()) {
+                            if (!err.isFixed()) {
+                                errors.add(err);
+                            }
                         }
-                    }
-                    it = errors.iterator();
-                    if (it.hasNext()) {
-                        StringBuilder builder = new StringBuilder();
+                        if (expectedErrors.size() != errors.size()) {
+                            List<String> descriptions = new ArrayList<>();
+                            for (IdentifiedError err : errors) {
+                                descriptions.add(err.getDescription());
+                            }
+                            String msg = "Number of expected errors mismatch. Expected "
+                                    + expectedErrors.size() + " reported " + errors.size() + ".\n"
+                                    + "Reported Errors " + descriptions + "\n"
+                                    + "Expected Errors " + expectedErrors;
+                            errorsFound = true;
+                            if (checkErrors) {
+                                throw new MojoExecutionException(msg);
+                            } else {
+                                getLog().warn(msg);
+                            }
+                        }
+                        Iterator<IdentifiedError> it = errors.iterator();
                         while (it.hasNext()) {
                             IdentifiedError err = it.next();
-                            builder.append(err.getDescription()).append("\n");
+                            if (expectedErrors.contains(err.getDescription())) {
+                                it.remove();
+                            }
                         }
-                        throw new MojoExecutionException("The following errors are unexpected:\n" + builder.toString());
-                    }
-                    getLog().info("Expected errors found in glow scanning results. "
-                            + " The test execution should fix them (eg: add missing datasources)");
-                } else {
-                    if (!expectedErrors.isEmpty()) {
-                        throw new MojoExecutionException("expected-errors contains errors but no error reported.");
+                        it = errors.iterator();
+                        if (it.hasNext()) {
+                            StringBuilder builder = new StringBuilder();
+                            while (it.hasNext()) {
+                                IdentifiedError err = it.next();
+                                builder.append(err.getDescription()).append("\n");
+                            }
+                            errorsFound = true;
+                            String msg = "The following errors are unexpected:\n" + builder.toString();
+                            if (checkErrors) {
+                                throw new MojoExecutionException(msg);
+                            } else {
+                                getLog().warn(msg);
+                            }
+                        }
+                        if(!errorsFound) {
+                            getLog().info("Expected errors found in glow scanning results. "
+                                + " The test execution should fix them (eg: add missing datasources)");
+                        }
+                    } else {
+                        if (!expectedErrors.isEmpty()) {
+                            throw new MojoExecutionException("expected-errors contains errors but no error reported.");
+                        }
                     }
                 }
-            }
-                if (enableVerboseOutput || getLog().isDebugEnabled()) {
+                if (verbose || getLog().isDebugEnabled()) {
                     results.outputInformation(writer);
                 } else {
                     results.outputCompactInformation(writer);
@@ -478,7 +552,7 @@ public class ScanMojo extends AbstractMojo {
         }
         Path lst = outputFolder.resolve(TEST_PATHS);
         Files.write(lst, pathList.toString().getBytes());
-        if (enableVerboseOutput) {
+        if (verbose) {
             getLog().info("SCANNER: Test elements: " + pathList);
             getLog().info("SCANNER: Classes: " + classesLst);
         }
@@ -487,10 +561,10 @@ public class ScanMojo extends AbstractMojo {
         collectCpPaths(System.getProperty("java.home"),
                 Thread.currentThread().getContextClassLoader(),
                 cp,
-                enableVerboseOutput,
+                verbose,
                 reducedCp,
                 getLog());
-        if (enableVerboseOutput) {
+        if (verbose) {
             getLog().info("SCANNER: classpath: " + cp);
             getLog().info("SCANNER: bootstrap classpath: " + reducedCp);
         }
@@ -510,7 +584,7 @@ public class ScanMojo extends AbstractMojo {
         cmd.add(lst.toAbsolutePath().toString());
         cmd.add(classesLst.toString());
         cmd.add(outputFolder.toAbsolutePath().toString());
-        cmd.add(enableVerboseOutput || getLog().isDebugEnabled() ? "true" : "false");
+        cmd.add(verbose || getLog().isDebugEnabled() ? "true" : "false");
         final ProcessBuilder builder = new ProcessBuilder(cmd)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT);
@@ -528,9 +602,6 @@ public class ScanMojo extends AbstractMojo {
             for (URL url : ((URLClassLoader) cl).getURLs()) {
                 final String filePath;
                 File file;
-                if (enableVerboseOutput) {
-                    log.info("SCANNER: CP file url " + url);
-                }
                 try {
                     file = new File(url.toURI());
                     filePath = file.getAbsolutePath();

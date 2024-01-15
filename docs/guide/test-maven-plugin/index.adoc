@@ -34,6 +34,13 @@ The left part of the arrow contains the list of the discovered Layers according 
 The right part is what will get provisioned. Composed of a base Layer (always `ee-core-profile-server`) and  
 a list of the discovered Layers that has been cleaned-up to avoid to include dependencies.
 
+Note: In case the `ha` profile is enabled, you need to prefix the expected discovery with the `[ha]` prefix. For example:
+
+
+```
+<expected-discovery>[ha][cdi, ee-integration, ejb, ejb-lite, elytron-oidc-client, naming, servlet]==>ee-core-profile-server,ejb,elytron-oidc-client</expected-discovery>
+```
+
 BTW: The link:https://github.com/wildfly/wildfly/tree/main/testsuite/integration[WildFly integration tests] contain 
 a lot of examples of WildFly Glow scanning executions that you can use as a starting-point.
 
@@ -60,6 +67,12 @@ That is generally an error to ignore, the test itself should add the datasource 
 
 * `no default datasource found error`: It has been identified that a default datasource is required. 
 That can be fixed by adding the add-on `h2-database:default`.
+
+You can disable the check for errors by setting `<check-errors>false</check-errors>`.
+
+Note: When `<verbose>true</verbose>` is set, the list of expected errors can be different (it contains more details on the error), 
+make sure to suppress the expected errors when debugging or set `<check-errors>false</check-errors>`.
+
 
 ### Selecting a surefire execution to scan
 
@@ -110,7 +123,97 @@ the dependencies coordinates (`groupId:artifactId`) can be configured in the plu
 </dependenciesToScan>
 ----
 
-### A pom.xml file extract
+### Specifying an execution context
+
+By default the `bare-metal` context is used. In case you need to produce a server to be executed on the cloud, 
+use the `<context>cloud</context>` element.
+
+### Specifying an execution profile
+
+In case you want to produce an High Available WildFly server, use the `<profile>ha</profile>` element.
+
+### Using WildFly Preview server
+
+In case you want to use a WildFly Preview server, use the `<preview-server>true</preview-server>` element.
+
+### Specifying a WildFly server version
+
+By default the latest WildFly server version is used. 
+In case you want to use a specific WildFly version, set the `<server-version>server version</server-version>` element.
+
+### Using a specific set of Galleon feature-packs
+
+By default the latest WildFly Galleon feature-pack and extra Galleon feature-packs are used. 
+You have the ability to set a list of feature-packs using the `<feature-packs>` element. 
+
+
+### Understanding which rule selected a given Galleon layer
+
+When setting `<verbose>true</verbose>`, the set of rules that selected a given layer are printed in the console. Output example:
+
+----
+...
+layers inclusion rules
+* ee-core-profile-server
+  - BASE_LAYER
+* ee-concurrency
+  - JAVA_TYPE: [jakarta.enterprise.concurrent.*]
+* undertow-https
+  - ADD_ON
+...
+----
+
+### A simple pom.xml file extract
+
+In this extract, the latest WildFly server version is used. 
+
+[source,xml,subs=attributes+]
+----
+...
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.wildfly.glow</groupId>
+            <artifactId>wildfly-glow-arquillian-plugin</artifactId>
+            <version>1.0.0.Beta4</version>
+            <configuration>
+              <expected-discovery>[cdi, ee-concurrency, ee-integration, elytron, messaging-activemq, naming, servlet, undertow]==>ee-core-profile-server,ee-concurrency,messaging-activemq</expected-discovery>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>scan</id>
+                    <goals>
+                        <goal>scan</goal>
+                    </goals>
+                    <phase>test-compile</phase>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.wildfly.plugins</groupId>
+            <artifactId>wildfly-maven-plugin</artifactId>
+            <version>5.0.0.Alpha2</version>
+            <configuration>
+                <overwrite-provisioned-server>true</overwrite-provisioned-server>
+                <provisioning-dir>${project.build.directory}/wildfly</provisioning-dir>
+                <provisioning-file>${project.build.directory}/glow-scan/provisioning.xml</provisioning-file>
+            </configuration>
+            <executions>
+                <execution>
+                    <id>test-provisioning</id>
+                    <goals>
+                        <goal>provision</goal>
+                    </goals>
+                    <phase>test-compile</phase>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+...
+----
+
+### A custom pom.xml file extract
 
 In this extract, WildFly 30.0.1.Final is used, the `ssl` add-on is enabled, expected discovery and expected errors are configured.
 The WildFly Maven Plugin is used to provision the server used by tests.
