@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.0.0.Beta4,</span>
-<span id="revdate">2024-01-10T09:17:45Z</span>
+<span id="revnumber">version 1.0.0.Beta5,</span>
+<span id="revdate">2024-01-16T14:19:10Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -478,10 +478,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_selecting_a_surefire_execution_to_scan">4.1. Selecting a surefire execution to scan</a></li>
 <li><a href="#_aggregating_multiple_server_configurations_in_the_same_provisioning_xml">4.2. Aggregating multiple server configurations in the same provisioning.xml</a></li>
 <li><a href="#_retrieving_the_test_classes_from_maven_dependencies">4.3. Retrieving the test classes from Maven dependencies</a></li>
-<li><a href="#_a_pom_xml_file_extract">4.4. A pom.xml file extract</a></li>
-<li><a href="#_goals_overview">4.5. Goals overview</a></li>
-<li><a href="#_help">4.6. help</a></li>
-<li><a href="#_scan">4.7. scan</a></li>
+<li><a href="#_specifying_an_execution_context">4.4. Specifying an execution context</a></li>
+<li><a href="#_specifying_an_execution_profile">4.5. Specifying an execution profile</a></li>
+<li><a href="#_using_wildfly_preview_server">4.6. Using WildFly Preview server</a></li>
+<li><a href="#_specifying_a_wildfly_server_version">4.7. Specifying a WildFly server version</a></li>
+<li><a href="#_using_a_specific_set_of_galleon_feature_packs">4.8. Using a specific set of Galleon feature-packs</a></li>
+<li><a href="#_understanding_which_rule_selected_a_given_galleon_layer">4.9. Understanding which rule selected a given Galleon layer</a></li>
+<li><a href="#_a_simple_pom_xml_file_extract">4.10. A simple pom.xml file extract</a></li>
+<li><a href="#_a_custom_pom_xml_file_extract">4.11. A custom pom.xml file extract</a></li>
+<li><a href="#_goals_overview">4.12. Goals overview</a></li>
+<li><a href="#_help">4.13. help</a></li>
+<li><a href="#_scan">4.14. scan</a></li>
 </ul>
 </li>
 <li><a href="#glow_server">5. Support for latest WildFly</a></li>
@@ -911,6 +918,22 @@ Java reflection, usage of JNDI API), you can evolve the <code>discover-provision
 <span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>An example of output:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>...
+layers inclusion rules
+* ee-core-profile-server
+  - BASE_LAYER
+* ee-concurrency
+  - JAVA_TYPE: [jakarta.enterprise.concurren.*]
+* undertow-https
+  - ADD_ON
+...</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -925,7 +948,7 @@ Java reflection, usage of JNDI API), you can evolve the <code>discover-provision
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Beta4<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Beta5<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -957,6 +980,14 @@ maven plugin to contain the element <code>&lt;expected-discovery&gt;</code>. For
 <p>The left part of the arrow contains the list of the discovered Layers according to the scanning.
 The right part is what will get provisioned. Composed of a base Layer (always <code>ee-core-profile-server</code>) and
 a list of the discovered Layers that has been cleaned-up to avoid to include dependencies.</p>
+</div>
+<div class="paragraph">
+<p>Note: In case the <code>ha</code> profile is enabled, you need to prefix the expected discovery with the <code>[ha]</code> prefix. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code>&lt;expected-discovery&gt;[ha][cdi, ee-integration, ejb, ejb-lite, elytron-oidc-client, naming, servlet]==&gt;ee-core-profile-server,ejb,elytron-oidc-client&lt;/expected-discovery&gt;</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>BTW: The <a href="https://github.com/wildfly/wildfly/tree/main/testsuite/integration">WildFly integration tests</a> contain
@@ -997,6 +1028,13 @@ That is generally an error to ignore, the test itself should add the datasource 
 That can be fixed by adding the add-on <code>h2-database:default</code>.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>You can disable the check for errors by setting <code>&lt;check-errors&gt;false&lt;/check-errors&gt;</code>.</p>
+</div>
+<div class="paragraph">
+<p>Note: When <code>&lt;verbose&gt;true&lt;/verbose&gt;</code> is set, the list of expected errors can be different (it contains more details on the error),
+make sure to suppress the expected errors when debugging or set <code>&lt;check-errors&gt;false&lt;/check-errors&gt;</code>.</p>
 </div>
 <div class="sect2">
 <h3 id="_selecting_a_surefire_execution_to_scan"><a class="anchor" href="#_selecting_a_surefire_execution_to_scan"></a><a class="link" href="#_selecting_a_surefire_execution_to_scan">4.1. Selecting a surefire execution to scan</a></h3>
@@ -1059,7 +1097,111 @@ the dependencies coordinates (<code>groupId:artifactId</code>) can be configured
 </div>
 </div>
 <div class="sect2">
-<h3 id="_a_pom_xml_file_extract"><a class="anchor" href="#_a_pom_xml_file_extract"></a><a class="link" href="#_a_pom_xml_file_extract">4.4. A pom.xml file extract</a></h3>
+<h3 id="_specifying_an_execution_context"><a class="anchor" href="#_specifying_an_execution_context"></a><a class="link" href="#_specifying_an_execution_context">4.4. Specifying an execution context</a></h3>
+<div class="paragraph">
+<p>By default the <code>bare-metal</code> context is used. In case you need to produce a server to be executed on the cloud,
+use the <code>&lt;context&gt;cloud&lt;/context&gt;</code> element.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_specifying_an_execution_profile"><a class="anchor" href="#_specifying_an_execution_profile"></a><a class="link" href="#_specifying_an_execution_profile">4.5. Specifying an execution profile</a></h3>
+<div class="paragraph">
+<p>In case you want to produce an High Available WildFly server, use the <code>&lt;profile&gt;ha&lt;/profile&gt;</code> element.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_wildfly_preview_server"><a class="anchor" href="#_using_wildfly_preview_server"></a><a class="link" href="#_using_wildfly_preview_server">4.6. Using WildFly Preview server</a></h3>
+<div class="paragraph">
+<p>In case you want to use a WildFly Preview server, use the <code>&lt;preview-server&gt;true&lt;/preview-server&gt;</code> element.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_specifying_a_wildfly_server_version"><a class="anchor" href="#_specifying_a_wildfly_server_version"></a><a class="link" href="#_specifying_a_wildfly_server_version">4.7. Specifying a WildFly server version</a></h3>
+<div class="paragraph">
+<p>By default the latest WildFly server version is used.
+In case you want to use a specific WildFly version, set the <code>&lt;server-version&gt;server version&lt;/server-version&gt;</code> element.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_a_specific_set_of_galleon_feature_packs"><a class="anchor" href="#_using_a_specific_set_of_galleon_feature_packs"></a><a class="link" href="#_using_a_specific_set_of_galleon_feature_packs">4.8. Using a specific set of Galleon feature-packs</a></h3>
+<div class="paragraph">
+<p>By default the latest WildFly Galleon feature-pack and extra Galleon feature-packs are used.
+You have the ability to set a list of feature-packs using the <code>&lt;feature-packs&gt;</code> element.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_understanding_which_rule_selected_a_given_galleon_layer"><a class="anchor" href="#_understanding_which_rule_selected_a_given_galleon_layer"></a><a class="link" href="#_understanding_which_rule_selected_a_given_galleon_layer">4.9. Understanding which rule selected a given Galleon layer</a></h3>
+<div class="paragraph">
+<p>When setting <code>&lt;verbose&gt;true&lt;/verbose&gt;</code>, the set of rules that selected a given layer are printed in the console. Output example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>...
+layers inclusion rules
+* ee-core-profile-server
+  - BASE_LAYER
+* ee-concurrency
+  - JAVA_TYPE: [jakarta.enterprise.concurrent.*]
+* undertow-https
+  - ADD_ON
+...</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_a_simple_pom_xml_file_extract"><a class="anchor" href="#_a_simple_pom_xml_file_extract"></a><a class="link" href="#_a_simple_pom_xml_file_extract">4.10. A simple pom.xml file extract</a></h3>
+<div class="paragraph">
+<p>In this extract, the latest WildFly server version is used.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml">...
+<span style="color:#070;font-weight:bold">&lt;build&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Beta4<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+              <span style="color:#070;font-weight:bold">&lt;expected-discovery&gt;</span>[cdi, ee-concurrency, ee-integration, elytron, messaging-activemq, naming, servlet, undertow]==<span style="color:#F00;background-color:#FAA">&gt;</span>ee-core-profile-server,ee-concurrency,messaging-activemq<span style="color:#070;font-weight:bold">&lt;/expected-discovery&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;id&gt;</span>scan<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>scan<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;phase&gt;</span>test-compile<span style="color:#070;font-weight:bold">&lt;/phase&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.plugins<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>wildfly-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>5.0.0.Alpha2<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;overwrite-provisioned-server&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/overwrite-provisioned-server&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;provisioning-dir&gt;</span>${project.build.directory}/wildfly<span style="color:#070;font-weight:bold">&lt;/provisioning-dir&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;provisioning-file&gt;</span>${project.build.directory}/glow-scan/provisioning.xml<span style="color:#070;font-weight:bold">&lt;/provisioning-file&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;executions&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;execution&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;id&gt;</span>test-provisioning<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;goals&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;goal&gt;</span>provision<span style="color:#070;font-weight:bold">&lt;/goal&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/goals&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;phase&gt;</span>test-compile<span style="color:#070;font-weight:bold">&lt;/phase&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/execution&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/executions&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/build&gt;</span>
+...</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_a_custom_pom_xml_file_extract"><a class="anchor" href="#_a_custom_pom_xml_file_extract"></a><a class="link" href="#_a_custom_pom_xml_file_extract">4.11. A custom pom.xml file extract</a></h3>
 <div class="paragraph">
 <p>In this extract, WildFly 30.0.1.Final is used, the <code>ssl</code> add-on is enabled, expected discovery and expected errors are configured.
 The WildFly Maven Plugin is used to provision the server used by tests.</p>
@@ -1127,7 +1269,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_goals_overview"><a class="anchor" href="#_goals_overview"></a><a class="link" href="#_goals_overview">4.5. Goals overview</a></h3>
+<h3 id="_goals_overview"><a class="anchor" href="#_goals_overview"></a><a class="link" href="#_goals_overview">4.12. Goals overview</a></h3>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -1146,16 +1288,16 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_help"><a class="anchor" href="#_help"></a><a class="link" href="#_help">4.6. help</a></h3>
+<h3 id="_help"><a class="anchor" href="#_help"></a><a class="link" href="#_help">4.13. help</a></h3>
 <div class="sect3">
-<h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.6.1. wildfly-glow-arquillian:help</a></h4>
+<h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta4:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta5:help</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_description"><a class="anchor" href="#_description"></a><a class="link" href="#_description">4.6.2. Description</a></h4>
+<h4 id="_description"><a class="anchor" href="#_description"></a><a class="link" href="#_description">4.13.2. Description</a></h4>
 <div class="paragraph">
 <p>Display help information on wildfly-glow-arquillian-plugin.<br>
 Call <code>mvn wildfly-glow-arquillian:help -Ddetail=true
@@ -1163,7 +1305,7 @@ Call <code>mvn wildfly-glow-arquillian:help -Ddetail=true
 </div>
 </div>
 <div class="sect3">
-<h4 id="_attributes"><a class="anchor" href="#_attributes"></a><a class="link" href="#_attributes">4.6.3. Attributes</a></h4>
+<h4 id="_attributes"><a class="anchor" href="#_attributes"></a><a class="link" href="#_attributes">4.13.3. Attributes</a></h4>
 <div class="ulist">
 <ul>
 <li>
@@ -1223,7 +1365,7 @@ goals will be displayed.<br>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_parameter_details"><a class="anchor" href="#_parameter_details"></a><a class="link" href="#_parameter_details">4.6.4. Parameter Details</a></h4>
+<h4 id="_parameter_details"><a class="anchor" href="#_parameter_details"></a><a class="link" href="#_parameter_details">4.13.4. Parameter Details</a></h4>
 <div class="paragraph">
 <p><a id="detail"></a> <strong>detail</strong><br>
 If <code>true</code>, display all settable properties for each
@@ -1306,22 +1448,22 @@ The maximum length of a display line, should be positive.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_scan"><a class="anchor" href="#_scan"></a><a class="link" href="#_scan">4.7. scan</a></h3>
+<h3 id="_scan"><a class="anchor" href="#_scan"></a><a class="link" href="#_scan">4.14. scan</a></h3>
 <div class="sect3">
-<h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.7.1. wildfly-glow-arquillian:scan</a></h4>
+<h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta4:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta5:scan</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_description_2"><a class="anchor" href="#_description_2"></a><a class="link" href="#_description_2">4.7.2. Description</a></h4>
+<h4 id="_description_2"><a class="anchor" href="#_description_2"></a><a class="link" href="#_description_2">4.14.2. Description</a></h4>
 <div class="paragraph">
 <p>(no description)</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_attributes_2"><a class="anchor" href="#_attributes_2"></a><a class="link" href="#_attributes_2">4.7.3. Attributes</a></h4>
+<h4 id="_attributes_2"><a class="anchor" href="#_attributes_2"></a><a class="link" href="#_attributes_2">4.14.3. Attributes</a></h4>
 <div class="ulist">
 <ul>
 <li>
@@ -1378,6 +1520,16 @@ aggregates.<br>
 <strong>Alias is</strong>: <code>channels</code>.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#checkErrors">[checkErrors]</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default the execution is aborted when unknown errors are
+reported. You can disable the check done for errors by setting this
+option to true.<br>
+<strong>User property is</strong>: <code>org.wildfly.glow.check-errors</code>.<br>
+<strong>Alias is</strong>: <code>check-errors</code>.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#configName">[configName]</a></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
@@ -1387,6 +1539,16 @@ aggregates.<br>
 <strong>Alias is</strong>: <code>config-name</code>.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#context">[context]</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Execution context, can be <code>cloud</code> or
+<code>bare-metal</code>, default value is <code>bare-metal</code>,
+only usable if no <code>feature-packs</code> have been set.<br>
+<strong>User property is</strong>: <code>org.wildfly.glow.context</code>.<br>
+<strong>Alias is</strong>: <code>context</code>.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#dependenciesToScan">[dependenciesToScan]</a></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>List</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
@@ -1394,15 +1556,6 @@ aggregates.<br>
 scan for Arquillian deployments.<br>
 <strong>User property is</strong>: <code>org.wildfly.glow.dependencies-to-scan</code>.<br>
 <strong>Alias is</strong>: <code>dependencies-to-scan</code>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#enableVerboseOutput">[enableVerboseOutput]</a></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolean</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enable verbose output (containing identified errors, suggestions,
-&#8230;&#8203;).<br>
-<strong>User property is</strong>: <code>org.wildfly.glow.enable-verbose-output</code>.<br>
-<strong>Alias is</strong>: <code>enable-verbose-output</code>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#expectedDiscovery">[expectedDiscovery]</a></code></p></td>
@@ -1431,7 +1584,9 @@ found, an exception is thrown.<br>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>List</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of feature-packs that are scanned and injected in the
-generated provisioning.xml.<br>
+generated provisioning.xml. This option can&#8217;t be used when
+<code>server-version</code> or <code>preview</code> or
+<code>context</code> are used.<br>
 <strong>Alias is</strong>: <code>feature-packs</code>.</p></td>
 </tr>
 <tr>
@@ -1443,12 +1598,30 @@ generated provisioning.xml.<br>
 <strong>Alias is</strong>: <code>add-layers-for-jndi</code>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#profiles">[profiles]</a></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Set</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#previewServer">[previewServer]</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolean</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Execution profiles.<br>
-<strong>User property is</strong>: <code>org.wildfly.glow.profiles</code>.<br>
-<strong>Alias is</strong>: <code>profiles</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use WildFly Preview server, only usable if no
+<code>feature-packs</code> have been set.<br>
+<strong>User property is</strong>: <code>org.wildfly.glow.preview-server</code>.<br>
+<strong>Alias is</strong>: <code>preview-server</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#profile">[profile]</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Execution profile.<br>
+<strong>User property is</strong>: <code>org.wildfly.glow.profile</code>.<br>
+<strong>Alias is</strong>: <code>profile</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#serverVersion">[serverVersion]</a></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A WildFly server version. The latest version is the default, only
+usable if no <code>feature-packs</code> have been set.<br>
+<strong>User property is</strong>: <code>org.wildfly.glow.server-version</code>.<br>
+<strong>Alias is</strong>: <code>server-version</code>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#skipScanning">[skipScanning]</a></code></p></td>
@@ -1481,14 +1654,15 @@ to add to the discovered set.<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><a href="#verbose">[verbose]</a></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>boolean</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>-</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">(no description)<br>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable verbose output (containing identified errors, suggestions,
+&#8230;&#8203;).<br>
 <strong>User property is</strong>: <code>org.wildfly.glow.verbose</code>.<br></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_parameter_details_2"><a class="anchor" href="#_parameter_details_2"></a><a class="link" href="#_parameter_details_2">4.7.4. Parameter Details</a></h4>
+<h4 id="_parameter_details_2"><a class="anchor" href="#_parameter_details_2"></a><a class="link" href="#_parameter_details_2">4.14.4. Parameter Details</a></h4>
 <div class="paragraph">
 <p><a id="addOns"></a> <strong>addOns</strong><br>
 Execution add-ons.</p>
@@ -1552,6 +1726,28 @@ aggregates.</p>
 </ul>
 </div>
 <div class="paragraph">
+<p><a id="checkErrors"></a> <strong>checkErrors</strong><br>
+By default the execution is aborted when unknown errors are
+reported. You can disable the check done for errors by setting this
+option to true.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Type</strong>: <code>boolean</code></p>
+</li>
+<li>
+<p><strong>Required</strong>: <code>No</code></p>
+</li>
+<li>
+<p><strong>User Property</strong>: <code>org.wildfly.glow.check-errors</code></p>
+</li>
+<li>
+<p><strong>Alias</strong>: <code>check-errors</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
 <p><a id="configName"></a> <strong>configName</strong><br>
 Server configuration name in the generated provisioning.xml.</p>
 </div>
@@ -1575,6 +1771,28 @@ Server configuration name in the generated provisioning.xml.</p>
 </ul>
 </div>
 <div class="paragraph">
+<p><a id="context"></a> <strong>context</strong><br>
+Execution context, can be <code>cloud</code> or
+<code>bare-metal</code>, default value is <code>bare-metal</code>,
+only usable if no <code>feature-packs</code> have been set.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Type</strong>: <code>java.lang.String</code></p>
+</li>
+<li>
+<p><strong>Required</strong>: <code>No</code></p>
+</li>
+<li>
+<p><strong>User Property</strong>: <code>org.wildfly.glow.context</code></p>
+</li>
+<li>
+<p><strong>Alias</strong>: <code>context</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
 <p><a id="dependenciesToScan"></a> <strong>dependenciesToScan</strong><br>
 GroupId:ArtifactId of dependencies that contain test classes to
 scan for Arquillian deployments.</p>
@@ -1592,27 +1810,6 @@ scan for Arquillian deployments.</p>
 </li>
 <li>
 <p><strong>Alias</strong>: <code>dependencies-to-scan</code></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p><a id="enableVerboseOutput"></a> <strong>enableVerboseOutput</strong><br>
-Enable verbose output (containing identified errors, suggestions,
-&#8230;&#8203;).</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>Type</strong>: <code>boolean</code></p>
-</li>
-<li>
-<p><strong>Required</strong>: <code>No</code></p>
-</li>
-<li>
-<p><strong>User Property</strong>: <code>org.wildfly.glow.enable-verbose-output</code></p>
-</li>
-<li>
-<p><strong>Alias</strong>: <code>enable-verbose-output</code></p>
 </li>
 </ul>
 </div>
@@ -1665,7 +1862,9 @@ found, an exception is thrown.</p>
 <div class="paragraph">
 <p><a id="featurePacks"></a> <strong>featurePacks</strong><br>
 List of feature-packs that are scanned and injected in the
-generated provisioning.xml.</p>
+generated provisioning.xml. This option can&#8217;t be used when
+<code>server-version</code> or <code>preview</code> or
+<code>context</code> are used.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1701,22 +1900,64 @@ generated provisioning.xml.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p><a id="profiles"></a> <strong>profiles</strong><br>
-Execution profiles.</p>
+<p><a id="previewServer"></a> <strong>previewServer</strong><br>
+Use WildFly Preview server, only usable if no
+<code>feature-packs</code> have been set.</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Type</strong>: <code>java.util.Set</code></p>
+<p><strong>Type</strong>: <code>boolean</code></p>
 </li>
 <li>
 <p><strong>Required</strong>: <code>No</code></p>
 </li>
 <li>
-<p><strong>User Property</strong>: <code>org.wildfly.glow.profiles</code></p>
+<p><strong>User Property</strong>: <code>org.wildfly.glow.preview-server</code></p>
 </li>
 <li>
-<p><strong>Alias</strong>: <code>profiles</code></p>
+<p><strong>Alias</strong>: <code>preview-server</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a id="profile"></a> <strong>profile</strong><br>
+Execution profile.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Type</strong>: <code>java.lang.String</code></p>
+</li>
+<li>
+<p><strong>Required</strong>: <code>No</code></p>
+</li>
+<li>
+<p><strong>User Property</strong>: <code>org.wildfly.glow.profile</code></p>
+</li>
+<li>
+<p><strong>Alias</strong>: <code>profile</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><a id="serverVersion"></a> <strong>serverVersion</strong><br>
+A WildFly server version. The latest version is the default, only
+usable if no <code>feature-packs</code> have been set.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Type</strong>: <code>java.lang.String</code></p>
+</li>
+<li>
+<p><strong>Required</strong>: <code>No</code></p>
+</li>
+<li>
+<p><strong>User Property</strong>: <code>org.wildfly.glow.server-version</code></p>
+</li>
+<li>
+<p><strong>Alias</strong>: <code>server-version</code></p>
 </li>
 </ul>
 </div>
@@ -1779,7 +2020,8 @@ to add to the discovered set.</p>
 </div>
 <div class="paragraph">
 <p><a id="verbose"></a> <strong>verbose</strong><br>
-(no description)</p>
+Enable verbose output (containing identified errors, suggestions,
+&#8230;&#8203;).</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1817,8 +2059,8 @@ It contains the known WildFly (and WildFly Preview) Feature-packs and Layers for
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.0.0.Beta4<br>
-Last updated 2024-01-10 10:17:56 +0100
+Version 1.0.0.Beta5<br>
+Last updated 2024-01-16 15:19:20 +0100
 </div>
 </div>
 </body>
