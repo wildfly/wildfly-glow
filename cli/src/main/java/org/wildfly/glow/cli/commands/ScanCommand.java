@@ -50,7 +50,7 @@ import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 )
 public class ScanCommand extends AbstractCommand {
 
-    private static final String ADD_ADD_ONS_MSG="@|bold To enable add-ons add the|@ @|fg(yellow) " +
+    private static final String ADD_ADD_ONS_MSG="@|bold To enable add-ons, add the|@ @|fg(yellow) " +
             Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) " +
             Constants.SCAN_COMMAND + "|@ @|bold command|@";
 
@@ -157,7 +157,7 @@ public class ScanCommand extends AbstractCommand {
                         print(ADD_ADD_ONS_MSG);
                     }
                     if (!scanResults.getSuggestions().getPossibleProfiles().isEmpty()) {
-                        print("@|bold To enable the HA profile add the|@ @|fg(yellow) %s|@ @|bold option to the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.HA_OPTION, Constants.SCAN_COMMAND);
+                        print("@|bold To enable the HA profile, add the|@ @|fg(yellow) %s|@ @|bold option to the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.HA_OPTION, Constants.SCAN_COMMAND);
                     }
                 }
                 if (scanResults.getErrorSession().hasErrors()) {
@@ -174,9 +174,9 @@ public class ScanCommand extends AbstractCommand {
                             System.out.println(CommandLine.Help.Ansi.AUTO.string(ADD_ADD_ONS_MSG));
                         }
                     }
-                    print("@|bold Some errors have been reported, you should fix them prior to provision a server with the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "=SERVER|@ @|bold option of the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@");
+                    print("@|bold Some errors have been reported. You should fix them prior provisioning a server with the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option of the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@");
                 } else {
-                    print("@|bold To provision the WildFly server for your deployment add the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "=SERVER|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@");
+                    print("@|bold If you had included a|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command, after outputting this report, WildFly Glow will continue on to provisioning your WildFly server, bootable jar or Docker image.|@");
                 }
             }
         } else {
