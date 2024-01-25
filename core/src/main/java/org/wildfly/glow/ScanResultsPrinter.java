@@ -229,7 +229,7 @@ public class ScanResultsPrinter {
             }
         } else {
             if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !suggestedConfigs.isEmpty()) {
-                writer.info("Some suggestions have been found. You could enable suggestions with --suggest option (if using the WildFly Glow CLI) or <suggest>true</suggest> (if using the WildFly Maven Plugin).");
+                writer.info("Some suggestions have been found. You could enable suggestions with the --suggest option (if using the WildFly Glow CLI) or <suggest>true</suggest> (if using the WildFly Maven Plugin).");
             }
         }
     }
@@ -244,7 +244,7 @@ public class ScanResultsPrinter {
 
     private static String buildSuggestions(Layer layer, Set<Env> envs) throws URISyntaxException, IOException {
         StringBuilder suggestedConfigsBuilder = new StringBuilder();
-        suggestedConfigsBuilder.append("\n").append(layer.getName()).append(":\n");
+        suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" environment variables:\n");
         Iterator<Env> it = envs.iterator();
         while (it.hasNext()) {
             Env e = it.next();
