@@ -6,6 +6,8 @@ WildFly Glow scans your deployment(s) and identify the set of [Galleon](https://
 
 WildFly Glow command line can provision a WildFly server, a WildFly Bootable JAR or a Docker image.
 
+This [blog post](https://www.wildfly.org/news/2024/01/29/wildfly-glow/) on [wildfly.org](https://www.wildfly.org) covers WildFly Glow and WildFly provisioning in general. This is a good introduction to WildFly Glow.
+
 # WildFly Glow overview
 
 The [WildFly Galleon Layers](https://docs.wildfly.org/29/Galleon_Guide.html#wildfly_galleon_layers) defined in the WildFly Galleon Feature-packs have been annotated 
