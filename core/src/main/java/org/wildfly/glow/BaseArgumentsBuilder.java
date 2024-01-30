@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jboss.as.version.Stability;
 
 public class BaseArgumentsBuilder {
     protected Set<String> executionProfiles = Collections.emptySet();
@@ -39,6 +40,7 @@ public class BaseArgumentsBuilder {
     protected boolean techPreview;
 
     protected Set<String> excludeJarsFromScan = Collections.emptySet();
+    protected Stability stability;
 
     protected BaseArgumentsBuilder() {
 
@@ -62,6 +64,7 @@ public class BaseArgumentsBuilder {
                 layersForJndi,
                 verbose,
                 techPreview,
-                excludeJarsFromScan);
+                excludeJarsFromScan,
+                stability);
     }
 }

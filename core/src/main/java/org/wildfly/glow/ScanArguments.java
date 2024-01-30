@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.jboss.as.version.Stability;
 
 public interface ScanArguments {
 
@@ -72,6 +73,8 @@ public interface ScanArguments {
     boolean isVerbose();
 
     Set<Pattern> getExcludeArchivesFromScan();
+
+    Stability getStability();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -148,6 +151,11 @@ public interface ScanArguments {
 
         public Builder setExcludeArchivesFromScan(Set<String> archives) {
             this.excludeJarsFromScan = archives;
+            return this;
+        }
+
+        public Builder setStability(Stability stability) {
+            this.stability = stability;
             return this;
         }
     }

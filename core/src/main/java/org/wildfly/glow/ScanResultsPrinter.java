@@ -80,6 +80,9 @@ public class ScanResultsPrinter {
             profileBuilder.append("none");
         }
         writer.info(profileBuilder);
+        if(arguments.getStability() != null) {
+            writer.info("stability: " + arguments.getStability().toString());
+        }
         writer.info("galleon discovery");
         StringBuilder builder = new StringBuilder();
         builder.append("- feature-packs").append("\n");
@@ -89,7 +92,7 @@ public class ScanResultsPrinter {
         builder.append("- layers").append("\n");
         builder.append("   ").append(scanResults.getBaseLayer()).append("\n");
         for (Layer l : scanResults.getDecorators()) {
-            builder.append("   ").append(l.getName()).append("\n");
+            builder.append("   ").append(l.getName() + (scanResults.getExcludedFeatures().containsKey(l) ? " [WARNING: contains content at a lower stability level]" : "")).append("\n");
         }
         if (!scanResults.getExcludedLayers().isEmpty()) {
             builder.append("- excluded-layers\n");
@@ -131,7 +134,31 @@ public class ScanResultsPrinter {
             }
             writer.info(disabledBuilder);
         }
-
+        if (arguments.getStability() != null) {
+            boolean needCR = false;
+            if (!scanResults.getExcludedFeatures().isEmpty() || !scanResults.getExcludedPackages().isEmpty()) {
+                writer.info("The following features and/or packages would be disabled if provisioning a server at the '"
+                        + arguments.getStability().toString() + "' stability level:");
+                needCR = true;
+            }
+            if (!scanResults.getExcludedFeatures().isEmpty()) {
+                for (Layer l : scanResults.getExcludedFeatures().keySet()) {
+                    writer.info(l.getName() + " features:");
+                    for (String f : scanResults.getExcludedFeatures().get(l)) {
+                        writer.info("- " + f);
+                    }
+                }
+            }
+            if (!scanResults.getExcludedPackages().isEmpty()) {
+                writer.info("packages:");
+                for (String p : scanResults.getExcludedPackages()) {
+                    writer.info("- " + p);
+                }
+            }
+            if (needCR) {
+                writer.info("");
+            }
+        }
         List<StringBuilder> fixBuilders = new ArrayList<>();
         List<StringBuilder> errorBuilders = new ArrayList<>();
         List<StringBuilder> warnBuilders = new ArrayList<>();
