@@ -38,6 +38,7 @@ import org.wildfly.glow.Layer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -49,7 +50,9 @@ import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.glow.AddOn;
 import org.wildfly.glow.FeaturePacks;
+import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.LayerMetadata;
 import org.wildfly.glow.Utils;
 
@@ -195,10 +198,28 @@ public class ScanDocMojo extends AbstractMojo {
             }
         }
         rulesBuilder.append("|===\n");
+
+        rulesBuilder.append("\n#### [[glow.table.addons." + context + "]]Add-ons\n");
+        rulesBuilder.append("[cols=\"25%,25%,50%\"]\n");
+        rulesBuilder.append("|===\n");
+        rulesBuilder.append("|Add-on |Family |Description\n");
+        Map<String, AddOn> addOns = new TreeMap<>();
+        for (Layer l : rules.keySet()) {
+            if (l.getAddOn() != null) {
+                addOns.put(l.getAddOn().getName(), l.getAddOn());
+            }
+        }
+        for (String a : addOns.keySet()) {
+            AddOn addon = addOns.get(a);
+            rulesBuilder.append("|" + addon.getName() + "\n");
+            rulesBuilder.append("|" + addon.getFamily() + "\n");
+            rulesBuilder.append("|" + addon.getDescription() + "\n");
+        }
+        rulesBuilder.append("|===\n");
         return rulesBuilder.toString();
     }
 
-    private void getRules(GalleonBuilder provider, String context, UniverseResolver universeResolver,
+    private LayerMapping getRules(GalleonBuilder provider, String context, UniverseResolver universeResolver,
             Map<Layer, Map<String, String>> rules) throws Exception {
         Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, false);
         Map<String, Layer> all;
@@ -207,12 +228,13 @@ public class ScanDocMojo extends AbstractMojo {
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             all = Utils.getAllLayers(config, universeResolver, p, fpDependencies);
         }
-
+        LayerMapping mapping = Utils.buildMapping(all, new HashSet<>());
         for (Layer l : all.values()) {
             if (!l.getProperties().isEmpty()) {
                 Map<String, String> props = rules.computeIfAbsent(l, (value) -> new TreeMap<>());
                 props.putAll(l.getProperties());
             }
         }
+        return mapping;
     }
 }
