@@ -17,16 +17,18 @@
 package org.wildfly.glow.cli.commands;
 
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.cli.CLIArguments;
 
 import picocli.CommandLine;
 
@@ -62,7 +64,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
             @Override
             public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
                     LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
-                String configStr = CLIArguments.dumpConfiguration(fpDependencies, finalContext, vers, all,
+                String configStr = dumpConfiguration(fpDependencies, finalContext, vers, all,
                         mapping, provisioning, isLatest, wildflyPreview.orElse(false));
                 print(configStr);
             }
@@ -70,5 +72,43 @@ public class ShowConfigurationCommand extends AbstractCommand {
         CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
 
         return 0;
+    }
+
+    private static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
+            String context, String serverVersion, Map<String, Layer> allLayers,
+            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview) throws Exception {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Execution context: ").append(context).append("\n");
+        builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
+        builder.append("Tech Preview: ").append(techPreview).append("\n");
+        Set<FeaturePackLocation.ProducerSpec> topLevel = new LinkedHashSet<>();
+        for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
+            topLevel.add(fp.getLocation().getProducer());
+        }
+        for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
+            builder.append("\nFeature-pack: ").append("@|bold ").append(fp.getLocation().getFPID()).append("|@\n");
+            builder.append("Contained layers: ");
+            Set<String> layers = new TreeSet<>();
+            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(fp.getLocation().getFPID());
+            for(Layer l : allLayers.values()) {
+                if(l.getFeaturePacks().contains(fp.getLocation().getFPID())) {
+                    layers.add(l.getName());
+                }
+                if(deps != null) {
+                    for (FeaturePackLocation.ProducerSpec dep : deps) {
+                        if (!topLevel.contains(dep)) {
+                            for (FeaturePackLocation.FPID fpid : l.getFeaturePacks()) {
+                                if (fpid.getProducer().equals(dep)) {
+                                    layers.add(l.getName());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            topLevel.addAll(deps);
+            builder.append(layers).append("\n");
+        }
+        return builder.toString();
     }
 }
