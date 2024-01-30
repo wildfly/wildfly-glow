@@ -17,33 +17,8 @@
  */
 package org.wildfly.glow.cli;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
-import org.jboss.galleon.util.IoUtils;
-import org.wildfly.glow.GlowSession;
-import org.wildfly.glow.Layer;
-import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.ScanResults;
-import org.wildfly.glow.Utils;
 import org.wildfly.glow.cli.commands.AbstractCommand;
-import org.wildfly.glow.maven.MavenResolver;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import org.jboss.galleon.api.GalleonBuilder;
-import org.jboss.galleon.api.Provisioning;
-import org.jboss.galleon.api.config.GalleonProvisioningConfig;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.wildfly.glow.FeaturePacks;
-import org.wildfly.glow.GlowMessageWriter;
-import org.wildfly.glow.Version;
-
-import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
 import org.wildfly.glow.cli.commands.CompletionCommand;
 import org.wildfly.glow.cli.commands.GoOfflineCommand;
 import org.wildfly.glow.cli.commands.ShowConfigurationCommand;
@@ -77,59 +52,6 @@ public class GlowCLI {
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
-        }
-        CLIArguments arguments = CLIArguments.fromMainArguments(args);
-        if (arguments.isVersion()) {
-           command.print(Version.getVersion());
-           return;
-        }
-        boolean dumpInfos = args.length == 0 || arguments.isHelp();
-        if (dumpInfos || arguments.isDisplayConfigurationInfo()) {
-            MavenRepoManager resolver = MavenResolver.newMavenResolver();
-            UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
-            GalleonBuilder provider = new GalleonBuilder();
-            provider.addArtifactResolver(resolver);
-            Provisioning provisioning = null;
-            try {
-                GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, GlowMessageWriter.DEFAULT);
-                if (config == null) {
-                    Path provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
-                    provisioning = provider.newProvisioningBuilder(provisioningXML).build();
-                    config = provisioning.loadProvisioningConfig(provisioningXML);
-                } else {
-                    provisioning = provider.newProvisioningBuilder(config).build();
-                }
-
-                Map<String, Layer> all = Utils.getAllLayers(config, universeResolver, provisioning, new HashMap<>());
-                Set<String> profiles = Utils.getAllProfiles(all);
-                LayerMapping mapping = Utils.buildMapping(all, Collections.emptySet());
-                if (dumpInfos) {
-                    CLIArguments.dumpInfos(profiles);
-                } else {
-                    boolean isLatest = arguments.getVersion() == null;
-                    String serverVersion = isLatest ? FeaturePacks.getLatestVersion() : arguments.getVersion();
-                    CLIArguments.dumpConfiguration(null, arguments.getExecutionContext(), serverVersion, all, mapping, config, isLatest, arguments.isTechPreview());
-                }
-            } finally {
-                IoUtils.recursiveDelete(OFFLINE_CONTENT);
-                if (provisioning != null) {
-                    provisioning.close();
-                }
-            }
-            return;
-        }
-
-        if (arguments.isGoOffline()) {
-            GlowSession.goOffline(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
-        } else {
-            //Temp
-            try (ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT)) {
-                if (arguments.getOutput() == null) {
-                    scanResults.outputInformation();
-                } else {
-                    scanResults.outputConfig(Paths.get("server"), null);
-                }
-            }
         }
     }
 }
