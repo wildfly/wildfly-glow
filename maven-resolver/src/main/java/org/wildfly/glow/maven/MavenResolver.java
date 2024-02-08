@@ -35,6 +35,7 @@ import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.aether.repository.RepositoryPolicy;
 
 /**
  *
@@ -56,12 +57,20 @@ public final class MavenResolver {
         session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
         List<RemoteRepository> repos = new ArrayList<>();
         RemoteRepository.Builder central = new RemoteRepository.Builder("central", "default", CENTRAL_REPO_URL);
+        central.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
         repos.add(central.build());
         RemoteRepository.Builder ga = new RemoteRepository.Builder("redhat-ga", "default", GA_REPO_URL);
+        ga.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
         repos.add(ga.build());
         RemoteRepository.Builder nexus = new RemoteRepository.Builder("jboss-nexus", "default", JBOSS_REPO_URL);
+        nexus.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
         repos.add(nexus.build());
         RemoteRepository.Builder spring = new RemoteRepository.Builder("spring-repo", "default", SPRING_REPO_URL);
+        spring.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
         repos.add(spring.build());
         MavenArtifactRepositoryManager resolver
                 = new MavenArtifactRepositoryManager(repoSystem, session, repos);
