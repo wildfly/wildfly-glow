@@ -25,7 +25,8 @@ public enum OutputFormat {
     PROVISIONING_XML("provisioning.xml", "Galleon provisioning file usable with Galleon tooling."),
     SERVER("server", "Provision a WildFly server."),
     BOOTABLE_JAR("bootable-jar", "Provision a WildFly bootable jar."),
-    DOCKER_IMAGE("docker-image", "Produce a docker image.");
+    DOCKER_IMAGE("docker-image", "Produce a docker image."),
+    OPENSHIFT("openshift", "Build and deploy on OpenShift.");
 
     public final String name;
     public final String description;

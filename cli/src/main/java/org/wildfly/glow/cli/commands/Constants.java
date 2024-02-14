@@ -41,10 +41,14 @@ public interface Constants {
 
     String CLOUD_OPTION = "--cloud";
     String CLOUD_OPTION_SHORT = "-c";
+    String DISABLE_DEPLOYERS = "--disable-deployers";
+    String DISABLE_DEPLOYERS_LABEL = "<ALL|deployer name>";
     String DOCKER_IMAGE_NAME_OPTION = "--docker-image-name";
     String DOCKER_IMAGE_NAME_OPTION_LABEL = "<docker image name>";
     String DOCKER_IMAGE_NAME_OPTION_SHORT = "-di";
-
+    String ENV_FILE_OPTION = "--env-file";
+    String ENV_FILE_OPTION_SHORT = "-ef";
+    String ENV_FILE_OPTION_LABEL = "<env file path>";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION = "--exclude-archives-from-scan";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL = "<list of nested archive names>";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT = "-ea";

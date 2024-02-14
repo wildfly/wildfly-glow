@@ -577,6 +577,8 @@ public class GlowSession {
             if (scanResults.getErrorSession().hasErrors()) {
                 writer.warn("You are provisioning a server although some errors still exist. You should first fix them.");
             }
+        }
+        if (!OutputFormat.PROVISIONING_XML.equals(arguments.getOutput()) && !OutputFormat.OPENSHIFT.equals(arguments.getOutput())) {
             Path generatedArtifact = provisionServer(arguments.getBinaries(),
                     scanResults.getProvisioningConfig(), resolver, arguments.getOutput(),
                     arguments.isCloud(), target);
@@ -601,8 +603,18 @@ public class GlowSession {
                     files.put(OutputContent.OutputFile.SERVER_DIR, generatedArtifact.toAbsolutePath());
                     break;
                 }
+                case OPENSHIFT: {
+                    Files.createDirectories(target.resolve("galleon"));
+                    Path prov = target.resolve("provisioning.xml");
+                    provisioning.storeProvisioningConfig(scanResults.getProvisioningConfig(),prov);
+                    files.put(OutputContent.OutputFile.PROVISIONING_XML_FILE, prov.toAbsolutePath());
+                    break;
+                }
             }
         } else {
+            if (OutputFormat.OPENSHIFT.equals(arguments.getOutput())) {
+                target = target.resolve("galleon");
+            }
             Files.createDirectories(target);
             Path prov = target.resolve("provisioning.xml");
             provisioning.storeProvisioningConfig(scanResults.getProvisioningConfig(),prov);

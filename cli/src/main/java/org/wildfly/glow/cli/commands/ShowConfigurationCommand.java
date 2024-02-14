@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeSet;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
@@ -29,6 +30,7 @@ import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
+import org.wildfly.glow.deployment.openshift.api.Deployer;
 
 import picocli.CommandLine;
 
@@ -53,6 +55,18 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving known provisioning configuration...");
+        StringBuilder ocBuilder = new StringBuilder();
+        ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
+        for (Deployer d : ServiceLoader.load(Deployer.class)) {
+            ocBuilder.append("* " + d.getName() + ". Enabled when one of the following ");
+            if (!d.getSupportedLayers().isEmpty()) {
+                ocBuilder.append("layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
+            } else {
+                ocBuilder.append("add-on(s) " + d.getSupportedAddOns() + " is/are enabled.\n");
+            }
+        }
+        print(ocBuilder.toString());
+
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;

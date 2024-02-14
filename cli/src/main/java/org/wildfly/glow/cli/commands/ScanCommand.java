@@ -16,6 +16,7 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.nio.file.Files;
 import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
@@ -33,17 +34,21 @@ import picocli.CommandLine.Parameters;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.jboss.as.version.Stability;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
+import org.wildfly.glow.Env;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
+import static org.wildfly.glow.OutputFormat.OPENSHIFT;
 
 @CommandLine.Command(
         name = Constants.SCAN_COMMAND,
@@ -106,6 +111,12 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.STABILITY_OPTION, Constants.STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
     Optional<Stability> stability;
 
+    @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
+    Optional<Path>  envFile;
+
+    @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
+    Set<String> disableDeployers = new LinkedHashSet<>();
+
     @Override
     public Integer call() throws Exception {
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
@@ -134,6 +145,29 @@ public class ScanCommand extends AbstractCommand {
         if (wildflyServerVersion.isPresent()) {
             builder.setVersion(wildflyServerVersion.get());
         }
+        Map<String, String> extraEnv = new HashMap<>();
+        if (envFile.isPresent()) {
+            if (provision.isPresent()) {
+                if (!OPENSHIFT.equals(provision.get())) {
+                    throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
+                }
+            } else {
+                throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
+            }
+            Path p = envFile.get();
+            if (!Files.exists(p)) {
+                throw new Exception(p + " file doesn't exist");
+            }
+            for(String l : Files.readAllLines(p)) {
+                if (!l.startsWith("#")) {
+                    int i = l.indexOf("=");
+                    if (i < 0 || i == l.length() - 1) {
+                        throw new Exception("Invalid environment variable " + l + " in " + p);
+                    }
+                    extraEnv.put(l.substring(0, i), l.substring(i+1));
+                }
+            }
+        }
         builder.setVerbose(verbose);
         if (!addOns.isEmpty()) {
             builder.setUserEnabledAddOns(addOns);
@@ -150,6 +184,9 @@ public class ScanCommand extends AbstractCommand {
             }
             if (DOCKER_IMAGE.equals(provision.get()) && !cloud.orElse(false)) {
                 throw new Exception("Can't produce a Docker image if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
+            }
+            if (OPENSHIFT.equals(provision.get()) && !cloud.orElse(false)) {
+                throw new Exception("Can't build/deploy on openShift if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
             }
             builder.setOutput(provision.get());
         }
@@ -218,6 +255,10 @@ public class ScanCommand extends AbstractCommand {
                     print("@|bold Generating docker image...|@");
                     break;
                 }
+                case OPENSHIFT: {
+                    print("@|bold Openshift build and deploy...|@");
+                    break;
+                }
             }
             OutputContent content = scanResults.outputConfig(target, dockerImageName.orElse(null));
             Path base = Paths.get("").toAbsolutePath();
@@ -235,7 +276,9 @@ public class ScanCommand extends AbstractCommand {
                         break;
                     }
                     case ENV_FILE: {
-                        print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
+                        if (!OutputFormat.OPENSHIFT.equals(provision.get())) {
+                            print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
+                        }
                         switch (provision.get()) {
                             case SERVER: {
                                 print("@|bold Export the suggested env variables for the server to take them into account.|@");
@@ -253,9 +296,14 @@ public class ScanCommand extends AbstractCommand {
                         break;
                     }
                     case PROVISIONING_XML_FILE: {
-                        print("@|bold Generation DONE.|@");
-                        print("@|bold Galleon Provisioning configuration is located in " + rel + " file|@");
+                        switch (provision.get()) {
+                            case PROVISIONING_XML: {
+                                print("@|bold Generation DONE.|@");
+                                print("@|bold Galleon Provisioning configuration is located in " + rel + " file|@");
+                            }
+                        }
                         break;
+
                     }
                     case SERVER_DIR: {
                         print("@|bold Provisioning DONE.|@");
@@ -267,6 +315,23 @@ public class ScanCommand extends AbstractCommand {
                         break;
                     }
                 }
+            }
+            if (OutputFormat.OPENSHIFT.equals(provision.get())) {
+                String name = null;
+                for (Path p : deployments) {
+                    Files.copy(p, target.resolve(p.getFileName()));
+                    int ext = p.getFileName().toString().indexOf(".");
+                    name = p.getFileName().toString().substring(0, ext);
+                }
+                Map<String, String> envMap = new HashMap<>();
+                for(Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
+                    for(Env env : envs) {
+                        envMap.put(env.getName(), env.getDescription());
+                    }
+                }
+                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name, envMap, scanResults.getDiscoveredLayers(),
+                        scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers);
+                print("@|bold Openshift build and deploy DONE.|@");
             }
             if (content.getDockerImageName() != null) {
                 print("@|bold To run the image call: 'docker run " + content.getDockerImageName() + "'|@");

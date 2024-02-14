@@ -41,6 +41,7 @@
         <version.org.apache.maven.plugin-plugin>3.6.4</version.org.apache.maven.plugin-plugin>
         <version.org.apache.maven.shared>3.2.1</version.org.apache.maven.shared>
         <version.org.apache.surefire.plugin>2.22.2</version.org.apache.surefire.plugin>
+        <version.io.fabric8>6.10.0</version.io.fabric8>
         <!-- arquillian plugin -->
         <version.org.jboss.arquillian.core>1.7.0.Alpha13</version.org.jboss.arquillian.core>
         <version.org.jboss.shrinkwrap.descriptors>2.0.0</version.org.jboss.shrinkwrap.descriptors>
@@ -216,6 +217,26 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-glow-arquillian-plugin-scanner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-openshift-deployment-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-openshift-deployment-postgresql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-openshift-deployment-artemis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-openshift-deployment-keycloak</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -415,6 +436,11 @@
                 <artifactId>maven-resolver</artifactId>
                 <version>${version.org.wildfly.channel}</version>
             </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>openshift-client</artifactId>
+                <version>${version.io.fabric8}</version>
+            </dependency>
             <!-- Test dependencies -->
             <dependency>
                 <groupId>jakarta.annotation</groupId>
@@ -490,6 +516,7 @@
         <module>cli</module>
         <module>docs</module>
         <module>doc-plugin</module>
+        <module>openshift-deployment</module>
         <module>maven-resolver</module>
         <module>tests</module>
     </modules>
