@@ -38,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.jboss.as.version.Stability;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
@@ -49,6 +50,14 @@ import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
         sortOptions = true
 )
 public class ScanCommand extends AbstractCommand {
+
+    private static class StabilityConverter implements CommandLine.ITypeConverter<Stability> {
+
+        @Override
+        public Stability convert(String value) throws Exception {
+            return Stability.fromString(value);
+        }
+    }
 
     private static final String ADD_ADD_ONS_MSG="@|bold To enable add-ons, add the|@ @|fg(yellow) " +
             Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) " +
@@ -93,6 +102,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT, Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION},
             split = ",", paramLabel = Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL)
     Set<String> excludeArchivesFromScan = new HashSet<>();
+
+    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.STABILITY_OPTION, Constants.STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<Stability> stability;
 
     @Override
     public Integer call() throws Exception {
@@ -142,7 +154,9 @@ public class ScanCommand extends AbstractCommand {
             builder.setOutput(provision.get());
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
-
+        if (stability.isPresent()) {
+            builder.setStability(stability.get());
+        }
         if (dockerImageName.isPresent()) {
             if (provision.isPresent() && !DOCKER_IMAGE.equals(provision.get())) {
                 throw new Exception("Can only set a docker image name when provisioning a docker image. Remove the " + Constants.DOCKER_IMAGE_NAME_OPTION + " option");

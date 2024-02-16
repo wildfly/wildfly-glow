@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.jboss.as.version.Stability;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
 
@@ -32,6 +33,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final boolean verbose;
     private final boolean techPreview;
     private final Set<Pattern> excludeArchivesFromScan;
+    private final Stability stability;
 
     protected Arguments(
             String executionContext,
@@ -46,7 +48,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             Set<String> layersForJndi,
             boolean verbose,
             boolean techPreview,
-            Set<Pattern> excludeArchivesFromScan) {
+            Set<Pattern> excludeArchivesFromScan,
+            Stability stability) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -60,6 +63,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.verbose = verbose;
         this.techPreview = techPreview;
         this.excludeArchivesFromScan = excludeArchivesFromScan;
+        this.stability = stability;
 
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         this.compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
@@ -172,6 +176,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public Set<Pattern> getExcludeArchivesFromScan() {
         return excludeArchivesFromScan;
+    }
+
+    @Override
+    public Stability getStability() {
+        return stability;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

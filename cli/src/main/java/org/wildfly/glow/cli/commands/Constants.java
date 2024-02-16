@@ -81,4 +81,9 @@ public interface Constants {
     String PROVISION_OUTPUT_DIR_OPTION_SHORT = "-d";
 
     String PROVISION_OUTPUT_DIR_LABEL = "<output directory>";
+
+    String STABILITY_OPTION = "--stability-level";
+    String STABILITY_OPTION_SHORT = "-sl";
+
+    String STABILITY_LABEL = "<default|community|preview|experimental>";
 }

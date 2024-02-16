@@ -37,7 +37,8 @@ public class ScanResults implements AutoCloseable {
     private final Map<AddOn, String> disabledAddOns;
     private final Set<AddOn> enabledAddOns;
     private final Suggestions suggestions;
-
+    private final Set<String> excludedPackages;
+    private final Map<Layer, Set<String>> excludedFeatures;
     ScanResults(GlowSession glowSession,
             Set<Layer> discoveredLayers,
             Set<Layer> excludedLayers,
@@ -48,7 +49,9 @@ public class ScanResults implements AutoCloseable {
             Set<AddOn> enabledAddOns,
             Map<AddOn, String> disabledAddOns,
             Suggestions suggestions,
-            ErrorIdentificationSession errorSession) {
+            ErrorIdentificationSession errorSession,
+            Set<String> excludedPackages,
+            Map<Layer, Set<String>> excludedFeatures) {
         this.glowSession = glowSession;
         this.discoveredLayers = discoveredLayers;
         this.excludedLayers = excludedLayers;
@@ -60,6 +63,8 @@ public class ScanResults implements AutoCloseable {
         this.enabledAddOns = enabledAddOns;
         this.suggestions = suggestions;
         this.errorSession = errorSession;
+        this.excludedPackages = excludedPackages;
+        this.excludedFeatures = excludedFeatures;
     }
 
     public Set<Layer> getDiscoveredLayers() {
@@ -131,5 +136,13 @@ public class ScanResults implements AutoCloseable {
     @Override
     public void close() {
         provisioning.close();
+    }
+
+    public Set<String> getExcludedPackages() {
+        return excludedPackages;
+    }
+
+    public Map<Layer, Set<String>> getExcludedFeatures() {
+        return excludedFeatures;
     }
 }

@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,12 +45,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import org.jboss.as.version.Stability;
 import org.jboss.galleon.MessageWriter;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.GalleonFeaturePackRuntime;
+import org.jboss.galleon.api.GalleonFeatureParamSpec;
+import org.jboss.galleon.api.GalleonFeatureSpec;
+import org.jboss.galleon.api.GalleonPackageRuntime;
+import org.jboss.galleon.api.GalleonProvisioningRuntime;
 import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
@@ -131,7 +139,8 @@ public class GlowSession {
         Set<Layer> layers = new LinkedHashSet<>();
         Set<AddOn> possibleAddOns = new TreeSet<>();
         ErrorIdentificationSession errorSession = new ErrorIdentificationSession();
-
+        Set<String> excludedPackages = new TreeSet<>();
+        Map<Layer, Set<String>> excludedFeatures = new TreeMap<>();
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
 
         if (Files.exists(OFFLINE_ZIP)) {
@@ -142,16 +151,17 @@ public class GlowSession {
         provider.addArtifactResolver(resolver);
         Provisioning provisioning = null;
         GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, writer);
+        Path fakeHome = Files.createTempDirectory("wildfly-glow");
         try {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
                     provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                 }
-                provisioning = provider.newProvisioningBuilder(provisioningXML).build();
+                provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
             } else {
-                provisioning = provider.newProvisioningBuilder(config).build();
+                provisioning = provider.newProvisioningBuilder(config).setInstallationHome(fakeHome).build();
             }
 
             // BUILD MODEL
@@ -472,8 +482,66 @@ public class GlowSession {
             }
             // Identify the active feature-packs.
             GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
-                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName());
+                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getStability());
 
+            // Handle stability
+            if (arguments.getStability() != null) {
+                List<Layer> checkLayers = new ArrayList<>();
+                checkLayers.add(baseLayer);
+                checkLayers.addAll(decorators);
+                // Retrieve the features of each layer
+                for (Layer layer : checkLayers) {
+                    try {
+                        GalleonConfigurationWithLayers configLayers = GalleonConfigurationWithLayersBuilder.builder("standalone", "standalone.xml").includeLayer(layer.getName()).build();
+                        GalleonProvisioningConfig.Builder config2Builder = GalleonProvisioningConfig.builder().addConfig(configLayers);
+                        for (GalleonFeaturePackConfig fp : activeConfig.getFeaturePackDeps()) {
+                            config2Builder.addFeaturePackDep(GalleonFeaturePackConfig.
+                                    builder(fp.getLocation(), false).setInheritConfigs(false).build());
+                        }
+                        GalleonProvisioningConfig config2 = config2Builder.build();
+
+                        try (GalleonProvisioningRuntime rt = provisioning.getProvisioningRuntime(config2)) {
+                            List<GalleonFeatureSpec> lst = rt.getAllFeatures();
+                            for (GalleonFeatureSpec spec : lst) {
+                                Stability stab = spec.getStability() == null ? null : Stability.fromString(spec.getStability());
+                                if (stab != null && !arguments.getStability().enables(stab)) {
+                                    Set<String> set = excludedFeatures.get(layer);
+                                    if (set == null) {
+                                        set = new HashSet<>();
+                                        excludedFeatures.put(layer, set);
+                                    }
+                                    set.add(spec.getName() + "[stability=" + spec.getStability() + "]");
+                                }
+                                for (GalleonFeatureParamSpec pspec : spec.getParams()) {
+                                    Stability pstab = pspec.getStability() == null ? null : Stability.fromString(pspec.getStability());
+                                    if (pstab != null && !arguments.getStability().enables(pstab)) {
+                                        Set<String> set = excludedFeatures.get(layer);
+                                        if (set == null) {
+                                            set = new HashSet<>();
+                                            excludedFeatures.put(layer, set);
+                                        }
+                                        set.add(spec.getName() + "." + pspec.getName() + "[stability=" + pspec.getStability() + "]");
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception ex) {
+                        writer.warn("Got unexpected exception dealing with " + layer + " features. Exception" + ex +". Please report the issue.");
+                    }
+                }
+                // We must disable the stability to see all packages in the runtime
+                GalleonProvisioningConfig config2 = GalleonProvisioningConfig.builder(activeConfig).removeOption(Constants.STABILITY_LEVEL).build();
+                try (GalleonProvisioningRuntime rt = provisioning.getProvisioningRuntime(config2)) {
+                    for (GalleonFeaturePackRuntime fpr : rt.getGalleonFeaturePacks()) {
+                        for (GalleonPackageRuntime prt : fpr.getGalleonPackages()) {
+                            Stability packageStability = prt.getStability()  == null ? null : Stability.fromString(prt.getStability());
+                            if (packageStability != null && !arguments.getStability().enables(packageStability)) {
+                                excludedPackages.add(prt.getName() + "[stability="+packageStability.toString()+"]");
+                            }
+                        }
+                    }
+                }
+            }
             Suggestions suggestions = new Suggestions(suggestedConfigurations,
                     stronglySuggestedConfigurations, possibleAddOns, possibleProfiles);
             ScanResults scanResults = new ScanResults(
@@ -487,11 +555,15 @@ public class GlowSession {
                     allEnabledAddOns,
                     disabledAddOns,
                     suggestions,
-                    errorSession);
+                    errorSession,
+                    excludedPackages,
+                    excludedFeatures
+            );
 
             return scanResults;
         } finally {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);
+            IoUtils.recursiveDelete(fakeHome);
         }
     }
 
@@ -823,7 +895,7 @@ public class GlowSession {
             Set<Layer> decorators,
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
-            String configName) throws ProvisioningException {
+            String configName, Stability stability) throws ProvisioningException {
         Map<FPID, GalleonFeaturePackConfig> map = new HashMap<>();
         Map<FPID, FPID> universeToGav = new HashMap<>();
         for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
@@ -906,6 +978,9 @@ public class GlowSession {
         Map<String, String> options = new HashMap<>();
         options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
         options.put("jboss-fork-embedded", "true");
+        if (stability != null) {
+            options.put(Constants.STABILITY_LEVEL, stability.toString());
+        }
         activeConfigBuilder.addOptions(options);
         return activeConfigBuilder.build();
     }
