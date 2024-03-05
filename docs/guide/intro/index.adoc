@@ -34,7 +34,44 @@ WildFly Glow does more than identifying Galleon Feature-packs and Layers.
 
 #### Provisioning
 
-WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR or produce a Docker image.
+WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR, produce a Docker image and deploy your application to OpenShift.
+
+##### OpenShift provisioning
+
+A good way to start with OpenShift is by using the link:https://developers.redhat.com/developer-sandbox[OpenShift Sandbox]. 
+You can create a cluster in few clicks.
+
+###### Pre-requisites
+
+Once you have a custer up and running, there are few steps needed in order for WildFly Glow to log onto the cluster:
+
+* Download the `oc` command from your cluster. Click on the `?` icon on the top right corner of the OpenShift admin console, then select `Command Line Tools`, 
+then download `oc` for your platform.
+* Retrieve the command to log to the Cluster. Click on your user name on the top right corner, 
+then select `Copy login command`. This will open a page, copy the login command.
+That should be something like: `oc login --token=sha256~ITC16QZxiVk5vm7NCdrRIx2yqvlB-L_6Wg-BrtIhnLE --server=https://api.sandbox-m3.1530.p1.openshiftapps.com:6443`
+
+* Paste the login command in your terminal.
+
+WildFly Glow can now interact with your cluster.
+
+###### Deploying to OpenShift
+
+That is done from the `wildfly-glow` command line tool. You can specify `--cloud --provision OPENSHIFT` to the `scan` command. For example:
+
+`wildfly-glow scan examples/kitchensink.war --cloud --provision OPENSHIFT`
+
+The kitchensink war file is analyzed, the Galleon configuration is generated, then both the war and the configuration are sent to OpenShift to start a server 
+provisioning and create your application deployment.
+
+At the end of the build, the application is deployed and the route to your application inside the cluster is printed. 
+Use it to interact with your application.
+
+###### Automatic deployment of PostGreSQL, Artemis JMS Broker and Keycloak
+
+If WildFly Glow detects the need for these technologies, it will automatically deploy the required servers and will bound the application to them.
+
+This feature is currently specified by this link:https://github.com/wildfly/wildfly-glow/issues/49[GitHub Issue].
 
 #### WildFly additional features discovery
 
