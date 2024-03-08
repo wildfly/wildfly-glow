@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.deployment.openshift.postgresql;
+package org.wildfly.glow.deployment.openshift.mariadb;
 
 import org.wildfly.glow.deployment.openshift.api.AbstractDatabaseDeployer;
 
@@ -23,20 +23,21 @@ import org.wildfly.glow.deployment.openshift.api.AbstractDatabaseDeployer;
  *
  * @author jdenise
  */
-public class PostgreSQLDeployer extends AbstractDatabaseDeployer {
+public class MariaDBDeployer extends AbstractDatabaseDeployer {
 
-    private static final String POSTGRESQL_NAME = "postgresql";
-    private static final int POSTGRESQL_SERVICE_PORT = 5432;
-    private static final String POSTGRESQL_SERVICE_HOST = POSTGRESQL_NAME;
-    private static final String ENV_RADICAL = "POSTGRESQL";
-    private static final String IMAGE = "registry.redhat.io/rhel8/postgresql-15";
+    private static final String MARIADB_NAME = "mariadb";
+    private static final int MARIADB_SERVICE_PORT = 3306;
+    private static final String MARIADB_SERVICE_HOST = MARIADB_NAME;
+    private static final String ENV_RADICAL = "MARIADB";
+    private static final String DB_ENV_RADICAL = "MYSQL";
+    private static final String IMAGE = "registry.redhat.io/rhel8/mariadb-103";
 
-    public PostgreSQLDeployer() {
-        super(POSTGRESQL_NAME,
+    public MariaDBDeployer() {
+        super(MARIADB_NAME,
                 IMAGE,
+                DB_ENV_RADICAL,
                 ENV_RADICAL,
-                ENV_RADICAL,
-                POSTGRESQL_SERVICE_HOST,
-                POSTGRESQL_SERVICE_PORT);
+                MARIADB_SERVICE_HOST,
+                MARIADB_SERVICE_PORT);
     }
 }

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.deployment.openshift.postgresql;
+package org.wildfly.glow.deployment.openshift.mysql;
 
 import org.wildfly.glow.deployment.openshift.api.AbstractDatabaseDeployer;
 
@@ -23,20 +23,20 @@ import org.wildfly.glow.deployment.openshift.api.AbstractDatabaseDeployer;
  *
  * @author jdenise
  */
-public class PostgreSQLDeployer extends AbstractDatabaseDeployer {
+public class MySQLDeployer extends AbstractDatabaseDeployer {
 
-    private static final String POSTGRESQL_NAME = "postgresql";
-    private static final int POSTGRESQL_SERVICE_PORT = 5432;
-    private static final String POSTGRESQL_SERVICE_HOST = POSTGRESQL_NAME;
-    private static final String ENV_RADICAL = "POSTGRESQL";
-    private static final String IMAGE = "registry.redhat.io/rhel8/postgresql-15";
+    private static final String MYSQL_NAME = "mysql";
+    private static final int MYSQL_SERVICE_PORT = 3306;
+    private static final String MYSQL_SERVICE_HOST = MYSQL_NAME;
+    private static final String ENV_RADICAL = "MYSQL";
+    private static final String IMAGE = "registry.redhat.io/rhel8/mysql-80";
 
-    public PostgreSQLDeployer() {
-        super(POSTGRESQL_NAME,
+    public MySQLDeployer() {
+        super(MYSQL_NAME,
                 IMAGE,
                 ENV_RADICAL,
                 ENV_RADICAL,
-                POSTGRESQL_SERVICE_HOST,
-                POSTGRESQL_SERVICE_PORT);
+                MYSQL_SERVICE_HOST,
+                MYSQL_SERVICE_PORT);
     }
 }

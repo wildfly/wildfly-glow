@@ -230,6 +230,16 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>wildfly-glow-openshift-deployment-mysql</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>wildfly-glow-openshift-deployment-mariadb</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-glow-openshift-deployment-artemis</artifactId>
                 <version>${project.version}</version>
