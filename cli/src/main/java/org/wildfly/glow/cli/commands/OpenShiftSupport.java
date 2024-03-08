@@ -92,6 +92,25 @@ class OpenShiftSupport {
         for (Entry<String, String> entry : env.entrySet()) {
             vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(entry.getValue()).build());
         }
+        if (ha) {
+            writer.info("\n HA enabled, 2 replicas will be started.");
+            vars.add(new EnvVar().toBuilder().withName("JGROUPS_PING_PROTOCOL").withValue("DNS_PING").build());
+            vars.add(new EnvVar().toBuilder().withName("OPENSHIFT_DNS_PING_SERVICE_PORT").withValue("8888").build());
+            vars.add(new EnvVar().toBuilder().withName("OPENSHIFT_DNS_PING_SERVICE_NAME").withValue(name + "-ping").build());
+            IntOrString v = new IntOrString();
+            v.setValue(8888);
+            Service pingService = new ServiceBuilder().withNewMetadata().withName(name + "-ping").endMetadata().
+                    withNewSpec().withPorts(new ServicePort().toBuilder().withProtocol("TCP").
+                            withPort(8888).
+                            withName("ping").
+                            withTargetPort(v).build()).
+                    withClusterIP("None").withPublishNotReadyAddresses().withIpFamilies("IPv4").
+                    withInternalTrafficPolicy("Cluster").withClusterIPs("None").
+                    withType("ClusterIP").withIpFamilyPolicy("SingleStack").
+                    withSessionAffinity("None").withSelector(labels).endSpec().build();
+            osClient.services().resource(pingService).createOr(NonDeletingOperation::update);
+            Files.write(target.resolve(name + "-ping-service.yaml"), Serialization.asYaml(pingService).getBytes());
+        }
         Container container = new Container();
         container.setName(name);
         container.setImage(name + ":latest");
