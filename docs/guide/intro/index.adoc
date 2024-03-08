@@ -67,7 +67,7 @@ provisioning and create your application deployment.
 At the end of the build, the application is deployed and the route to your application inside the cluster is printed. 
 Use it to interact with your application.
 
-###### Automatic deployment of PostGreSQL, Artemis JMS Broker and Keycloak
+###### Automatic deployment of PostGreSQL, MySQL, MariaDB, Artemis JMS Broker and Keycloak
 
 If WildFly Glow detects the need for these technologies, it will automatically deploy the required servers and will bound the application to them.
 
