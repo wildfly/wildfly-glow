@@ -334,8 +334,10 @@ public class ScanCommand extends AbstractCommand {
             }
             if (OutputFormat.OPENSHIFT.equals(provision.get())) {
                 String name = null;
+                Path deploymentsDir = target.resolve("deployments");
+                Files.createDirectories(deploymentsDir);
                 for (Path p : deployments) {
-                    Files.copy(p, target.resolve(p.getFileName()));
+                    Files.copy(p, deploymentsDir.resolve(p.getFileName()));
                     int ext = p.getFileName().toString().indexOf(".");
                     name = p.getFileName().toString().substring(0, ext);
                 }
