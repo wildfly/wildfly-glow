@@ -114,6 +114,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
     Optional<Path>  envFile;
 
+    @CommandLine.Option(names = {Constants.INIT_SCRIPT_OPTION_SHORT, Constants.INIT_SCRIPT_OPTION}, paramLabel = Constants.INIT_SCRIPT_OPTION_LABEL)
+    Optional<Path>  initScriptFile;
+
     @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
 
@@ -166,6 +169,19 @@ public class ScanCommand extends AbstractCommand {
                     }
                     extraEnv.put(l.substring(0, i), l.substring(i+1));
                 }
+            }
+        }
+        if (initScriptFile.isPresent()) {
+            if (provision.isPresent()) {
+                if (!OPENSHIFT.equals(provision.get())) {
+                    throw new Exception("Init script file is only usable when --provision=" + OPENSHIFT + " option is set.");
+                }
+            } else {
+                throw new Exception("Init script file file is only usable when --provision=" + OPENSHIFT + " option is set.");
+            }
+            Path p = initScriptFile.get();
+            if (!Files.exists(p)) {
+                throw new Exception(p + " file doesn't exist");
             }
         }
         builder.setVerbose(verbose);
@@ -323,13 +339,16 @@ public class ScanCommand extends AbstractCommand {
                     int ext = p.getFileName().toString().indexOf(".");
                     name = p.getFileName().toString().substring(0, ext);
                 }
+                if (initScriptFile.isPresent()) {
+                    OpenShiftSupport.packageInitScript(initScriptFile.get(), target);
+                }
                 Map<String, String> envMap = new HashMap<>();
                 for(Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
                     for(Env env : envs) {
                         envMap.put(env.getName(), env.getDescription());
                     }
                 }
-                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name, envMap, scanResults.getDiscoveredLayers(),
+                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(), envMap, scanResults.getDiscoveredLayers(),
                         scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers);
                 print("@|bold Openshift build and deploy DONE.|@");
             }

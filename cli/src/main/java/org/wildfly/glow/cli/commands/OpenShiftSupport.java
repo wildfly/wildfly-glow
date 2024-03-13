@@ -225,7 +225,7 @@ class OpenShiftSupport {
         }
 
         createBuild(writer, target, osClient, appName);
-
+        actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
             if (!disabledDeployers.isEmpty()) {
@@ -239,6 +239,26 @@ class OpenShiftSupport {
         }
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
+    }
+
+    public static void packageInitScript(Path initScript, Path target) throws Exception {
+        Path s2i = target.resolve(".s2i");
+        Files.createDirectory(s2i);
+        Path environment = s2i.resolve("environment");
+        Files.write(environment, "CUSTOM_INSTALL_DIRECTORIES=extensions".getBytes());
+        Path extensions = target.resolve("extensions");
+        Files.createDirectories(extensions);
+        Path postconfigure = extensions.resolve("postconfigure.sh");
+        Path install = extensions.resolve("install.sh");
+        StringBuilder installer = new StringBuilder();
+        installer.append("#!/bin/bash\n");
+        installer.append("DIRNAME=`dirname \"$0\"`\n");
+        installer.append("echo \"Installing initialization script\"\n");
+        installer.append("ls -l\n");
+        installer.append("mkdir -p $JBOSS_HOME/extensions\n");
+        installer.append("cp ${DIRNAME}/postconfigure.sh $JBOSS_HOME/extensions/\n");
+        Files.write(install, installer.toString().getBytes());
+        Files.copy(initScript, postconfigure);
     }
 
     private static boolean isDisabled(String name, Set<String> disabledDeployers) {
