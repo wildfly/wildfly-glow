@@ -66,6 +66,12 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.jboss.galleon.api.GalleonBuilder;
+import org.jboss.galleon.api.Provisioning;
+import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
+import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
 import org.wildfly.glow.AddOn;
@@ -277,6 +283,47 @@ class OpenShiftSupport {
         return hexString.toString();
     }
 
+    static Map<String, String> createLabels(Path provisioning) throws Exception {
+        GalleonBuilder provider = new GalleonBuilder();
+        Path dir = provisioning.getParent().resolve("tmpHome");
+        Files.createDirectory(dir);
+        StringBuilder layers = new StringBuilder();
+        StringBuilder excludedLayers = new StringBuilder();
+        StringBuilder fps = new StringBuilder();
+        Map<String, String> labels = new HashMap<>();
+        try (Provisioning p = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build()) {
+            GalleonProvisioningConfig config = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build().loadProvisioningConfig(provisioning);
+            GalleonConfigurationWithLayers cl = config.getDefinedConfig(new ConfigId("standalone", "standalone.xml"));
+            for(String s : cl.getIncludedLayers()) {
+                labels.put("org.wildfly.glow.layer."+s,"");
+            }
+            for(String s : cl.getExcludedLayers()) {
+                labels.put("org.wildfly.glow.excluded.layer."+s,"");
+            }
+            for (GalleonFeaturePackConfig gfpc : config.getFeaturePackDeps()) {
+                if (fps.length() != 0) {
+                    fps.append("_");
+                }
+                String producerName = gfpc.getLocation().getProducerName();
+                producerName = producerName.replaceAll("::zip", "");
+                int i = producerName.indexOf(":");
+                if(i > 0) {
+                    producerName = producerName.substring(i+1);
+                }
+                producerName = producerName.replaceAll(":", "-");
+                labels.put("org.wildfly.glow.feature-pack."+producerName,"");
+            }
+        }
+        return labels;
+    }
+
+    private static String format(String label) {
+        if (label.length() > 63) {
+            label = label.substring(0, 56);
+            label += ".trunc";
+        }
+        return label;
+    }
     static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient) throws Exception {
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
@@ -302,6 +349,7 @@ class OpenShiftSupport {
             Files.createDirectories(stepOne);
             IoUtils.copy(target.resolve("galleon"), stepOne.resolve("galleon"));
             ZipUtils.zip(stepOne, file);
+            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(provisioning)).endMetadata().build();
             osClient.imageStreams().resource(stream).createOr(NonDeletingOperation::update);
             Files.write(target.resolve(serverImageName + "-image-stream.yaml"), Serialization.asYaml(stream).getBytes());
             BuildConfigBuilder builder = new BuildConfigBuilder();
