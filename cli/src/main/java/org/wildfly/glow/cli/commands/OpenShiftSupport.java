@@ -175,7 +175,7 @@ class OpenShiftSupport {
     }
 
     static void deploy(GlowMessageWriter writer, Path target, String appName, Map<String, String> env, Set<Layer> layers, Set<AddOn> addOns, boolean ha,
-            Map<String, String> extraEnv, Set<String> disabledDeployers) throws Exception {
+            Map<String, String> extraEnv, Set<String> disabledDeployers, Path initScript) throws Exception {
         Map<String, String> actualEnv = new TreeMap<>();
         OpenShiftClient osClient = new KubernetesClientBuilder().build().adapt(OpenShiftClient.class);
         writer.info("\nConnected to OpenShift cluster");
@@ -232,7 +232,7 @@ class OpenShiftSupport {
             }
         }
 
-        createBuild(writer, target, osClient, appName);
+        createBuild(writer, target, osClient, appName, initScript);
         actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
@@ -249,7 +249,12 @@ class OpenShiftSupport {
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
 
-    public static void packageInitScript(Path initScript, Path target) throws Exception {
+    static void createBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Path initScript) throws Exception {
+        String serverImageName = doServerImageBuild(writer, target, osClient);
+        doAppImageBuild(serverImageName, writer, target, osClient, name, initScript);
+    }
+
+    private static void packageInitScript(Path initScript, Path target) throws Exception {
         Path extensions = target.resolve("extensions");
         Files.createDirectories(extensions);
         Path postconfigure = extensions.resolve("postconfigure.sh");
@@ -272,7 +277,7 @@ class OpenShiftSupport {
         return hexString.toString();
     }
 
-    static void createBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name) throws Exception {
+    static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient) throws Exception {
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -284,7 +289,6 @@ class OpenShiftSupport {
                 endMetadata().withNewSpec().withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
         // check if it exists
         ImageStream existingStream = osClient.imageStreams().resource(stream).get();
-        writer.info("\nCreating and starting application image build on OpenShift...");
         if (existingStream == null) {
             writer.info("\nBuilding server image (this can take up to few minutes the first time)...");
             // zip deployment and provisioning.xml to be pushed to OpenShift
@@ -325,6 +329,10 @@ class OpenShiftSupport {
                 latch.await();
             }
         }
+        return serverImageName;
+    }
+
+    static void doAppImageBuild(String serverImageName, GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Path initScript) throws Exception {
         // Now step 2
         // From the server image, do a docker build, copy the server and copy in it the deployments and init file.
         Path stepTwo = target.resolve("step-two");
@@ -334,9 +342,8 @@ class OpenShiftSupport {
         dockerFileBuilder.append("COPY --chown=jboss:root /server $JBOSS_HOME\n");
         dockerFileBuilder.append("COPY --chown=jboss:root deployments/* $JBOSS_HOME/standalone/deployments\n");
 
-        Path extensions = target.resolve("extensions");
-        if(Files.exists(extensions)) {
-            IoUtils.copy(extensions, stepTwo.resolve("extensions"));
+        if (initScript != null) {
+            packageInitScript(initScript, stepTwo);
             dockerFileBuilder.append("COPY --chown=jboss:root extensions $JBOSS_HOME/extensions\n");
             dockerFileBuilder.append("RUN chmod ug+rwx $JBOSS_HOME/extensions/postconfigure.sh\n");
         }

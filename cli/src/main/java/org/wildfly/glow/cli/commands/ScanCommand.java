@@ -341,9 +341,6 @@ public class ScanCommand extends AbstractCommand {
                     int ext = p.getFileName().toString().indexOf(".");
                     name = p.getFileName().toString().substring(0, ext);
                 }
-                if (initScriptFile.isPresent()) {
-                    OpenShiftSupport.packageInitScript(initScriptFile.get(), target);
-                }
                 Map<String, String> envMap = new HashMap<>();
                 for(Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
                     for(Env env : envs) {
@@ -351,7 +348,7 @@ public class ScanCommand extends AbstractCommand {
                     }
                 }
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(), envMap, scanResults.getDiscoveredLayers(),
-                        scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers);
+                        scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers, initScriptFile.orElse(null));
                 print("@|bold Openshift build and deploy DONE.|@");
             }
             if (content.getDockerImageName() != null) {
