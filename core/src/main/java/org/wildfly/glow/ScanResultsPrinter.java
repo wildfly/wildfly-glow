@@ -80,8 +80,11 @@ public class ScanResultsPrinter {
             profileBuilder.append("none");
         }
         writer.info(profileBuilder);
-        if(arguments.getStability() != null) {
-            writer.info("stability: " + arguments.getStability().toString());
+        if(arguments.getConfigStability() != null) {
+            writer.info("config stability: " + arguments.getConfigStability().toString());
+        }
+        if(arguments.getPackageStability() != null) {
+            writer.info("package stability: " + arguments.getPackageStability().toString());
         }
         writer.info("galleon discovery");
         StringBuilder builder = new StringBuilder();
@@ -134,11 +137,16 @@ public class ScanResultsPrinter {
             }
             writer.info(disabledBuilder);
         }
-        if (arguments.getStability() != null) {
+        if (arguments.getConfigStability() != null || arguments.getPackageStability() != null) {
             boolean needCR = false;
-            if (!scanResults.getExcludedFeatures().isEmpty() || !scanResults.getExcludedPackages().isEmpty()) {
-                writer.info("The following features and/or packages would be disabled if provisioning a server at the '"
-                        + arguments.getStability().toString() + "' stability level:");
+            if (!scanResults.getExcludedFeatures().isEmpty()) {
+                writer.info("The following features would be disabled if provisioning a server at the '"
+                        + arguments.getConfigStability().toString() + "' stability level for configs:");
+                needCR = true;
+            }
+            if(!scanResults.getExcludedPackages().isEmpty()) {
+                writer.info("The following packages would be disabled if provisioning a server at the '"
+                        + arguments.getPackageStability().toString() + "' stability level for packages:");
                 needCR = true;
             }
             if (!scanResults.getExcludedFeatures().isEmpty()) {

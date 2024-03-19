@@ -482,10 +482,10 @@ public class GlowSession {
             }
             // Identify the active feature-packs.
             GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
-                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getStability());
+                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability());
 
             // Handle stability
-            if (arguments.getStability() != null) {
+            if (arguments.getConfigStability() != null) {
                 List<Layer> checkLayers = new ArrayList<>();
                 checkLayers.add(baseLayer);
                 checkLayers.addAll(decorators);
@@ -504,7 +504,7 @@ public class GlowSession {
                             List<GalleonFeatureSpec> lst = rt.getAllFeatures();
                             for (GalleonFeatureSpec spec : lst) {
                                 Stability stab = spec.getStability() == null ? null : Stability.fromString(spec.getStability());
-                                if (stab != null && !arguments.getStability().enables(stab)) {
+                                if (stab != null && !arguments.getConfigStability().enables(stab)) {
                                     Set<String> set = excludedFeatures.get(layer);
                                     if (set == null) {
                                         set = new HashSet<>();
@@ -514,7 +514,7 @@ public class GlowSession {
                                 }
                                 for (GalleonFeatureParamSpec pspec : spec.getParams()) {
                                     Stability pstab = pspec.getStability() == null ? null : Stability.fromString(pspec.getStability());
-                                    if (pstab != null && !arguments.getStability().enables(pstab)) {
+                                    if (pstab != null && !arguments.getConfigStability().enables(pstab)) {
                                         Set<String> set = excludedFeatures.get(layer);
                                         if (set == null) {
                                             set = new HashSet<>();
@@ -529,13 +529,15 @@ public class GlowSession {
                         writer.warn("Got unexpected exception dealing with " + layer + " features. Exception" + ex +". Please report the issue.");
                     }
                 }
+            }
+            if(arguments.getPackageStability() != null) {
                 // We must disable the stability to see all packages in the runtime
                 GalleonProvisioningConfig config2 = GalleonProvisioningConfig.builder(activeConfig).removeOption(Constants.STABILITY_LEVEL).build();
                 try (GalleonProvisioningRuntime rt = provisioning.getProvisioningRuntime(config2)) {
                     for (GalleonFeaturePackRuntime fpr : rt.getGalleonFeaturePacks()) {
                         for (GalleonPackageRuntime prt : fpr.getGalleonPackages()) {
                             Stability packageStability = prt.getStability()  == null ? null : Stability.fromString(prt.getStability());
-                            if (packageStability != null && !arguments.getStability().enables(packageStability)) {
+                            if (packageStability != null && !arguments.getPackageStability().enables(packageStability)) {
                                 excludedPackages.add(prt.getName() + "[stability="+packageStability.toString()+"]");
                             }
                         }
@@ -907,7 +909,7 @@ public class GlowSession {
             Set<Layer> decorators,
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
-            String configName, Stability stability) throws ProvisioningException {
+            String configName, Stability configStability, Stability packageStability) throws ProvisioningException {
         Map<FPID, GalleonFeaturePackConfig> map = new HashMap<>();
         Map<FPID, FPID> universeToGav = new HashMap<>();
         for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
@@ -990,8 +992,11 @@ public class GlowSession {
         Map<String, String> options = new HashMap<>();
         options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
         options.put("jboss-fork-embedded", "true");
-        if (stability != null) {
-            options.put(Constants.STABILITY_LEVEL, stability.toString());
+        if (configStability != null) {
+            options.put(Constants.CONFIG_STABILITY_LEVEL, configStability.toString());
+        }
+        if (packageStability != null) {
+            options.put(Constants.PACKAGE_STABILITY_LEVEL, packageStability.toString());
         }
         activeConfigBuilder.addOptions(options);
         return activeConfigBuilder.build();
