@@ -111,6 +111,12 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.STABILITY_OPTION, Constants.STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
     Optional<Stability> stability;
 
+    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.PACKAGE_STABILITY_OPTION, Constants.PACKAGE_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<Stability> packageStability;
+
+    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.CONFIG_STABILITY_OPTION, Constants.CONFIG_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<Stability> configStability;
+
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
     Optional<Path>  envFile;
 
@@ -208,7 +214,20 @@ public class ScanCommand extends AbstractCommand {
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
         if (stability.isPresent()) {
-            builder.setStability(stability.get());
+            if (configStability.isPresent()) {
+                throw new Exception(Constants.CONFIG_STABILITY_OPTION + " can't be set when " + Constants.STABILITY_OPTION + " is set");
+            }
+            if (packageStability.isPresent()) {
+                throw new Exception(Constants.PACKAGE_STABILITY_OPTION + " can't be set when " + Constants.STABILITY_OPTION + " is set");
+            }
+            builder.setConfigStability(stability.get());
+            builder.setPackageStability(stability.get());
+        }
+        if (configStability.isPresent()) {
+            builder.setConfigStability(configStability.get());
+        }
+        if (packageStability.isPresent()) {
+            builder.setPackageStability(packageStability.get());
         }
         if (dockerImageName.isPresent()) {
             if (provision.isPresent() && !DOCKER_IMAGE.equals(provision.get())) {

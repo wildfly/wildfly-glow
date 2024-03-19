@@ -92,5 +92,11 @@ public interface Constants {
     String STABILITY_OPTION = "--stability-level";
     String STABILITY_OPTION_SHORT = "-sl";
 
+    String PACKAGE_STABILITY_OPTION = "--package-stability-level";
+    String PACKAGE_STABILITY_OPTION_SHORT = "-psl";
+
+    String CONFIG_STABILITY_OPTION = "--config-stability-level";
+    String CONFIG_STABILITY_OPTION_SHORT = "-csl";
+
     String STABILITY_LABEL = "<default|community|preview|experimental>";
 }

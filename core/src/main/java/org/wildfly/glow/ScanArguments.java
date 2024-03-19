@@ -74,7 +74,8 @@ public interface ScanArguments {
 
     Set<Pattern> getExcludeArchivesFromScan();
 
-    Stability getStability();
+    Stability getConfigStability();
+    Stability getPackageStability();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -154,8 +155,12 @@ public interface ScanArguments {
             return this;
         }
 
-        public Builder setStability(Stability stability) {
-            this.stability = stability;
+        public Builder setPackageStability(Stability stability) {
+            this.packageStability = stability;
+            return this;
+        }
+        public Builder setConfigStability(Stability stability) {
+            this.configStability = stability;
             return this;
         }
     }

@@ -33,7 +33,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final boolean verbose;
     private final boolean techPreview;
     private final Set<Pattern> excludeArchivesFromScan;
-    private final Stability stability;
+    private final Stability configStability;
+    private final Stability packageStability;
 
     protected Arguments(
             String executionContext,
@@ -49,7 +50,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             boolean verbose,
             boolean techPreview,
             Set<Pattern> excludeArchivesFromScan,
-            Stability stability) {
+            Stability configStability,
+            Stability packageStability) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -63,7 +65,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.verbose = verbose;
         this.techPreview = techPreview;
         this.excludeArchivesFromScan = excludeArchivesFromScan;
-        this.stability = stability;
+        this.configStability = configStability;
+        this.packageStability = packageStability;
 
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         this.compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
@@ -179,8 +182,13 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     }
 
     @Override
-    public Stability getStability() {
-        return stability;
+    public Stability getConfigStability() {
+        return configStability;
+    }
+
+    @Override
+    public Stability getPackageStability() {
+        return packageStability;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {
