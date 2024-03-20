@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.0.0.Beta9,</span>
-<span id="revdate">2024-02-16T14:54:12Z</span>
+<span id="revnumber">version 1.0.0.Beta10,</span>
+<span id="revdate">2024-03-20T14:49:28Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -552,7 +552,75 @@ that are bound to the usage of a given Galleon Layer. An example of rule can be 
 <div class="sect3">
 <h4 id="_provisioning"><a class="anchor" href="#_provisioning"></a><a class="link" href="#_provisioning">1.3.1. Provisioning</a></h4>
 <div class="paragraph">
-<p>WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR or produce a Docker image.</p>
+<p>WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR, produce a Docker image and deploy your application to OpenShift.</p>
+</div>
+<div class="sect4">
+<h5 id="_openshift_provisioning"><a class="anchor" href="#_openshift_provisioning"></a><a class="link" href="#_openshift_provisioning">OpenShift provisioning</a></h5>
+<div class="paragraph">
+<p>A good way to start with OpenShift is by using the <a href="https://developers.redhat.com/developer-sandbox">OpenShift Sandbox</a>.
+You can create a cluster in few clicks.</p>
+</div>
+<div class="sect5">
+<h6 id="_pre_requisites"><a class="anchor" href="#_pre_requisites"></a><a class="link" href="#_pre_requisites">Pre-requisites</a></h6>
+<div class="paragraph">
+<p>Once you have a custer up and running, there are few steps needed in order for WildFly Glow to log onto the cluster:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Download the <code>oc</code> command from your cluster. Click on the <code>?</code> icon on the top right corner of the OpenShift admin console, then select <code>Command Line Tools</code>,
+then download <code>oc</code> for your platform.</p>
+</li>
+<li>
+<p>Retrieve the command to log to the Cluster. Click on your user name on the top right corner,
+then select <code>Copy login command</code>. This will open a page, copy the login command.
+That should be something like: <code>oc login --token=sha256~ITC16QZxiVk5vm7NCdrRIx2yqvlB-L_6Wg-BrtIhnLE --server=https://api.sandbox-m3.1530.p1.openshiftapps.com:6443</code></p>
+</li>
+<li>
+<p>Paste the login command in your terminal.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>WildFly Glow can now interact with your cluster.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_deploying_to_openshift"><a class="anchor" href="#_deploying_to_openshift"></a><a class="link" href="#_deploying_to_openshift">Deploying to OpenShift</a></h6>
+<div class="paragraph">
+<p>That is done from the <code>wildfly-glow</code> command line tool. You can specify <code>--cloud --provision OPENSHIFT</code> to the <code>scan</code> command. For example:</p>
+</div>
+<div class="paragraph">
+<p><code>wildfly-glow scan examples/kitchensink.war --cloud --provision OPENSHIFT</code></p>
+</div>
+<div class="paragraph">
+<p>The kitchensink war file is analyzed, the Galleon configuration is generated, then both the war and the configuration are sent to OpenShift to start a server
+provisioning and create your application deployment.</p>
+</div>
+<div class="paragraph">
+<p>At the end of the build, the application is deployed and the route to your application inside the cluster is printed.
+Use it to interact with your application.</p>
+</div>
+<div class="paragraph">
+<p>Note: The OpenShift resources yaml files are generated in the directory <code>server-&lt;wildfly version&gt;/resources</code></p>
+</div>
+<div class="paragraph">
+<p>Note: the support for OpenShift is currently specified by this WildFly Glow project <a href="https://github.com/wildfly/wildfly-glow/issues/49">GitHub Issue</a>.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_automatic_deployment_of_postgresql_mysql_mariadb_artemis_jms_broker_and_keycloak"><a class="anchor" href="#_automatic_deployment_of_postgresql_mysql_mariadb_artemis_jms_broker_and_keycloak"></a><a class="link" href="#_automatic_deployment_of_postgresql_mysql_mariadb_artemis_jms_broker_and_keycloak">Automatic deployment of PostGreSQL, MySQL, MariaDB, Artemis JMS Broker and Keycloak</a></h6>
+<div class="paragraph">
+<p>If WildFly Glow detects the need for these technologies, it will automatically deploy the required servers and will bound the application to them.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_high_availability_support"><a class="anchor" href="#_high_availability_support"></a><a class="link" href="#_high_availability_support">High Availability support</a></h6>
+<div class="paragraph">
+<p>When the HA profile is enabled, 2 pods will be created for the deployment.
+The JGroups <code>dns.DNS_PING</code> protocol is enabled for the members of the cluster to discover each others.</p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect3">
@@ -948,7 +1016,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Beta9<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.Beta10<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1293,7 +1361,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta9:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta10:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1453,7 +1521,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta9:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.0.Beta10:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2059,8 +2127,8 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.0.0.Beta9<br>
-Last updated 2024-02-16 15:54:27 +0100
+Version 1.0.0.Beta10<br>
+Last updated 2024-03-20 15:49:57 +0100
 </div>
 </div>
 </body>
