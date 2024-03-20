@@ -35,7 +35,6 @@ import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.NonDeletingOperation;
-import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.api.model.Build;
 import io.fabric8.openshift.api.model.BuildConfig;
 import io.fabric8.openshift.api.model.BuildConfigBuilder;
@@ -54,7 +53,6 @@ import io.fabric8.openshift.api.model.TagReferenceBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,7 +76,7 @@ import org.wildfly.glow.AddOn;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
-
+import org.wildfly.glow.deployment.openshift.api.Utils;
 /**
  *
  * @author jdenise
@@ -123,7 +121,7 @@ class OpenShiftSupport {
                     withType("ClusterIP").withIpFamilyPolicy("SingleStack").
                     withSessionAffinity("None").withSelector(labels).endSpec().build();
             osClient.services().resource(pingService).createOr(NonDeletingOperation::update);
-            Files.write(target.resolve(name + "-ping-service.yaml"), Serialization.asYaml(pingService).getBytes());
+            Utils.persistResource(target, pingService, name + "-ping-service.yaml");
         }
         Container container = new Container();
         container.setName(name);
@@ -166,7 +164,7 @@ class OpenShiftSupport {
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
         osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(name + "-deployment.yaml"), Serialization.asYaml(deployment).getBytes());
+        Utils.persistResource(target, deployment, name + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(8080);
         Service service = new ServiceBuilder().withNewMetadata().withName(name).endMetadata().
@@ -174,7 +172,7 @@ class OpenShiftSupport {
                         withPort(8080).
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(name + "-service.yaml"), Serialization.asYaml(service).getBytes());
+        Utils.persistResource(target, service, name + "-service.yaml");
 
         writer.info("Waiting until the application is ready ...");
         osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
@@ -192,7 +190,7 @@ class OpenShiftSupport {
                 withTls(new TLSConfig().toBuilder().withTermination("edge").
                         withInsecureEdgeTerminationPolicy("Redirect").build()).endSpec().build();
         osClient.routes().resource(route).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(appName + "-route.yaml"), Serialization.asYaml(route).getBytes());
+        Utils.persistResource(target, route, appName + "-route.yaml");
         String host = osClient.routes().resource(route).get().getSpec().getHost();
         // Done route creation
         Map<String, Deployer> existingDeployers = new HashMap<>();
@@ -243,13 +241,14 @@ class OpenShiftSupport {
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
             if (!disabledDeployers.isEmpty()) {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. WARN: Some of them need possibly to be updated in the deployment:");
+                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. WARN: Some of them need possibly to be updated in the deployment:\n");
             } else {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment:");
+                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment:\n");
             }
             for (Entry<String, String> entry : actualEnv.entrySet()) {
                 writer.warn(entry.getKey() + "=" + entry.getValue());
             }
+            writer.warn("\n");
         }
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
@@ -283,12 +282,10 @@ class OpenShiftSupport {
         return hexString.toString();
     }
 
-    static Map<String, String> createLabels(Path provisioning) throws Exception {
+    static Map<String, String> createLabels(Path target, Path provisioning) throws Exception {
         GalleonBuilder provider = new GalleonBuilder();
-        Path dir = provisioning.getParent().resolve("tmpHome");
+        Path dir = target.resolve("tmp").resolve("tmpHome");
         Files.createDirectory(dir);
-        StringBuilder layers = new StringBuilder();
-        StringBuilder excludedLayers = new StringBuilder();
         StringBuilder fps = new StringBuilder();
         Map<String, String> labels = new HashMap<>();
         try (Provisioning p = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build()) {
@@ -317,13 +314,6 @@ class OpenShiftSupport {
         return labels;
     }
 
-    private static String format(String label) {
-        if (label.length() > 63) {
-            label = label.substring(0, 56);
-            label += ".trunc";
-        }
-        return label;
-    }
     static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient) throws Exception {
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
@@ -339,19 +329,18 @@ class OpenShiftSupport {
         if (existingStream == null) {
             writer.info("\nBuilding server image (this can take up to few minutes the first time)...");
             // zip deployment and provisioning.xml to be pushed to OpenShift
-            Path file = Paths.get("openshiftServer.zip");
+            Path file = target.resolve("tmp").resolve("openshiftServer.zip");
             if (Files.exists(file)) {
                 Files.delete(file);
             }
-            file.toFile().deleteOnExit();
             // First do a build of the naked server
-            Path stepOne = target.resolve("step-one");
+            Path stepOne = target.resolve("tmp").resolve("step-one");
             Files.createDirectories(stepOne);
             IoUtils.copy(target.resolve("galleon"), stepOne.resolve("galleon"));
             ZipUtils.zip(stepOne, file);
-            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(provisioning)).endMetadata().build();
+            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(target, provisioning)).endMetadata().build();
             osClient.imageStreams().resource(stream).createOr(NonDeletingOperation::update);
-            Files.write(target.resolve(serverImageName + "-image-stream.yaml"), Serialization.asYaml(stream).getBytes());
+            Utils.persistResource(target, stream, serverImageName + "-image-stream.yaml");
             BuildConfigBuilder builder = new BuildConfigBuilder();
             ObjectReference ref = new ObjectReference();
             ref.setKind("ImageStreamTag");
@@ -369,7 +358,7 @@ class OpenShiftSupport {
                     endSourceStrategy().endStrategy().withNewSource().
                     withType("Binary").endSource().endSpec().build();
             osClient.buildConfigs().resource(buildConfig).createOr(NonDeletingOperation::update);
-            Files.write(target.resolve(serverImageName + "-build-config.yaml"), Serialization.asYaml(buildConfig).getBytes());
+            Utils.persistResource(target, buildConfig, serverImageName + "-build-config.yaml");
 
             Build build = osClient.buildConfigs().withName(serverImageName + "-build").instantiateBinary().fromFile(file.toFile());
             CountDownLatch latch = new CountDownLatch(1);
@@ -383,7 +372,7 @@ class OpenShiftSupport {
     static void doAppImageBuild(String serverImageName, GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Path initScript) throws Exception {
         // Now step 2
         // From the server image, do a docker build, copy the server and copy in it the deployments and init file.
-        Path stepTwo = target.resolve("step-two");
+        Path stepTwo = target.resolve("tmp").resolve("step-two");
         IoUtils.copy(target.resolve("deployments"), stepTwo.resolve("deployments"));
         StringBuilder dockerFileBuilder = new StringBuilder();
         dockerFileBuilder.append("FROM wildfly-runtime:latest\n");
@@ -400,12 +389,12 @@ class OpenShiftSupport {
 
         Path dockerFile = stepTwo.resolve("Dockerfile");
         Files.write(dockerFile, dockerFileBuilder.toString().getBytes());
-        Path file2 = Paths.get("openshiftApp.zip");
+        Path file2 = target.resolve("tmp").resolve("openshiftApp.zip");
         if (Files.exists(file2)) {
             Files.delete(file2);
         }
         ZipUtils.zip(stepTwo, file2);
-        writer.info("\nCreating and starting application image build on OpenShift...");
+        writer.info("\nBuilding application image...");
         ImageStream runtimeStream = new ImageStreamBuilder().withNewMetadata().withName("wildfly-runtime").
                 endMetadata().withNewSpec().
                 addToTags(0, new TagReferenceBuilder()
@@ -439,7 +428,7 @@ class OpenShiftSupport {
                 withDockerfilePath("./Dockerfile").
                 endDockerStrategy().endStrategy().endSpec().build();
         osClient.buildConfigs().resource(buildConfig2).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(name + "-build-config.yaml"), Serialization.asYaml(buildConfig2).getBytes());
+        Utils.persistResource(target, buildConfig2, name + "-build-config.yaml");
 
         Build build = osClient.buildConfigs().withName(name + "-build").instantiateBinary().fromFile(file2.toFile());
         CountDownLatch latch = new CountDownLatch(1);

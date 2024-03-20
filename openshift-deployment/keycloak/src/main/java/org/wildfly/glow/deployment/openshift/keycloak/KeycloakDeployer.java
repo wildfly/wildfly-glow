@@ -19,7 +19,6 @@ package org.wildfly.glow.deployment.openshift.keycloak;
 
 import io.fabric8.kubernetes.api.model.KubernetesList;
 import io.fabric8.kubernetes.client.dsl.NonDeletingOperation;
-import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.Route;
@@ -27,7 +26,6 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.Template;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
+import org.wildfly.glow.deployment.openshift.api.Utils;
 
 /**
  *
@@ -93,7 +92,7 @@ public class KeycloakDeployer implements Deployer {
                 withName(KEYCLOAK_NAME)
                 .process(parameters);
         osClient.resourceList(processedTemplateWithCustomParameters).createOrReplace();
-        Files.write(target.resolve(KEYCLOAK_NAME + "-resources.yaml"), Serialization.asYaml(processedTemplateWithCustomParameters).getBytes());
+        Utils.persistResource(target, processedTemplateWithCustomParameters, KEYCLOAK_NAME + "-resources.yaml");
         writer.info("Waiting until keycloak is ready ...");
         DeploymentConfig dc = new DeploymentConfigBuilder().withNewMetadata().withName(KEYCLOAK_NAME).endMetadata().build();
         osClient.resources(DeploymentConfig.class).resource(dc).waitUntilReady(5, TimeUnit.MINUTES);

@@ -67,6 +67,8 @@ provisioning and create your application deployment.
 At the end of the build, the application is deployed and the route to your application inside the cluster is printed. 
 Use it to interact with your application.
 
+Note: The OpenShift resources yaml files are generated in the directory `server-<wildfly version>/resources`
+
 Note: the support for OpenShift is currently specified by this WildFly Glow project link:https://github.com/wildfly/wildfly-glow/issues/49[GitHub Issue].
 
 ###### Automatic deployment of PostGreSQL, MySQL, MariaDB, Artemis JMS Broker and Keycloak
