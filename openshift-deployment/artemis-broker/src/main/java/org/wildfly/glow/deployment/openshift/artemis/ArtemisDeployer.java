@@ -27,9 +27,7 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.NonDeletingOperation;
-import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.client.OpenShiftClient;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
+import org.wildfly.glow.deployment.openshift.api.Utils;
 
 /**
  *
@@ -96,7 +95,7 @@ public class ArtemisDeployer implements Deployer {
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
         osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(REMOTE_BROKER_NAME + "-deployment.yaml"), Serialization.asYaml(deployment).getBytes());
+        Utils.persistResource(target, deployment, REMOTE_BROKER_NAME + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(61616);
         Service service = new ServiceBuilder().withNewMetadata().withName(REMOTE_BROKER_NAME).endMetadata().
@@ -104,7 +103,7 @@ public class ArtemisDeployer implements Deployer {
                         withPort(61616).
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(REMOTE_BROKER_NAME + "-service.yaml"), Serialization.asYaml(service).getBytes());
+        Utils.persistResource(target, service, REMOTE_BROKER_NAME + "-service.yaml");
         Map<String, String> ret = new HashMap<>();
         ret.putAll(REMOTE_BROKER_APP_MAP);
         return REMOTE_BROKER_APP_MAP;

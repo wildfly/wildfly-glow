@@ -368,7 +368,7 @@ public class ScanCommand extends AbstractCommand {
                 }
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(), envMap, scanResults.getDiscoveredLayers(),
                         scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers, initScriptFile.orElse(null));
-                print("@|bold Openshift build and deploy DONE.|@");
+                print("@|bold \nOpenshift build and deploy DONE.|@");
             }
             if (content.getDockerImageName() != null) {
                 print("@|bold To run the image call: 'docker run " + content.getDockerImageName() + "'|@");

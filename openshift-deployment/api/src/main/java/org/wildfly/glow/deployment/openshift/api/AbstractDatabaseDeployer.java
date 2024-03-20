@@ -27,9 +27,7 @@ import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.NonDeletingOperation;
-import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.client.OpenShiftClient;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,7 +101,6 @@ public class AbstractDatabaseDeployer implements Deployer {
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> env, String appHost, String appName, String matching) throws Exception {
-        writer.info("\nDeploying " + dbName + " server");
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, dbName);
         ContainerPort port = new ContainerPort();
@@ -129,7 +126,7 @@ public class AbstractDatabaseDeployer implements Deployer {
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
         osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(dbName + "-deployment.yaml"), Serialization.asYaml(deployment).getBytes());
+        Utils.persistResource(target, deployment, dbName + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(this.port);
         Service service = new ServiceBuilder().withNewMetadata().withName(dbName).endMetadata().
@@ -137,10 +134,11 @@ public class AbstractDatabaseDeployer implements Deployer {
                         withPort(this.port).
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Files.write(target.resolve(dbName + "-service.yaml"), Serialization.asYaml(service).getBytes());
+        Utils.persistResource(target, service, dbName + "-service.yaml");
         Map<String, String> ret = new HashMap<>();
         ret.putAll(getExistingEnv(env));
         ret.putAll(APP_MAP);
+        writer.info("\n" + dbName + " server has been deployed");
         return ret;
     }
 
