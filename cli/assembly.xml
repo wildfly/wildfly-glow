@@ -31,6 +31,7 @@
             <outputDirectory>examples</outputDirectory>
             <includes>
                 <include>kitchensink.war</include>
+                <include>todo-backend.war</include>
             </includes>
         </fileSet>
         <fileSet>

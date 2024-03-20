@@ -28,3 +28,20 @@ This war comes from the WildFly https://github.com/wildfly/quickstart/tree/30.0.
 === To provision a WildFly server for the cloud and produce a Docker image: 
 
 `./wildfly-glow scan ./examples/kitchensink.war --provision=DOCKER_IMAGE --cloud`
+
+=== To provision a WildFly server for the cloud and directly deploy to OpenShift cluster: 
+
+You must first log into an OpenShift cluster. 
+
+`./wildfly-glow scan ./examples/kitchensink.war --provision=OPENSHIFT --cloud`
+
+== ToDo backend example
+
+This war comes from the WildFly https://github.com/wildfly/quickstart/tree/30.0.0.Final/todo-backend[todo-backend] quickstart.
+
+=== To provision a WildFly server for the cloud and directly deploy to OpenShift cluster:
+
+You must first log into an OpenShift cluster. 
+In this case, a `postgresql` database is started. The WildFly server automatically connects to it.
+
+`./wildfly-glow scan ./examples/todo-backend.war --provision=OPENSHIFT --cloud --add-ons postgresql`
