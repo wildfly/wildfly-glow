@@ -317,7 +317,7 @@ class OpenShiftSupport {
     static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient) throws Exception {
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        MessageDigest digest = MessageDigest.getInstance("MD5");
         byte[] encodedhash = digest.digest(content);
         String key = bytesToHex(encodedhash);
         String serverImageName = "wildfly-server-" + key;
