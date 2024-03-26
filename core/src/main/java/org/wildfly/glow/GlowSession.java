@@ -426,20 +426,32 @@ public class GlowSession {
             // and that its required configuration should be applied.
             Map<Layer, Set<Env>> suggestedConfigurations = new TreeMap<>();
             Map<Layer, Set<Env>> stronglySuggestedConfigurations = new TreeMap<>();
+            Map<Layer, Set<Env>> buildTimeConfigurations = new TreeMap<>();
+            Map<Layer, Set<Env>> buildTimeRequiredConfigurations = new TreeMap<>();
             for (Layer l : allBaseLayers) {
                 if (!excludedLayers.contains(l)) {
                     if (!l.getConfiguration().isEmpty()) {
                         if (layers.contains(l)) {
                             Set<Env> requiredSet = new TreeSet<>();
                             Set<Env> notRequiredSet = new TreeSet<>();
+                            Set<Env> buildTimeSet = new TreeSet<>();
+                            Set<Env> buildTimeRequiredSet = new TreeSet<>();
                             for (String c : l.getConfiguration()) {
                                 URI uri = new URI(c);
                                 Set<Env> envs = EnvHandler.retrieveEnv(uri);
                                 for (Env e : envs) {
                                     if (e.isRequired()) {
-                                        requiredSet.add(e);
+                                        if (e.isRuntime()) {
+                                            requiredSet.add(e);
+                                        } else {
+                                            buildTimeRequiredSet.add(e);
+                                        }
                                     } else {
-                                        notRequiredSet.add(e);
+                                        if (e.isRuntime()) {
+                                            notRequiredSet.add(e);
+                                        } else {
+                                            buildTimeSet.add(e);
+                                        }
                                     }
                                 }
                             }
@@ -448,6 +460,12 @@ public class GlowSession {
                             }
                             if (!notRequiredSet.isEmpty()) {
                                 suggestedConfigurations.put(l, notRequiredSet);
+                            }
+                            if (!buildTimeSet.isEmpty()) {
+                                buildTimeConfigurations.put(l, buildTimeSet);
+                            }
+                            if (!buildTimeRequiredSet.isEmpty()) {
+                                buildTimeRequiredConfigurations.put(l, buildTimeRequiredSet);
                             }
                         } else {
                             Set<Env> envs = new TreeSet<>();
@@ -545,7 +563,7 @@ public class GlowSession {
                 }
             }
             Suggestions suggestions = new Suggestions(suggestedConfigurations,
-                    stronglySuggestedConfigurations, possibleAddOns, possibleProfiles);
+                    stronglySuggestedConfigurations, buildTimeConfigurations, buildTimeRequiredConfigurations, possibleAddOns, possibleProfiles);
             ScanResults scanResults = new ScanResults(
                     this,
                     layers,

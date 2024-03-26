@@ -28,15 +28,21 @@ public class Suggestions {
 
     private final Map<Layer, Set<Env>> suggestedConfigurations;
     private final Map<Layer, Set<Env>> stronglySuggestedConfigurations;
+    private final Map<Layer, Set<Env>> buildTimeConfigurations;
+    private final Map<Layer, Set<Env>> buildTimeRequiredConfigurations;
     private final Set<AddOn> possibleAddOns;
     private final Set<String> possibleProfiles;
 
     Suggestions(Map<Layer, Set<Env>> suggestedConfigurations,
             Map<Layer, Set<Env>> stronglySuggestedConfigurations,
+            Map<Layer, Set<Env>> buildTimeConfigurations,
+            Map<Layer, Set<Env>> buildTimeRequiredConfigurations,
             Set<AddOn> possibleAddOns,
             Set<String> possibleProfiles) {
         this.suggestedConfigurations = suggestedConfigurations;
         this.stronglySuggestedConfigurations = stronglySuggestedConfigurations;
+        this.buildTimeConfigurations = buildTimeConfigurations;
+        this.buildTimeRequiredConfigurations = buildTimeRequiredConfigurations;
         this.possibleAddOns = possibleAddOns;
         this.possibleProfiles = possibleProfiles;
     }
@@ -46,6 +52,20 @@ public class Suggestions {
      */
     public Map<Layer, Set<Env>> getSuggestedConfigurations() {
         return suggestedConfigurations;
+    }
+
+    /**
+     * @return the build time Configurations
+     */
+    public Map<Layer, Set<Env>> getBuildTimeConfigurations() {
+        return buildTimeConfigurations;
+    }
+
+    /**
+     * @return the required build time Configurations
+     */
+    public Map<Layer, Set<Env>> getBuildTimeRequiredConfigurations() {
+        return buildTimeRequiredConfigurations;
     }
 
     /**

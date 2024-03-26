@@ -214,22 +214,35 @@ public class ScanResultsPrinter {
         }
 
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty()) {
-            writer.warn("strongly suggested configuration");
+            writer.warn("strongly suggested configuration at runtime");
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getStronglySuggestedConfigurations().entrySet()) {
                 writer.warn(buildSuggestions(entry.getKey(), entry.getValue()));
             }
             writer.warn("");
         }
 
+        if (!scanResults.getSuggestions().getBuildTimeRequiredConfigurations().isEmpty()) {
+            writer.warn("configuration that must be set at provisioning time");
+            for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getBuildTimeRequiredConfigurations().entrySet()) {
+                writer.warn(buildSuggestions(entry.getKey(), entry.getValue()));
+            }
+            writer.warn("");
+        }
+
         String suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
+        String suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations());
 
         if (arguments.isSuggest()) {
             writer.info("suggestions");
-            if (scanResults.getSuggestions().getPossibleAddOns().isEmpty() && scanResults.getSuggestions().getPossibleProfiles().isEmpty() && suggestedConfigs.isEmpty()) {
+            if (scanResults.getSuggestions().getPossibleAddOns().isEmpty() && scanResults.getSuggestions().getPossibleProfiles().isEmpty() && suggestedConfigs.isEmpty() && suggestedBuildTimeConfigs.isEmpty()) {
                 writer.info("none");
             } else {
+                if (!suggestedBuildTimeConfigs.isEmpty()) {
+                    writer.info("\n* you could set the following configuration at provisioning time");
+                    writer.info(suggestedBuildTimeConfigs);
+                }
                 if (!suggestedConfigs.isEmpty()) {
-                    writer.info("\n* you could set the following env variables");
+                    writer.info("\n* you could set the following configuration at runtime");
                     writer.info(suggestedConfigs);
                 }
                 if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty()) {
@@ -263,7 +276,7 @@ public class ScanResultsPrinter {
                 }
             }
         } else {
-            if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !suggestedConfigs.isEmpty()) {
+            if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !scanResults.getSuggestions().getPossibleAddOns().isEmpty() || !suggestedConfigs.isEmpty() || !suggestedBuildTimeConfigs.isEmpty()) {
                 writer.info("Some suggestions have been found. You could enable suggestions with the --suggest option (if using the WildFly Glow CLI) or <suggest>true</suggest> (if using the WildFly Maven Plugin).");
             }
         }
@@ -279,13 +292,37 @@ public class ScanResultsPrinter {
 
     private static String buildSuggestions(Layer layer, Set<Env> envs) throws URISyntaxException, IOException {
         StringBuilder suggestedConfigsBuilder = new StringBuilder();
-        suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" environment variables:\n");
+        Set<Env> envVars = new TreeSet<>();
+        Set<Env> properties = new TreeSet<>();
         Iterator<Env> it = envs.iterator();
         while (it.hasNext()) {
             Env e = it.next();
-            suggestedConfigsBuilder.append(" - ").append(e.getName()).append("=").append(e.getDescription());
-            if (it.hasNext()) {
-                suggestedConfigsBuilder.append("\n");
+            if (e.isProperty()) {
+                properties.add(e);
+            } else {
+                envVars.add(e);
+            }
+        }
+        if (!envVars.isEmpty()) {
+            suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" environment variables:\n");
+            Iterator<Env> it2 = envVars.iterator();
+            while (it2.hasNext()) {
+                Env e = it2.next();
+                suggestedConfigsBuilder.append(" - ").append(e.getName()).append("=").append(e.getDescription());
+                if (it2.hasNext()) {
+                    suggestedConfigsBuilder.append("\n");
+                }
+            }
+        }
+        if (!properties.isEmpty()) {
+            suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" system properties:\n");
+            Iterator<Env> it2 = properties.iterator();
+            while (it2.hasNext()) {
+                Env e = it2.next();
+                suggestedConfigsBuilder.append(" -D").append(e.getName()).append("=").append(e.getDescription());
+                if (it2.hasNext()) {
+                    suggestedConfigsBuilder.append("\n");
+                }
             }
         }
         return suggestedConfigsBuilder.toString();
