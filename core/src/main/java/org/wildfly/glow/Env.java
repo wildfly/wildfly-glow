@@ -26,12 +26,13 @@ public class Env implements Comparable<Env> {
     private final String description;
     private final Boolean runtime;
     private final Boolean required;
-
-   public Env(String name, String description, Boolean buildTime, Boolean required) {
+    private final Boolean isProperty;
+   public Env(String name, String description, Boolean buildTime, Boolean required, Boolean property) {
        this.name= name;
        this.description = description;
        this.runtime = buildTime == null ? Boolean.TRUE : !buildTime;
        this.required = required == null ? Boolean.FALSE : required;
+       this.isProperty = property == null ? Boolean.FALSE : property;
    }
 
     /**
@@ -53,6 +54,13 @@ public class Env implements Comparable<Env> {
      */
     public Boolean isRuntime() {
         return runtime;
+    }
+
+    /**
+     * @return the property
+     */
+    public Boolean isProperty() {
+        return isProperty;
     }
 
     /**

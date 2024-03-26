@@ -151,7 +151,7 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                                             envs = new HashSet<>();
                                             ret.put(l, envs);
                                         }
-                                        envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
+                                        envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true, false));
                                     }
                                 }
                                 String errorMessage = getAddOnFix(l.getAddOn(), content);
@@ -183,7 +183,7 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
                                     envs = new HashSet<>();
                                     ret.put(l, envs);
                                 }
-                                envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true));
+                                envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true, false));
                             }
                             String errorMessage = getAddOnFix(l.getAddOn(), content);
                             error.setFixed(errorMessage);

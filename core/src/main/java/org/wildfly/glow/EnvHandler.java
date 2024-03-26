@@ -45,7 +45,8 @@ public class EnvHandler {
                 Boolean required = (Boolean) env.get("required");
                 Boolean buildTime = (Boolean) env.get("build-time");
                 String description = (String) env.get("description");
-                ret.add(new Env(name,description, buildTime, required));
+                Boolean property = (Boolean) env.get("property");
+                ret.add(new Env(name,description, buildTime, required, property));
             }
         } catch (IOException ex) {
             System.err.println("Error accessing configuration in " + uri);
