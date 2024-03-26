@@ -69,6 +69,9 @@ public interface Constants {
     String SERVER_VERSION_OPTION = "--server-version";
     String SERVER_VERSION_OPTION_SHORT = "-sv";
     String SERVER_VERSION_OPTION_LABEL = "<server version>";
+    String SYSTEM_PROPERTIES_LABEL = "\"<-DpropName[=value] [-DpropName[=value]]>\"";
+    String SYSTEM_PROPERTIES_OPTION = "--properties";
+    String SYSTEM_PROPERTIES_OPTION_SHORT = "-pp";
     String SUGGEST_OPTION = "--suggest";
     String SUGGEST_OPTION_SHORT = "-s";
 

@@ -126,8 +126,30 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
 
+    @CommandLine.Option(names = {Constants.SYSTEM_PROPERTIES_OPTION_SHORT, Constants.SYSTEM_PROPERTIES_OPTION},
+            split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
+    Set<String> systemProperties = new HashSet<>();
+
     @Override
     public Integer call() throws Exception {
+        if (!systemProperties.isEmpty()) {
+            for (String p : systemProperties) {
+                if (p.startsWith("-D")) {
+                    int i = p.indexOf("=");
+                    String propName;
+                    String value = "";
+                    if (i > 0) {
+                        propName = p.substring(2, i);
+                        value = p.substring(i + 1);
+                    } else {
+                        propName = p.substring(2);
+                    }
+                    System.setProperty(propName, value);
+                } else {
+                    throw new Exception("Invalid system property " + p +". A property must start with -D");
+                }
+            }
+        }
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         boolean compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         if (!compact) {
