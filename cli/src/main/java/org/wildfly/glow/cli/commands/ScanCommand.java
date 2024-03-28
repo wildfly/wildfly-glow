@@ -229,7 +229,7 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Can't produce a Bootable JAR for cloud. Use the " + Constants.PROVISION_OPTION + "=SERVER option for cloud.");
             }
             if (DOCKER_IMAGE.equals(provision.get()) && !cloud.orElse(false)) {
-                throw new Exception("Can't produce a Docker image if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
+                cloud = Optional.of(Boolean.TRUE);
             }
             if (OPENSHIFT.equals(provision.get()) && !cloud.orElse(false)) {
                cloud = Optional.of(Boolean.TRUE);
@@ -408,7 +408,7 @@ public class ScanCommand extends AbstractCommand {
                 print("@|bold \nOpenshift build and deploy DONE.|@");
             }
             if (content.getDockerImageName() != null) {
-                print("@|bold To run the image call: 'docker run " + content.getDockerImageName() + "'|@");
+                print("@|bold To run the image call: '[docker | podman] run -p 8080:8080 -p 9990:9990 " + content.getDockerImageName() + "'|@");
             }
         }
         return 0;
