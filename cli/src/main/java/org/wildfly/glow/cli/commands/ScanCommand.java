@@ -327,34 +327,35 @@ public class ScanCommand extends AbstractCommand {
             }
             OutputContent content = scanResults.outputConfig(target, dockerImageName.orElse(null));
             Path base = Paths.get("").toAbsolutePath();
+            String envMessage = null;
+            String completedMessage = null;
             for (OutputContent.OutputFile f : content.getFiles().keySet()) {
                 Path rel = base.relativize(content.getFiles().get(f));
                 switch (f) {
                     case BOOTABLE_JAR_FILE: {
-                        print("@|bold Bootable JAR build DONE.|@");
-                        print("@|bold To run the jar call: 'java -jar " + rel + "'|@");
+                        completedMessage = "@|bold To run the jar call: 'java -jar " + rel + "'|@";
                         break;
                     }
                     case DOCKER_FILE: {
-                        print("@|bold Image generation DONE.|@.");
                         print("@|bold Docker file generated in %s|@.", rel);
                         break;
                     }
                     case ENV_FILE: {
-                        if (!OutputFormat.OPENSHIFT.equals(provision.get())) {
-                            print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
-                        }
+                        // Exposing this file seems to create confusion
+//                        if (!OutputFormat.OPENSHIFT.equals(provision.get())) {
+//                            print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
+//                        }
                         switch (provision.get()) {
                             case SERVER: {
-                                print("@|bold Export the suggested env variables for the server to take them into account.|@");
+                                envMessage = "WARNING: You have to export the suggested env variables prior to start the server.";
                                 break;
                             }
                             case BOOTABLE_JAR: {
-                                print("@|bold Export the suggested env variables for the bootable JAR to take them into account.|@");
+                                envMessage="WARNING: You have to export the suggested env variables prior to start the bootable JAR.";
                                 break;
                             }
                             case DOCKER_IMAGE: {
-                                print("@|bold For each env variable add `-e <env name>=<env value>` to the `docker run` command.|@");
+                                envMessage = "WARNING: For each suggested env variable add `-e <env name>=<env value>` to the `[docker | podman] run` command.";
                                 break;
                             }
                         }
@@ -363,7 +364,6 @@ public class ScanCommand extends AbstractCommand {
                     case PROVISIONING_XML_FILE: {
                         switch (provision.get()) {
                             case PROVISIONING_XML: {
-                                print("@|bold Generation DONE.|@");
                                 print("@|bold Galleon Provisioning configuration is located in " + rel + " file|@");
                             }
                         }
@@ -371,11 +371,10 @@ public class ScanCommand extends AbstractCommand {
 
                     }
                     case SERVER_DIR: {
-                        print("@|bold Provisioning DONE.|@");
                         if (cloud.orElse(false)) {
-                            print("@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@");
+                            completedMessage = "@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@";
                         } else {
-                            print("@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh'|@");
+                            completedMessage = "@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh'|@";
                         }
                         break;
                     }
@@ -406,9 +405,20 @@ public class ScanCommand extends AbstractCommand {
                         disableDeployers,
                         initScriptFile.orElse(null), new OpenShiftConfiguration.Builder().build());
                 print("@|bold \nOpenshift build and deploy DONE.|@");
-            }
-            if (content.getDockerImageName() != null) {
-                print("@|bold To run the image call: '[docker | podman] run -p 8080:8080 -p 9990:9990 " + content.getDockerImageName() + "'|@");
+            } else {
+                if (content.getDockerImageName() != null) {
+                    print("@|bold To run the image call: '[docker | podman] run -p 8080:8080 -p 9990:9990 " + content.getDockerImageName() + "'|@");
+                    if (envMessage != null) {
+                        GlowMessageWriter.DEFAULT.warn(envMessage);
+                    }
+                } else {
+                    if (completedMessage != null) {
+                        print(completedMessage);
+                        if (envMessage != null) {
+                            GlowMessageWriter.DEFAULT.warn(envMessage);
+                        }
+                    }
+                }
             }
         }
         return 0;
