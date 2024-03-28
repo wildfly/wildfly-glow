@@ -76,6 +76,7 @@ public interface ScanArguments {
 
     Stability getConfigStability();
     Stability getPackageStability();
+    boolean isCli();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -161,6 +162,10 @@ public interface ScanArguments {
         }
         public Builder setConfigStability(Stability stability) {
             this.configStability = stability;
+            return this;
+        }
+        public Builder setIsCli(boolean isCli) {
+            this.isCli = isCli;
             return this;
         }
     }

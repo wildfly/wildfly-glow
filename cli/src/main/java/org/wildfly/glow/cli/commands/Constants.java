@@ -52,19 +52,24 @@ public interface Constants {
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION = "--exclude-archives-from-scan";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL = "<list of nested archive names>";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT = "-ea";
+    String FAILS_ON_ERROR_OPTION = "--fails-on-error";
+    String FAILS_ON_ERROR_OPTION_SHORT = "-foe";
     String HA_OPTION = "--ha";
 
     String HELP_OPTION = "--help";
     String HELP_OPTION_SHORT = "-h";
+    String CLI_SCRIPT_OPTION = "--cli-script";
+    String CLI_SCRIPT_OPTION_SHORT = "-cs";
+    String CLI_SCRIPT_OPTION_LABEL = "<CLI script file path>";
     String INIT_SCRIPT_OPTION = "--init-script";
-    String INIT_SCRIPT_OPTION_SHORT = "-id";
+    String INIT_SCRIPT_OPTION_SHORT = "-is";
     String INIT_SCRIPT_OPTION_LABEL = "<init script file path>";
     String INPUT_FEATURE_PACKS_FILE_OPTION = "--input-feature-packs-file";
     String INPUT_FEATURE_PACKS_FILE_OPTION_LABEL = "<provisioning file path>";
     String NO_DOCKER_IMAGE_OPTION = "--no-docker-image";
     String NO_DOCKER_IMAGE_OPTION_SHORT = "-nd";
     String PROVISION_OPTION = "--provision";
-    String PROVISION_OPTION_LABEL = "<SERVER|BOOTABLE_JAR|DOCKER_IMAGE|PROVISIONING_XML>";
+    String PROVISION_OPTION_LABEL = "<SERVER|BOOTABLE_JAR|OPENSHIFT|DOCKER_IMAGE|PROVISIONING_XML>";
     String PROVISION_OPTION_SHORT = "-p";
     String SERVER_VERSION_OPTION = "--server-version";
     String SERVER_VERSION_OPTION_SHORT = "-sv";

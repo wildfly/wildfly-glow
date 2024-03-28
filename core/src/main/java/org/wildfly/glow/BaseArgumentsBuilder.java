@@ -42,6 +42,7 @@ public class BaseArgumentsBuilder {
     protected Set<String> excludeJarsFromScan = Collections.emptySet();
     protected Stability packageStability;
     protected Stability configStability;
+    protected boolean isCli;
 
     protected BaseArgumentsBuilder() {
 
@@ -67,6 +68,7 @@ public class BaseArgumentsBuilder {
                 techPreview,
                 excludeJarsFromScan,
                 configStability,
-                packageStability);
+                packageStability,
+                isCli);
     }
 }

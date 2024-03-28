@@ -8,7 +8,7 @@
         <version>1.0.0.Beta12-SNAPSHOT</version>
     </parent>
 
-    <artifactId>wildfly-glow-openshift-deployment-artemis</artifactId>
+    <artifactId>wildfly-glow-openshift-deployment-amq</artifactId>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>

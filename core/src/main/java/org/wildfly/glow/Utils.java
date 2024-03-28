@@ -637,10 +637,7 @@ public final class Utils {
             }
         }
         if (envBuilder.length() != 0) {
-            builder.append(" and expects (at least) the following env variables:\n").append(envBuilder.toString());
-            if (fixContent != null && !fixContent.isEmpty()) {
-                builder.append("   - ").append(fixContent);
-            }
+            builder.append(" but you need to set the strongly suggested configuration.");
         } else {
             if (fixContent == null || fixContent.isEmpty()) {
                 builder.append(" fully");

@@ -35,6 +35,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Set<Pattern> excludeArchivesFromScan;
     private final Stability configStability;
     private final Stability packageStability;
+    private final boolean isCli;
 
     protected Arguments(
             String executionContext,
@@ -51,7 +52,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             boolean techPreview,
             Set<Pattern> excludeArchivesFromScan,
             Stability configStability,
-            Stability packageStability) {
+            Stability packageStability,
+            boolean isCli) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -76,6 +78,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         } else {
             this.manualLayers = new HashSet<>(Arrays.asList(manualLayers.split(",")));
         }
+        this.isCli = isCli;
     }
 
     /**
@@ -189,6 +192,14 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public Stability getPackageStability() {
         return packageStability;
+    }
+
+    /**
+     * @return the isCli
+     */
+    @Override
+    public boolean isCli() {
+        return isCli;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

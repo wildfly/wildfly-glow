@@ -16,6 +16,8 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
+import org.wildfly.glow.deployment.openshift.api.OpenShiftConfiguration;
 import java.nio.file.Files;
 import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.Arguments;
@@ -64,9 +66,9 @@ public class ScanCommand extends AbstractCommand {
         }
     }
 
-    private static final String ADD_ADD_ONS_MSG="@|bold To enable add-ons, add the|@ @|fg(yellow) " +
-            Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) " +
-            Constants.SCAN_COMMAND + "|@ @|bold command|@";
+    private static final String ADD_ADD_ONS_MSG = "@|bold To enable add-ons, add the|@ @|fg(yellow) "
+            + Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) "
+            + Constants.SCAN_COMMAND + "|@ @|bold command|@";
 
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
@@ -118,10 +120,13 @@ public class ScanCommand extends AbstractCommand {
     Optional<Stability> configStability;
 
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
-    Optional<Path>  envFile;
+    Optional<Path> envFile;
 
     @CommandLine.Option(names = {Constants.INIT_SCRIPT_OPTION_SHORT, Constants.INIT_SCRIPT_OPTION}, paramLabel = Constants.INIT_SCRIPT_OPTION_LABEL)
-    Optional<Path>  initScriptFile;
+    Optional<Path> initScriptFile;
+
+    @CommandLine.Option(names = {Constants.CLI_SCRIPT_OPTION_SHORT, Constants.CLI_SCRIPT_OPTION}, paramLabel = Constants.CLI_SCRIPT_OPTION_LABEL)
+    Optional<Path> cliScriptFile;
 
     @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
@@ -129,6 +134,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.SYSTEM_PROPERTIES_OPTION_SHORT, Constants.SYSTEM_PROPERTIES_OPTION},
             split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
     Set<String> systemProperties = new HashSet<>();
+
+    @CommandLine.Option(names = {Constants.FAILS_ON_ERROR_OPTION_SHORT, Constants.FAILS_ON_ERROR_OPTION}, defaultValue = "true")
+    Optional<Boolean> failsOnError;
 
     @Override
     public Integer call() throws Exception {
@@ -146,7 +154,7 @@ public class ScanCommand extends AbstractCommand {
                     }
                     System.setProperty(propName, value);
                 } else {
-                    throw new Exception("Invalid system property " + p +". A property must start with -D");
+                    throw new Exception("Invalid system property " + p + ". A property must start with -D");
                 }
             }
         }
@@ -156,9 +164,6 @@ public class ScanCommand extends AbstractCommand {
             print("Wildfly Glow is scanning...");
         }
         Builder builder = Arguments.scanBuilder();
-        if (cloud.orElse(false)) {
-            builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
-        }
         if (haProfile.orElse(false)) {
             Set<String> profiles = new HashSet<>();
             profiles.add(Constants.HA);
@@ -189,13 +194,14 @@ public class ScanCommand extends AbstractCommand {
             if (!Files.exists(p)) {
                 throw new Exception(p + " file doesn't exist");
             }
-            for(String l : Files.readAllLines(p)) {
-                if (!l.startsWith("#")) {
+            for (String l : Files.readAllLines(p)) {
+                l = l.trim();
+                if (!l.isEmpty() && !l.startsWith("#")) {
                     int i = l.indexOf("=");
                     if (i < 0 || i == l.length() - 1) {
                         throw new Exception("Invalid environment variable " + l + " in " + p);
                     }
-                    extraEnv.put(l.substring(0, i), l.substring(i+1));
+                    extraEnv.put(l.substring(0, i), l.substring(i + 1));
                 }
             }
         }
@@ -227,12 +233,15 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Can't produce a Bootable JAR for cloud. Use the " + Constants.PROVISION_OPTION + "=SERVER option for cloud.");
             }
             if (DOCKER_IMAGE.equals(provision.get()) && !cloud.orElse(false)) {
-                throw new Exception("Can't produce a Docker image if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
+                cloud = Optional.of(Boolean.TRUE);
             }
             if (OPENSHIFT.equals(provision.get()) && !cloud.orElse(false)) {
-                throw new Exception("Can't build/deploy on openShift if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
+               cloud = Optional.of(Boolean.TRUE);
             }
             builder.setOutput(provision.get());
+        }
+        if (cloud.orElse(false)) {
+            builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
         if (stability.isPresent()) {
@@ -256,6 +265,7 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Can only set a docker image name when provisioning a docker image. Remove the " + Constants.DOCKER_IMAGE_NAME_OPTION + " option");
             }
         }
+        builder.setIsCli(true);
         ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), builder.build(), GlowMessageWriter.DEFAULT);
         scanResults.outputInformation();
         if (provision.isEmpty()) {
@@ -271,24 +281,27 @@ public class ScanCommand extends AbstractCommand {
                 if (scanResults.getErrorSession().hasErrors()) {
                     if (!suggest.orElse(false)) {
                         boolean hasAddOn = false;
-                       // Do we have errors and add-ons to set?
-                       for(IdentifiedError err : scanResults.getErrorSession().getErrors()) {
-                           if (!err.getPossibleAddons().isEmpty()) {
-                               hasAddOn = true;
-                               break;
-                           }
-                       }
+                        // Do we have errors and add-ons to set?
+                        for (IdentifiedError err : scanResults.getErrorSession().getErrors()) {
+                            if (!err.getPossibleAddons().isEmpty()) {
+                                hasAddOn = true;
+                                break;
+                            }
+                        }
                         if (hasAddOn) {
                             System.out.println(CommandLine.Help.Ansi.AUTO.string(ADD_ADD_ONS_MSG));
                         }
                     }
                     print("@|bold Some errors have been reported. You should fix them prior provisioning a server with the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option of the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@");
                 } else {
-                    print("@|bold If you had included a|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command, after outputting this report, WildFly Glow will continue on to provisioning your WildFly server, bootable jar or Docker image.|@");
+                    print("@|bold If you had included a|@ @|fg(yellow) " + Constants.PROVISION_OPTION+"="+Constants.PROVISION_OPTION_LABEL + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command, after outputting this report, WildFly Glow will continue on to provisioning your WildFly server, bootable jar, a Docker image or deploy your application to OpenShift.|@");
                 }
             }
         } else {
             print();
+            if (failsOnError.orElse(false) && scanResults.getErrorSession().hasErrors()) {
+                throw new Exception("Your are provisioning although errors have been reported. If you want to enforce provisioning, set --fails-on-error=false to ignore errors.");
+            }
             String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
             Path target = Paths.get(provisionOutputDir.orElse("server-" + vers));
             IoUtils.recursiveDelete(target);
@@ -319,34 +332,35 @@ public class ScanCommand extends AbstractCommand {
             }
             OutputContent content = scanResults.outputConfig(target, dockerImageName.orElse(null));
             Path base = Paths.get("").toAbsolutePath();
+            String envMessage = null;
+            String completedMessage = null;
             for (OutputContent.OutputFile f : content.getFiles().keySet()) {
                 Path rel = base.relativize(content.getFiles().get(f));
                 switch (f) {
                     case BOOTABLE_JAR_FILE: {
-                        print("@|bold Bootable JAR build DONE.|@");
-                        print("@|bold To run the jar call: 'java -jar " + rel + "'|@");
+                        completedMessage = "@|bold To run the jar call: 'java -jar " + rel + "'|@";
                         break;
                     }
                     case DOCKER_FILE: {
-                        print("@|bold Image generation DONE.|@.");
                         print("@|bold Docker file generated in %s|@.", rel);
                         break;
                     }
                     case ENV_FILE: {
-                        if (!OutputFormat.OPENSHIFT.equals(provision.get())) {
-                            print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
-                        }
+                        // Exposing this file seems to create confusion
+//                        if (!OutputFormat.OPENSHIFT.equals(provision.get())) {
+//                            print("@|bold The file " + rel + " contains the list of environment variables that you must set prior to start the server.|@");
+//                        }
                         switch (provision.get()) {
                             case SERVER: {
-                                print("@|bold Export the suggested env variables for the server to take them into account.|@");
+                                envMessage = "WARNING: You have to export the suggested env variables prior to start the server.";
                                 break;
                             }
                             case BOOTABLE_JAR: {
-                                print("@|bold Export the suggested env variables for the bootable JAR to take them into account.|@");
+                                envMessage="WARNING: You have to export the suggested env variables prior to start the bootable JAR.";
                                 break;
                             }
                             case DOCKER_IMAGE: {
-                                print("@|bold For each env variable add `-e <env name>=<env value>` to the `docker run` command.|@");
+                                envMessage = "WARNING: For each suggested env variable add `-e <env name>=<env value>` to the `[docker | podman] run` command.";
                                 break;
                             }
                         }
@@ -355,7 +369,6 @@ public class ScanCommand extends AbstractCommand {
                     case PROVISIONING_XML_FILE: {
                         switch (provision.get()) {
                             case PROVISIONING_XML: {
-                                print("@|bold Generation DONE.|@");
                                 print("@|bold Galleon Provisioning configuration is located in " + rel + " file|@");
                             }
                         }
@@ -363,11 +376,10 @@ public class ScanCommand extends AbstractCommand {
 
                     }
                     case SERVER_DIR: {
-                        print("@|bold Provisioning DONE.|@");
                         if (cloud.orElse(false)) {
-                            print("@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@");
+                            completedMessage = "@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@";
                         } else {
-                            print("@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh'|@");
+                            completedMessage = "@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh'|@";
                         }
                         break;
                     }
@@ -383,17 +395,37 @@ public class ScanCommand extends AbstractCommand {
                     name = p.getFileName().toString().substring(0, ext);
                 }
                 Map<String, String> envMap = new HashMap<>();
-                for(Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
-                    for(Env env : envs) {
+                for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
+                    for (Env env : envs) {
                         envMap.put(env.getName(), env.getDescription());
                     }
                 }
-                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(), envMap, scanResults.getDiscoveredLayers(),
-                        scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers, initScriptFile.orElse(null));
+                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
+                        target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(),
+                        envMap,
+                        scanResults.getDiscoveredLayers(),
+                        scanResults.getEnabledAddOns(),
+                        haProfile.orElse(false),
+                        extraEnv,
+                        disableDeployers,
+                        initScriptFile.orElse(null),
+                        cliScriptFile.orElse(null),
+                        new OpenShiftConfiguration.Builder().build());
                 print("@|bold \nOpenshift build and deploy DONE.|@");
-            }
-            if (content.getDockerImageName() != null) {
-                print("@|bold To run the image call: 'docker run " + content.getDockerImageName() + "'|@");
+            } else {
+                if (content.getDockerImageName() != null) {
+                    print("@|bold To run the image call: '[docker | podman] run -p 8080:8080 -p 9990:9990 " + content.getDockerImageName() + "'|@");
+                    if (envMessage != null) {
+                        GlowMessageWriter.DEFAULT.warn(envMessage);
+                    }
+                } else {
+                    if (completedMessage != null) {
+                        print(completedMessage);
+                        if (envMessage != null) {
+                            GlowMessageWriter.DEFAULT.warn(envMessage);
+                        }
+                    }
+                }
             }
         }
         return 0;

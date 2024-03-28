@@ -100,7 +100,7 @@ public class AbstractDatabaseDeployer implements Deployer {
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
-            Map<String, String> env, String appHost, String appName, String matching) throws Exception {
+            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, dbName);
         ContainerPort port = new ContainerPort();
@@ -110,7 +110,9 @@ public class AbstractDatabaseDeployer implements Deployer {
         ports.add(port);
         List<EnvVar> vars = new ArrayList<>();
         for (Map.Entry<String, String> entry : CONNECTION_MAP.entrySet()) {
-            vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(entry.getValue()).build());
+            // In case user overrides the default values.
+            String val = extraEnv.get(entry.getKey());
+            vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(val == null ? entry.getValue() : val).build());
         }
         Container container = new Container();
         container.setName(dbName);
