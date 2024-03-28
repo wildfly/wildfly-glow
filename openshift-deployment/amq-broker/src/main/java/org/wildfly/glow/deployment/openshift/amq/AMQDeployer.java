@@ -52,23 +52,27 @@ public class AMQDeployer implements Deployer {
     private static final Map<String, String> REMOTE_BROKER_CONNECTION_MAP = new HashMap<>();
     private static final Map<String, String> REMOTE_BROKER_APP_MAP = new HashMap<>();
 
+    private static final String AMQ_USER_ENV = "AMQ_USER";
+    private static final String AMQ_PASSWORD_ENV = "AMQ_PASSWORD";
+    private static final String BROKER_AMQ_USERNAME_ENV = "BROKER_AMQ_USERNAME";
+    private static final String BROKER_AMQ_PASSWORD_ENV = "BROKER_AMQ_PASSWORD";
     static {
 
-        REMOTE_BROKER_CONNECTION_MAP.put("AMQ_USER", REMOTE_BROKER_USER);
-        REMOTE_BROKER_CONNECTION_MAP.put("AMQ_PASSWORD", REMOTE_BROKER_PASSWORD);
+        REMOTE_BROKER_CONNECTION_MAP.put(AMQ_USER_ENV, REMOTE_BROKER_USER);
+        REMOTE_BROKER_CONNECTION_MAP.put(AMQ_PASSWORD_ENV, REMOTE_BROKER_PASSWORD);
         REMOTE_BROKER_CONNECTION_MAP.put("AMQ_DATA_DIR", "/home/jboss/data");
 
         REMOTE_BROKER_APP_MAP.put("MQ_SERVICE_PREFIX_MAPPING", "broker-amq7=BROKER_AMQ");
         REMOTE_BROKER_APP_MAP.put("MQ_SERVICE_PREFIX_MAPPING", "broker-amq7=BROKER_AMQ");
         REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_TCP_SERVICE_HOST", REMOTE_BROKER_NAME);
         REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_TCP_SERVICE_PORT", "61616");
-        REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_PASSWORD", REMOTE_BROKER_PASSWORD);
-        REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_USERNAME", REMOTE_BROKER_USER);
+        REMOTE_BROKER_APP_MAP.put(BROKER_AMQ_PASSWORD_ENV, REMOTE_BROKER_PASSWORD);
+        REMOTE_BROKER_APP_MAP.put(BROKER_AMQ_USERNAME_ENV, REMOTE_BROKER_USER);
     }
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
-            Map<String, String> env, String appHost, String appName, String matching) throws Exception {
+            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
         writer.info("\nDeploying AMQ Messaging Broker");
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, REMOTE_BROKER_NAME);
@@ -79,7 +83,16 @@ public class AMQDeployer implements Deployer {
         ports.add(port);
         List<EnvVar> vars = new ArrayList<>();
         for (Map.Entry<String, String> entry : REMOTE_BROKER_CONNECTION_MAP.entrySet()) {
-            vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(entry.getValue()).build());
+            // In case user overrides the default values.
+            String val = extraEnv.get(entry.getKey());
+            if (val != null) {
+                if (AMQ_USER_ENV.equals(entry.getKey())) {
+                    REMOTE_BROKER_APP_MAP.put(BROKER_AMQ_USERNAME_ENV, val);
+                } else if (AMQ_PASSWORD_ENV.equals(entry.getKey())) {
+                    REMOTE_BROKER_APP_MAP.put(BROKER_AMQ_PASSWORD_ENV, val);
+                }
+            }
+            vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(val == null ? entry.getValue() : val).build());
         }
         Container container = new Container();
         container.setName(REMOTE_BROKER_NAME);
@@ -108,6 +121,7 @@ public class AMQDeployer implements Deployer {
         ret.putAll(REMOTE_BROKER_APP_MAP);
         return REMOTE_BROKER_APP_MAP;
     }
+
     @Override
     public Map<String, String> disabledDeploy(String appHost, String appName, String matching, Map<String, String> env) {
         Map<String, String> ret = new HashMap<>();
@@ -122,7 +136,7 @@ public class AMQDeployer implements Deployer {
                     String k = entry.getKey().replace("{SERVICE-NAME}", "SERVICE-NAME");
                     ret.put(k, entry.getValue() + descriptionServiceName);
                 } else {
-                    if(entry.getKey().startsWith("MQ_SERVICE_PREFIX_MAPPING")) {
+                    if (entry.getKey().startsWith("MQ_SERVICE_PREFIX_MAPPING")) {
                         ret.put(entry.getKey(), entry.getValue());
                     }
 
@@ -146,7 +160,7 @@ public class AMQDeployer implements Deployer {
 
     @Override
     public String getName() {
-        return "amq_jms_broker";
+        return REMOTE_BROKER_NAME;
     }
 
 }

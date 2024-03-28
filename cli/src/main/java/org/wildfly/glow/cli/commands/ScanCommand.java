@@ -192,7 +192,8 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception(p + " file doesn't exist");
             }
             for (String l : Files.readAllLines(p)) {
-                if (!l.startsWith("#")) {
+                l = l.trim();
+                if (!l.isEmpty() && !l.startsWith("#")) {
                     int i = l.indexOf("=");
                     if (i < 0 || i == l.length() - 1) {
                         throw new Exception("Invalid environment variable " + l + " in " + p);

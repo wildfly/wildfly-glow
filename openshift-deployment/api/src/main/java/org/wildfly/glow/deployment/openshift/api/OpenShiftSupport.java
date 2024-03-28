@@ -53,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -221,7 +222,7 @@ public class OpenShiftSupport {
                     } else {
                         writer.warn("The deployer " + d.getName() + " has been disabled");
                     }
-                    actualEnv.putAll(isDisabled ? d.disabledDeploy(host, appName, l.getName(), env) : d.deploy(writer, target, osClient, env, host, appName, l.getName()));
+                    actualEnv.putAll(isDisabled ? Collections.emptyMap(): d.deploy(writer, target, osClient, env, host, appName, l.getName(), extraEnv));
                     break;
                 }
             }
@@ -234,7 +235,7 @@ public class OpenShiftSupport {
                         } else {
                             writer.warn("The deployer " + d.getName() + " has been disabled");
                         }
-                        actualEnv.putAll(isDisabled ? d.disabledDeploy(host, appName, ao.getName(), env) : d.deploy(writer, target, osClient, env, host, appName, ao.getName()));
+                        actualEnv.putAll(isDisabled ? Collections.emptyMap() : d.deploy(writer, target, osClient, env, host, appName, ao.getName(), extraEnv));
                         break;
                     }
                 }
@@ -246,7 +247,7 @@ public class OpenShiftSupport {
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
             if (!disabledDeployers.isEmpty()) {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. WARN: Some of them need possibly to be updated in the deployment:\n");
+                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
             } else {
                 writer.warn("\nThe following environment variables have been set in the " + appName + " deployment:\n");
             }
@@ -337,7 +338,7 @@ public class OpenShiftSupport {
         // check if it exists
         ImageStream existingStream = osClient.imageStreams().resource(stream).get();
         if (existingStream == null) {
-            writer.info("\nBuilding server image (this can take up to few minutes the first time)...");
+            writer.info("\nBuilding server image (this can take up to few minutes)...");
             // zip deployment and provisioning.xml to be pushed to OpenShift
             Path file = target.resolve("tmp").resolve("openshiftServer.zip");
             if (Files.exists(file)) {

@@ -80,11 +80,13 @@ public class KeycloakDeployer implements Deployer {
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient, Map<String, String> env,
-            String appHost, String appName, String matching) throws Exception {
+            String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
         writer.info("\nDeploying Keycloak server");
         Map<String, String> parameters = new HashMap<>();
-        parameters.put(KEYCLOAK_ADMIN_ENV, KEYCLOAK_ADMIN);
-        parameters.put(KEYCLOAK_ADMIN_PASSWORD_ENV, KEYCLOAK_ADMIN_PASSWORD);
+        String adminVal = extraEnv.get(KEYCLOAK_ADMIN_ENV);
+        parameters.put(KEYCLOAK_ADMIN_ENV, adminVal == null ? KEYCLOAK_ADMIN : adminVal);
+        String adminPassword = extraEnv.get(KEYCLOAK_ADMIN_PASSWORD_ENV);
+        parameters.put(KEYCLOAK_ADMIN_PASSWORD_ENV, adminPassword == null ? KEYCLOAK_ADMIN_PASSWORD : adminPassword);
         parameters.put(NAMESPACE_ENV, osClient.getNamespace());
         Template t = osClient.templates().
                 load(new URL(KEYCLOAK_TEMPLATE_URL)).createOr(NonDeletingOperation::update);
