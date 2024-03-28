@@ -132,6 +132,9 @@ public class ScanCommand extends AbstractCommand {
             split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
     Set<String> systemProperties = new HashSet<>();
 
+    @CommandLine.Option(names = {Constants.FAILS_ON_ERROR_OPTION_SHORT, Constants.FAILS_ON_ERROR_OPTION}, defaultValue = "true")
+    Optional<Boolean> failsOnError;
+
     @Override
     public Integer call() throws Exception {
         if (!systemProperties.isEmpty()) {
@@ -158,9 +161,6 @@ public class ScanCommand extends AbstractCommand {
             print("Wildfly Glow is scanning...");
         }
         Builder builder = Arguments.scanBuilder();
-        if (cloud.orElse(false)) {
-            builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
-        }
         if (haProfile.orElse(false)) {
             Set<String> profiles = new HashSet<>();
             profiles.add(Constants.HA);
@@ -232,9 +232,12 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Can't produce a Docker image if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
             }
             if (OPENSHIFT.equals(provision.get()) && !cloud.orElse(false)) {
-                throw new Exception("Can't build/deploy on openShift if cloud is not enabled. Use the " + Constants.CLOUD_OPTION + " option.");
+               cloud = Optional.of(Boolean.TRUE);
             }
             builder.setOutput(provision.get());
+        }
+        if (cloud.orElse(false)) {
+            builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
         if (stability.isPresent()) {
@@ -286,11 +289,14 @@ public class ScanCommand extends AbstractCommand {
                     }
                     print("@|bold Some errors have been reported. You should fix them prior provisioning a server with the|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option of the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command|@");
                 } else {
-                    print("@|bold If you had included a|@ @|fg(yellow) " + Constants.PROVISION_OPTION + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command, after outputting this report, WildFly Glow will continue on to provisioning your WildFly server, bootable jar or Docker image.|@");
+                    print("@|bold If you had included a|@ @|fg(yellow) " + Constants.PROVISION_OPTION+"="+Constants.PROVISION_OPTION_LABEL + "|@ @|bold option to the|@ @|fg(yellow) " + Constants.SCAN_COMMAND + "|@ @|bold command, after outputting this report, WildFly Glow will continue on to provisioning your WildFly server, bootable jar, a Docker image or deploy your application to OpenShift.|@");
                 }
             }
         } else {
             print();
+            if (failsOnError.orElse(false) && scanResults.getErrorSession().hasErrors()) {
+                throw new Exception("Your are provisioning although errors have been reported. If you want to enforce provisioning, set --fails-on-error=false to ignore errors.");
+            }
             String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
             Path target = Paths.get(provisionOutputDir.orElse("server-" + vers));
             IoUtils.recursiveDelete(target);

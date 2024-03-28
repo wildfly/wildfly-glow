@@ -52,6 +52,8 @@ public interface Constants {
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION = "--exclude-archives-from-scan";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL = "<list of nested archive names>";
     String EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_SHORT = "-ea";
+    String FAILS_ON_ERROR_OPTION = "--fails-on-error";
+    String FAILS_ON_ERROR_OPTION_SHORT = "-foe";
     String HA_OPTION = "--ha";
 
     String HELP_OPTION = "--help";
