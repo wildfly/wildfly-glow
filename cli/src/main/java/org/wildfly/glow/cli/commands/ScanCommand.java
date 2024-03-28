@@ -125,6 +125,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.INIT_SCRIPT_OPTION_SHORT, Constants.INIT_SCRIPT_OPTION}, paramLabel = Constants.INIT_SCRIPT_OPTION_LABEL)
     Optional<Path> initScriptFile;
 
+    @CommandLine.Option(names = {Constants.CLI_SCRIPT_OPTION_SHORT, Constants.CLI_SCRIPT_OPTION}, paramLabel = Constants.CLI_SCRIPT_OPTION_LABEL)
+    Optional<Path> cliScriptFile;
+
     @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
 
@@ -405,7 +408,9 @@ public class ScanCommand extends AbstractCommand {
                         haProfile.orElse(false),
                         extraEnv,
                         disableDeployers,
-                        initScriptFile.orElse(null), new OpenShiftConfiguration.Builder().build());
+                        initScriptFile.orElse(null),
+                        cliScriptFile.orElse(null),
+                        new OpenShiftConfiguration.Builder().build());
                 print("@|bold \nOpenshift build and deploy DONE.|@");
             } else {
                 if (content.getDockerImageName() != null) {

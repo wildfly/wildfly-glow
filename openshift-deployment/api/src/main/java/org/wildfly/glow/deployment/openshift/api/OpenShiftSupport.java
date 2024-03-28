@@ -185,7 +185,9 @@ public class OpenShiftSupport {
             boolean ha,
             Map<String, String> extraEnv,
             Set<String> disabledDeployers,
-            Path initScript, OpenShiftConfiguration config) throws Exception {
+            Path initScript,
+            Path cliScript,
+            OpenShiftConfiguration config) throws Exception {
         Map<String, String> actualEnv = new TreeMap<>();
         OpenShiftClient osClient = new KubernetesClientBuilder().build().adapt(OpenShiftClient.class);
         writer.info("\nConnected to OpenShift cluster");
@@ -242,7 +244,7 @@ public class OpenShiftSupport {
             }
         }
 
-        createBuild(writer, target, osClient, appName, initScript, config);
+        createBuild(writer, target, osClient, appName, initScript, cliScript, config);
         actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
@@ -265,16 +267,35 @@ public class OpenShiftSupport {
             OpenShiftClient osClient,
             String name,
             Path initScript,
+            Path cliScript,
             OpenShiftConfiguration config) throws Exception {
         String serverImageName = doServerImageBuild(writer, target, osClient, config);
-        doAppImageBuild(serverImageName, writer, target, osClient, name, initScript, config);
+        doAppImageBuild(serverImageName, writer, target, osClient, name, initScript, cliScript, config);
     }
 
-    private static void packageInitScript(Path initScript, Path target) throws Exception {
-        Path extensions = target.resolve("extensions");
-        Files.createDirectories(extensions);
-        Path postconfigure = extensions.resolve("postconfigure.sh");
-        Files.copy(initScript, postconfigure);
+    private static boolean packageInitScript(Path initScript, Path cliScript, Path target) throws Exception {
+        if (initScript != null || cliScript != null) {
+            Path extensions = target.resolve("extensions");
+            Files.createDirectories(extensions);
+            StringBuilder initExecution = new StringBuilder();
+            initExecution.append("#!/bin/bash").append("\n");
+            if (initScript != null) {
+                initExecution.append("echo \"Calling initialization script\"").append("\n");
+                Path init = extensions.resolve("init-script.sh");
+                Files.copy(initScript, init);
+                initExecution.append("sh $JBOSS_HOME/extensions/init-script.sh").append("\n");
+            }
+            if (cliScript != null) {
+                initExecution.append("echo \"Calling CLI script\"").append("\n");
+                Path cli = extensions.resolve("cli-script.cli");
+                Files.copy(cliScript, cli);
+                initExecution.append("cat $JBOSS_HOME/extensions/cli-script.cli >> \"${CLI_SCRIPT_FILE}\"");
+            }
+            Path postconfigure = extensions.resolve("postconfigure.sh");
+            Files.write(postconfigure, initExecution.toString().getBytes());
+            return true;
+        }
+        return false;
     }
 
     private static boolean isDisabled(String name, Set<String> disabledDeployers) {
@@ -386,6 +407,7 @@ public class OpenShiftSupport {
             OpenShiftClient osClient,
             String name,
             Path initScript,
+            Path cliScript,
             OpenShiftConfiguration config) throws Exception {
         // Now step 2
         // From the server image, do a docker build, copy the server and copy in it the deployments and init file.
@@ -395,9 +417,7 @@ public class OpenShiftSupport {
         dockerFileBuilder.append("FROM " + config.getRuntimeImage() + "\n");
         dockerFileBuilder.append("COPY --chown=jboss:root /server $JBOSS_HOME\n");
         dockerFileBuilder.append("COPY --chown=jboss:root deployments/* $JBOSS_HOME/standalone/deployments\n");
-
-        if (initScript != null) {
-            packageInitScript(initScript, stepTwo);
+        if (packageInitScript(initScript, cliScript, stepTwo)) {
             dockerFileBuilder.append("COPY --chown=jboss:root extensions $JBOSS_HOME/extensions\n");
             dockerFileBuilder.append("RUN chmod ug+rwx $JBOSS_HOME/extensions/postconfigure.sh\n");
         }

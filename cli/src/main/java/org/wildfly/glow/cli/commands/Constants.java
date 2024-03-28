@@ -58,6 +58,9 @@ public interface Constants {
 
     String HELP_OPTION = "--help";
     String HELP_OPTION_SHORT = "-h";
+    String CLI_SCRIPT_OPTION = "--cli-script";
+    String CLI_SCRIPT_OPTION_SHORT = "-cs";
+    String CLI_SCRIPT_OPTION_LABEL = "<CLI script file path>";
     String INIT_SCRIPT_OPTION = "--init-script";
     String INIT_SCRIPT_OPTION_SHORT = "-is";
     String INIT_SCRIPT_OPTION_LABEL = "<init script file path>";
