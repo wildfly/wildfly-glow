@@ -64,7 +64,7 @@ public interface Constants {
     String NO_DOCKER_IMAGE_OPTION = "--no-docker-image";
     String NO_DOCKER_IMAGE_OPTION_SHORT = "-nd";
     String PROVISION_OPTION = "--provision";
-    String PROVISION_OPTION_LABEL = "<SERVER|BOOTABLE_JAR|DOCKER_IMAGE|PROVISIONING_XML>";
+    String PROVISION_OPTION_LABEL = "<SERVER|BOOTABLE_JAR|OPENSHIFT|DOCKER_IMAGE|PROVISIONING_XML>";
     String PROVISION_OPTION_SHORT = "-p";
     String SERVER_VERSION_OPTION = "--server-version";
     String SERVER_VERSION_OPTION_SHORT = "-sv";

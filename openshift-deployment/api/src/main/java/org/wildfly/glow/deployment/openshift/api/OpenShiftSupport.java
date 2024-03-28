@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.cli.commands;
+package org.wildfly.glow.deployment.openshift.api;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -23,7 +23,6 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetAction;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.ObjectReference;
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
@@ -49,7 +48,6 @@ import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReference;
 import io.fabric8.openshift.api.model.TLSConfig;
-import io.fabric8.openshift.api.model.TagReferenceBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,13 +73,12 @@ import org.jboss.galleon.util.ZipUtils;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
-import org.wildfly.glow.deployment.openshift.api.Deployer;
-import org.wildfly.glow.deployment.openshift.api.Utils;
+
 /**
  *
  * @author jdenise
  */
-class OpenShiftSupport {
+public class OpenShiftSupport {
 
     private static void createAppDeployment(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Map<String, String> env, boolean ha) throws Exception {
         writer.info("Deploying application image on OpenShift");
@@ -178,8 +175,16 @@ class OpenShiftSupport {
         osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
     }
 
-    static void deploy(GlowMessageWriter writer, Path target, String appName, Map<String, String> env, Set<Layer> layers, Set<AddOn> addOns, boolean ha,
-            Map<String, String> extraEnv, Set<String> disabledDeployers, Path initScript) throws Exception {
+    public static void deploy(GlowMessageWriter writer,
+            Path target,
+            String appName,
+            Map<String, String> env,
+            Set<Layer> layers,
+            Set<AddOn> addOns,
+            boolean ha,
+            Map<String, String> extraEnv,
+            Set<String> disabledDeployers,
+            Path initScript, OpenShiftConfiguration config) throws Exception {
         Map<String, String> actualEnv = new TreeMap<>();
         OpenShiftClient osClient = new KubernetesClientBuilder().build().adapt(OpenShiftClient.class);
         writer.info("\nConnected to OpenShift cluster");
@@ -236,7 +241,7 @@ class OpenShiftSupport {
             }
         }
 
-        createBuild(writer, target, osClient, appName, initScript);
+        createBuild(writer, target, osClient, appName, initScript, config);
         actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
         if (!actualEnv.isEmpty()) {
@@ -254,9 +259,14 @@ class OpenShiftSupport {
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
 
-    static void createBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Path initScript) throws Exception {
-        String serverImageName = doServerImageBuild(writer, target, osClient);
-        doAppImageBuild(serverImageName, writer, target, osClient, name, initScript);
+    private static void createBuild(GlowMessageWriter writer,
+            Path target,
+            OpenShiftClient osClient,
+            String name,
+            Path initScript,
+            OpenShiftConfiguration config) throws Exception {
+        String serverImageName = doServerImageBuild(writer, target, osClient, config);
+        doAppImageBuild(serverImageName, writer, target, osClient, name, initScript, config);
     }
 
     private static void packageInitScript(Path initScript, Path target) throws Exception {
@@ -282,7 +292,7 @@ class OpenShiftSupport {
         return hexString.toString();
     }
 
-    static Map<String, String> createLabels(Path target, Path provisioning) throws Exception {
+    private static Map<String, String> createLabels(Path target, Path provisioning, OpenShiftConfiguration osConfig) throws Exception {
         GalleonBuilder provider = new GalleonBuilder();
         Path dir = target.resolve("tmp").resolve("tmpHome");
         Files.createDirectory(dir);
@@ -291,11 +301,11 @@ class OpenShiftSupport {
         try (Provisioning p = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build()) {
             GalleonProvisioningConfig config = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build().loadProvisioningConfig(provisioning);
             GalleonConfigurationWithLayers cl = config.getDefinedConfig(new ConfigId("standalone", "standalone.xml"));
-            for(String s : cl.getIncludedLayers()) {
-                labels.put("org.wildfly.glow.layer."+s,"");
+            for (String s : cl.getIncludedLayers()) {
+                labels.put(osConfig.getLabelRadical() + ".layer." + s, "");
             }
-            for(String s : cl.getExcludedLayers()) {
-                labels.put("org.wildfly.glow.excluded.layer."+s,"");
+            for (String s : cl.getExcludedLayers()) {
+                labels.put(osConfig.getLabelRadical() + ".excluded.layer." + s, "");
             }
             for (GalleonFeaturePackConfig gfpc : config.getFeaturePackDeps()) {
                 if (fps.length() != 0) {
@@ -304,23 +314,23 @@ class OpenShiftSupport {
                 String producerName = gfpc.getLocation().getProducerName();
                 producerName = producerName.replaceAll("::zip", "");
                 int i = producerName.indexOf(":");
-                if(i > 0) {
-                    producerName = producerName.substring(i+1);
+                if (i > 0) {
+                    producerName = producerName.substring(i + 1);
                 }
                 producerName = producerName.replaceAll(":", "-");
-                labels.put("org.wildfly.glow.feature-pack."+producerName,"");
+                labels.put(osConfig.getLabelRadical() + ".feature-pack." + producerName, "");
             }
         }
         return labels;
     }
 
-    static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient) throws Exception {
+    private static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient, OpenShiftConfiguration config) throws Exception {
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
         MessageDigest digest = MessageDigest.getInstance("MD5");
         byte[] encodedhash = digest.digest(content);
         String key = bytesToHex(encodedhash);
-        String serverImageName = "wildfly-server-" + key;
+        String serverImageName = config.getServerImageNameRadical() + key;
 
         ImageStream stream = new ImageStreamBuilder().withNewMetadata().withName(serverImageName).
                 endMetadata().withNewSpec().withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
@@ -338,7 +348,7 @@ class OpenShiftSupport {
             Files.createDirectories(stepOne);
             IoUtils.copy(target.resolve("galleon"), stepOne.resolve("galleon"));
             ZipUtils.zip(stepOne, file);
-            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(target, provisioning)).endMetadata().build();
+            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(target, provisioning, config)).endMetadata().build();
             osClient.imageStreams().resource(stream).createOr(NonDeletingOperation::update);
             Utils.persistResource(target, stream, serverImageName + "-image-stream.yaml");
             BuildConfigBuilder builder = new BuildConfigBuilder();
@@ -352,7 +362,7 @@ class OpenShiftSupport {
                     withKind("ImageStreamTag").
                     withName(serverImageName + ":latest").endTo().
                     endOutput().withNewStrategy().withNewSourceStrategy().withNewFrom().withKind("DockerImage").
-                    withName("quay.io/wildfly/wildfly-s2i:latest").endFrom().
+                    withName(config.getBuilderImage()).endFrom().
                     withIncremental(true).
                     withEnv(new EnvVar().toBuilder().withName("GALLEON_USE_LOCAL_FILE").withValue("true").build()).
                     endSourceStrategy().endStrategy().withNewSource().
@@ -369,13 +379,19 @@ class OpenShiftSupport {
         return serverImageName;
     }
 
-    static void doAppImageBuild(String serverImageName, GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Path initScript) throws Exception {
+    private static void doAppImageBuild(String serverImageName,
+            GlowMessageWriter writer,
+            Path target,
+            OpenShiftClient osClient,
+            String name,
+            Path initScript,
+            OpenShiftConfiguration config) throws Exception {
         // Now step 2
         // From the server image, do a docker build, copy the server and copy in it the deployments and init file.
         Path stepTwo = target.resolve("tmp").resolve("step-two");
         IoUtils.copy(target.resolve("deployments"), stepTwo.resolve("deployments"));
         StringBuilder dockerFileBuilder = new StringBuilder();
-        dockerFileBuilder.append("FROM wildfly-runtime:latest\n");
+        dockerFileBuilder.append("FROM " + config.getRuntimeImage() + "\n");
         dockerFileBuilder.append("COPY --chown=jboss:root /server $JBOSS_HOME\n");
         dockerFileBuilder.append("COPY --chown=jboss:root deployments/* $JBOSS_HOME/standalone/deployments\n");
 
@@ -395,17 +411,6 @@ class OpenShiftSupport {
         }
         ZipUtils.zip(stepTwo, file2);
         writer.info("\nBuilding application image...");
-        ImageStream runtimeStream = new ImageStreamBuilder().withNewMetadata().withName("wildfly-runtime").
-                endMetadata().withNewSpec().
-                addToTags(0, new TagReferenceBuilder()
-                        .withName("latest")
-                        .withFrom(new ObjectReferenceBuilder()
-                                .withKind("DockerImage")
-                                .withName("quay.io/wildfly/wildfly-runtime:latest")
-                                .build())
-                        .build()).
-                withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
-        osClient.imageStreams().resource(runtimeStream).createOr(NonDeletingOperation::update);
         ImageStream appStream = new ImageStreamBuilder().withNewMetadata().withName(name).
                 endMetadata().withNewSpec().withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
         osClient.imageStreams().resource(appStream).createOr(NonDeletingOperation::update);
@@ -423,8 +428,8 @@ class OpenShiftSupport {
                 withName(name + ":latest").endTo().
                 endOutput().
                 withNewSource().withType("Binary").withImages(imageSource).endSource().
-                withNewStrategy().withNewDockerStrategy().withNewFrom().withKind("ImageStream").
-                withName("wildfly-runtime").endFrom().
+                withNewStrategy().withNewDockerStrategy().withNewFrom().withKind("DockerImage").
+                withName("quay.io/wildfly/wildfly-runtime:latest").endFrom().
                 withDockerfilePath("./Dockerfile").
                 endDockerStrategy().endStrategy().endSpec().build();
         osClient.buildConfigs().resource(buildConfig2).createOr(NonDeletingOperation::update);

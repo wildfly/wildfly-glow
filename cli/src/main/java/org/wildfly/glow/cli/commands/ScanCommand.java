@@ -16,6 +16,8 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
+import org.wildfly.glow.deployment.openshift.api.OpenShiftConfiguration;
 import java.nio.file.Files;
 import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.Arguments;
@@ -64,9 +66,9 @@ public class ScanCommand extends AbstractCommand {
         }
     }
 
-    private static final String ADD_ADD_ONS_MSG="@|bold To enable add-ons, add the|@ @|fg(yellow) " +
-            Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) " +
-            Constants.SCAN_COMMAND + "|@ @|bold command|@";
+    private static final String ADD_ADD_ONS_MSG = "@|bold To enable add-ons, add the|@ @|fg(yellow) "
+            + Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) "
+            + Constants.SCAN_COMMAND + "|@ @|bold command|@";
 
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
@@ -118,10 +120,10 @@ public class ScanCommand extends AbstractCommand {
     Optional<Stability> configStability;
 
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
-    Optional<Path>  envFile;
+    Optional<Path> envFile;
 
     @CommandLine.Option(names = {Constants.INIT_SCRIPT_OPTION_SHORT, Constants.INIT_SCRIPT_OPTION}, paramLabel = Constants.INIT_SCRIPT_OPTION_LABEL)
-    Optional<Path>  initScriptFile;
+    Optional<Path> initScriptFile;
 
     @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
@@ -146,7 +148,7 @@ public class ScanCommand extends AbstractCommand {
                     }
                     System.setProperty(propName, value);
                 } else {
-                    throw new Exception("Invalid system property " + p +". A property must start with -D");
+                    throw new Exception("Invalid system property " + p + ". A property must start with -D");
                 }
             }
         }
@@ -189,13 +191,13 @@ public class ScanCommand extends AbstractCommand {
             if (!Files.exists(p)) {
                 throw new Exception(p + " file doesn't exist");
             }
-            for(String l : Files.readAllLines(p)) {
+            for (String l : Files.readAllLines(p)) {
                 if (!l.startsWith("#")) {
                     int i = l.indexOf("=");
                     if (i < 0 || i == l.length() - 1) {
                         throw new Exception("Invalid environment variable " + l + " in " + p);
                     }
-                    extraEnv.put(l.substring(0, i), l.substring(i+1));
+                    extraEnv.put(l.substring(0, i), l.substring(i + 1));
                 }
             }
         }
@@ -271,13 +273,13 @@ public class ScanCommand extends AbstractCommand {
                 if (scanResults.getErrorSession().hasErrors()) {
                     if (!suggest.orElse(false)) {
                         boolean hasAddOn = false;
-                       // Do we have errors and add-ons to set?
-                       for(IdentifiedError err : scanResults.getErrorSession().getErrors()) {
-                           if (!err.getPossibleAddons().isEmpty()) {
-                               hasAddOn = true;
-                               break;
-                           }
-                       }
+                        // Do we have errors and add-ons to set?
+                        for (IdentifiedError err : scanResults.getErrorSession().getErrors()) {
+                            if (!err.getPossibleAddons().isEmpty()) {
+                                hasAddOn = true;
+                                break;
+                            }
+                        }
                         if (hasAddOn) {
                             System.out.println(CommandLine.Help.Ansi.AUTO.string(ADD_ADD_ONS_MSG));
                         }
@@ -383,13 +385,20 @@ public class ScanCommand extends AbstractCommand {
                     name = p.getFileName().toString().substring(0, ext);
                 }
                 Map<String, String> envMap = new HashMap<>();
-                for(Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
-                    for(Env env : envs) {
+                for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
+                    for (Env env : envs) {
                         envMap.put(env.getName(), env.getDescription());
                     }
                 }
-                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT, target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(), envMap, scanResults.getDiscoveredLayers(),
-                        scanResults.getEnabledAddOns(), haProfile.orElse(false), extraEnv, disableDeployers, initScriptFile.orElse(null));
+                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
+                        target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(),
+                        envMap,
+                        scanResults.getDiscoveredLayers(),
+                        scanResults.getEnabledAddOns(),
+                        haProfile.orElse(false),
+                        extraEnv,
+                        disableDeployers,
+                        initScriptFile.orElse(null), new OpenShiftConfiguration.Builder().build());
                 print("@|bold \nOpenshift build and deploy DONE.|@");
             }
             if (content.getDockerImageName() != null) {

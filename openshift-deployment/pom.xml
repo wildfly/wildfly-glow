@@ -22,6 +22,6 @@
         <module>mariadb</module>
         <module>mysql</module>
         <module>postgresql</module>
-        <module>artemis-broker</module>
+        <module>amq-broker</module>
     </modules>
 </project>

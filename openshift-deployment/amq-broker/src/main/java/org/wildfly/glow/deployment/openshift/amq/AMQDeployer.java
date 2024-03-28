@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.deployment.openshift.artemis;
+package org.wildfly.glow.deployment.openshift.amq;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -43,9 +43,9 @@ import org.wildfly.glow.deployment.openshift.api.Utils;
  *
  * @author jdenise
  */
-public class ArtemisDeployer implements Deployer {
+public class AMQDeployer implements Deployer {
 
-    private static final String REMOTE_BROKER_NAME = "artemis-broker";
+    private static final String REMOTE_BROKER_NAME = "amq-broker";
     private static final String REMOTE_BROKER_PASSWORD = "admin";
     private static final String REMOTE_BROKER_USER = "admin";
 
@@ -69,7 +69,7 @@ public class ArtemisDeployer implements Deployer {
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> env, String appHost, String appName, String matching) throws Exception {
-        writer.info("\nDeploying Artemis Messaging Broker");
+        writer.info("\nDeploying AMQ Messaging Broker");
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, REMOTE_BROKER_NAME);
         ContainerPort port = new ContainerPort();
@@ -83,7 +83,7 @@ public class ArtemisDeployer implements Deployer {
         }
         Container container = new Container();
         container.setName(REMOTE_BROKER_NAME);
-        container.setImage("quay.io/artemiscloud/activemq-artemis-broker-kubernetes");
+        container.setImage("registry.redhat.io/amq7/amq-broker");
         container.setPorts(ports);
         container.setEnv(vars);
         container.setImagePullPolicy("IfNotPresent");
@@ -146,7 +146,7 @@ public class ArtemisDeployer implements Deployer {
 
     @Override
     public String getName() {
-        return "artemis_jms_broker";
+        return "amq_jms_broker";
     }
 
 }
