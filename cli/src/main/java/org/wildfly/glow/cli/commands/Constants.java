@@ -59,7 +59,7 @@ public interface Constants {
     String HELP_OPTION = "--help";
     String HELP_OPTION_SHORT = "-h";
     String INIT_SCRIPT_OPTION = "--init-script";
-    String INIT_SCRIPT_OPTION_SHORT = "-id";
+    String INIT_SCRIPT_OPTION_SHORT = "-is";
     String INIT_SCRIPT_OPTION_LABEL = "<init script file path>";
     String INPUT_FEATURE_PACKS_FILE_OPTION = "--input-feature-packs-file";
     String INPUT_FEATURE_PACKS_FILE_OPTION_LABEL = "<provisioning file path>";
