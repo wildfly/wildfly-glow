@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.glow.GlowMessageWriter;
 
 /**
@@ -157,4 +159,19 @@ public class AbstractDatabaseDeployer implements Deployer {
         return dbName;
     }
 
+    @Override
+    public Map<String, String> handleBuildTimeDefault(Set<String> buildEnv, MavenRepoManager mvnResolver) throws Exception {
+        Map<String, String> map = new TreeMap<>();
+        for(String s : buildEnv) {
+            String val = computeBuildTimeValue(s, mvnResolver);
+            if(val != null) {
+                map.put(s, val);
+            }
+        }
+        return map;
+    }
+
+    protected String computeBuildTimeValue(String name, MavenRepoManager mvnResolver) throws Exception {
+        return null;
+    }
 }

@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.glow.GlowMessageWriter;
 
 /**
@@ -43,11 +44,7 @@ public interface Deployer {
         return Collections.emptySet();
     }
 
-    default String getSupportedAddOnFamily() {
-        return null;
-    }
-
-    default Set<String> getSupportedAddOns() {
-        return Collections.emptySet();
+    default Map<String, String> handleBuildTimeDefault(Set<String> buildEnv, MavenRepoManager mvnResolver) throws Exception {
+        return Collections.emptyMap();
     }
 }

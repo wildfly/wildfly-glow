@@ -477,14 +477,16 @@ public class GlowSession {
                     }
                 }
             }
-
+            Set<Layer> metadataOnlyLayers = new LinkedHashSet<>();
             // Remove layers from output that are metadata-only
             for (Layer metadataOnly : mapping.getMetadataOnly()) {
                 if (decorators.contains(metadataOnly)) {
                     decorators.remove(metadataOnly);
+                    metadataOnlyLayers.add(metadataOnly);
                 }
                 if (layers.contains(metadataOnly)) {
                     layers.remove(metadataOnly);
+                    metadataOnlyLayers.add(metadataOnly);
                 }
             }
             // END cleanup
@@ -570,6 +572,7 @@ public class GlowSession {
                     excludedLayers,
                     baseLayer,
                     decorators,
+                    metadataOnlyLayers,
                     provisioning,
                     activeConfig,
                     allEnabledAddOns,
