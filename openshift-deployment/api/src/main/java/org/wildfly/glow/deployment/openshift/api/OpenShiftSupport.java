@@ -55,6 +55,8 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -69,9 +71,10 @@ import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.config.ConfigId;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
-import org.wildfly.glow.AddOn;
+import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
 
@@ -81,8 +84,45 @@ import org.wildfly.glow.Layer;
  */
 public class OpenShiftSupport {
 
+    private static class BuildWatcher implements Watcher<Build>, AutoCloseable {
+        private final CountDownLatch latch = new CountDownLatch(1);
+        private final GlowMessageWriter writer;
+        private boolean failed;
+        BuildWatcher(GlowMessageWriter writer) {
+            this.writer = writer;
+        }
+        @Override
+        public void eventReceived(Action action, Build build) {
+            String phase = build.getStatus().getPhase();
+            if ("Running".equals(phase)) {
+                writer.info("Build is running...");
+            }
+            if ("Complete".equals(phase)) {
+                writer.info("Build is complete.");
+                latch.countDown();
+            }
+            if ("Failed".equals(phase)) {
+                writer.info("Build Failed.");
+                failed = true;
+                latch.countDown();
+            }
+        }
+
+        @Override
+        public void onClose(WatcherException cause) {
+        }
+        void await() throws InterruptedException {
+            latch.await();
+        }
+        boolean isFailed() {
+            return failed;
+        }
+
+        @Override
+        public void close() throws Exception {
+        }
+    }
     private static void createAppDeployment(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Map<String, String> env, boolean ha) throws Exception {
-        writer.info("Deploying application image on OpenShift");
         Map<String, String> labels = new HashMap<>();
         labels.put(Deployer.LABEL, name);
         ContainerPort port = new ContainerPort();
@@ -172,7 +212,7 @@ public class OpenShiftSupport {
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
         Utils.persistResource(target, service, name + "-service.yaml");
 
-        writer.info("Waiting until the application is ready ...");
+        writer.info("\nWaiting until the application is ready ...");
         osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
     }
 
@@ -181,14 +221,21 @@ public class OpenShiftSupport {
             String appName,
             Map<String, String> env,
             Set<Layer> layers,
-            Set<AddOn> addOns,
+            Set<Layer> metadataOnlyLayers,
             boolean ha,
             Map<String, String> extraEnv,
+            Map<String, String> buildExtraEnv,
+            Map<Layer, Set<Env>> requiredBuildTime,
             Set<String> disabledDeployers,
             Path initScript,
             Path cliScript,
-            OpenShiftConfiguration config) throws Exception {
+            OpenShiftConfiguration config,
+            MavenRepoManager mvnResolver) throws Exception {
+        Set<Layer> allLayers = new LinkedHashSet<>();
+        allLayers.addAll(layers);
+        allLayers.addAll(metadataOnlyLayers);
         Map<String, String> actualEnv = new TreeMap<>();
+        Map<String, String> actualBuildEnv = new TreeMap<>();
         OpenShiftClient osClient = new KubernetesClientBuilder().build().adapt(OpenShiftClient.class);
         writer.info("\nConnected to OpenShift cluster");
         // First create the future route to the application, can be needed by deployers
@@ -214,39 +261,37 @@ public class OpenShiftSupport {
             }
         }
         for (Deployer d : existingDeployers.values()) {
-            boolean deployed = false;
             boolean isDisabled = isDisabled(d.getName(), disabledDeployers);
-            for (Layer l : layers) {
+            for (Layer l : allLayers) {
                 if (d.getSupportedLayers().contains(l.getName())) {
-                    deployed = true;
                     if (!isDisabled) {
-                        writer.info("Found deployer " + d.getName() + " for " + l.getName());
+                        writer.info("\nFound deployer " + d.getName() + " for " + l.getName());
                     } else {
-                        writer.warn("The deployer " + d.getName() + " has been disabled");
+                        writer.warn("\nThe deployer " + d.getName() + " has been disabled");
                     }
                     actualEnv.putAll(isDisabled ? Collections.emptyMap(): d.deploy(writer, target, osClient, env, host, appName, l.getName(), extraEnv));
+                    Set<Env> buildEnv =  requiredBuildTime.get(l);
+                    if (buildEnv != null) {
+                        Set<String> names = new HashSet<>();
+                        for(Env e : buildEnv) {
+                            if (!buildExtraEnv.containsKey(e.getName())) {
+                                names.add(e.getName());
+                            }
+                        }
+                        actualBuildEnv.putAll(d.handleBuildTimeDefault(names, mvnResolver));
+                    }
                     break;
                 }
             }
-            if (!deployed) {
-                for (AddOn ao : addOns) {
-                    if (ao.getFamily().equals(d.getSupportedAddOnFamily())
-                            && d.getSupportedAddOns().contains(ao.getName())) {
-                        if (!isDisabled) {
-                            writer.info("Found deployer " + d.getName() + " for " + ao.getName());
-                        } else {
-                            writer.warn("The deployer " + d.getName() + " has been disabled");
-                        }
-                        actualEnv.putAll(isDisabled ? Collections.emptyMap() : d.deploy(writer, target, osClient, env, host, appName, ao.getName(), extraEnv));
-                        break;
-                    }
-                }
-            }
         }
+        writer.info("\nThe active deployers have resolved the environment variables required at build time and deployment time.");
 
-        createBuild(writer, target, osClient, appName, initScript, cliScript, config);
+        // Can be overriden by user
+        actualBuildEnv.putAll(buildExtraEnv);
+        createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config);
         actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
+        writer.info("Deploying application image on OpenShift");
         if (!actualEnv.isEmpty()) {
             if (!disabledDeployers.isEmpty()) {
                 writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
@@ -256,7 +301,6 @@ public class OpenShiftSupport {
             for (Entry<String, String> entry : actualEnv.entrySet()) {
                 writer.warn(entry.getKey() + "=" + entry.getValue());
             }
-            writer.warn("\n");
         }
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
@@ -268,8 +312,9 @@ public class OpenShiftSupport {
             String name,
             Path initScript,
             Path cliScript,
+            Map<String, String> buildExtraEnv,
             OpenShiftConfiguration config) throws Exception {
-        String serverImageName = doServerImageBuild(writer, target, osClient, config);
+        String serverImageName = doServerImageBuild(writer, target, osClient, buildExtraEnv, config);
         doAppImageBuild(serverImageName, writer, target, osClient, name, initScript, cliScript, config);
     }
 
@@ -346,7 +391,10 @@ public class OpenShiftSupport {
         return labels;
     }
 
-    private static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient, OpenShiftConfiguration config) throws Exception {
+    private static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
+            Map<String, String> buildExtraEnv,
+            OpenShiftConfiguration config) throws Exception {
+        // To compute a hash we need build time env variables and channel version.
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
         byte[] content = Files.readAllBytes(provisioning);
         MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -377,6 +425,16 @@ public class OpenShiftSupport {
             ObjectReference ref = new ObjectReference();
             ref.setKind("ImageStreamTag");
             ref.setName(serverImageName + ":latest");
+            List<EnvVar> vars = new ArrayList<>();
+            vars.add(new EnvVar().toBuilder().withName("GALLEON_USE_LOCAL_FILE").withValue("true").build());
+            if (!buildExtraEnv.isEmpty()) {
+                writer.warn("\nThe following environment variables have been set in the " + serverImageName + " buildConfig:\n");
+                for (Map.Entry<String, String> entry : buildExtraEnv.entrySet()) {
+                    String val = buildExtraEnv.get(entry.getKey());
+                    writer.warn(entry.getKey()+"="+entry.getValue());
+                    vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(val == null ? entry.getValue() : val).build());
+                }
+            }
             BuildConfig buildConfig = builder.
                     withNewMetadata().withName(serverImageName + "-build").endMetadata().withNewSpec().
                     withNewOutput().
@@ -386,16 +444,20 @@ public class OpenShiftSupport {
                     endOutput().withNewStrategy().withNewSourceStrategy().withNewFrom().withKind("DockerImage").
                     withName(config.getBuilderImage()).endFrom().
                     withIncremental(true).
-                    withEnv(new EnvVar().toBuilder().withName("GALLEON_USE_LOCAL_FILE").withValue("true").build()).
+                    withEnv(vars).
                     endSourceStrategy().endStrategy().withNewSource().
                     withType("Binary").endSource().endSpec().build();
             osClient.buildConfigs().resource(buildConfig).createOr(NonDeletingOperation::update);
             Utils.persistResource(target, buildConfig, serverImageName + "-build-config.yaml");
 
             Build build = osClient.buildConfigs().withName(serverImageName + "-build").instantiateBinary().fromFile(file.toFile());
-            CountDownLatch latch = new CountDownLatch(1);
-            try (Watch watcher = osClient.builds().withName(build.getMetadata().getName()).watch(getBuildWatcher(writer, latch))) {
-                latch.await();
+            BuildWatcher buildWatcher = new BuildWatcher(writer);
+            try (Watch watcher = osClient.builds().withName(build.getMetadata().getName()).watch(buildWatcher)) {
+                buildWatcher.await();
+            }
+            if(buildWatcher.isFailed()) {
+                osClient.imageStreams().resource(stream).delete();
+                throw new Exception("Server image build has failed. Check the OpenShift build log.");
             }
         }
         return serverImageName;
@@ -458,29 +520,13 @@ public class OpenShiftSupport {
 
         Build build = osClient.buildConfigs().withName(name + "-build").instantiateBinary().fromFile(file2.toFile());
         CountDownLatch latch = new CountDownLatch(1);
-        try (Watch watcher = osClient.builds().withName(build.getMetadata().getName()).watch(getBuildWatcher(writer, latch))) {
-            latch.await();
+        BuildWatcher buildWatcher = new BuildWatcher(writer);
+        try (Watch watcher = osClient.builds().withName(build.getMetadata().getName()).watch(buildWatcher)) {
+            buildWatcher.await();
         }
-    }
-
-    private static Watcher<Build> getBuildWatcher(GlowMessageWriter writer, final CountDownLatch latch) {
-        return new Watcher<Build>() {
-            @Override
-            public void eventReceived(Action action, Build build) {
-                //buildHolder.set(build);
-                String phase = build.getStatus().getPhase();
-                if ("Running".equals(phase)) {
-                    writer.info("Build is running...");
-                }
-                if ("Complete".equals(phase)) {
-                    writer.info("Build is complete.");
-                    latch.countDown();
-                }
-            }
-
-            @Override
-            public void onClose(WatcherException cause) {
-            }
-        };
+        if (buildWatcher.isFailed()) {
+            osClient.imageStreams().resource(appStream).delete();
+            throw new Exception("Application image build has failed. Check the OpenShift build log.");
+        }
     }
 }

@@ -17,6 +17,8 @@
  */
 package org.wildfly.glow.deployment.openshift.postgresql;
 
+import org.jboss.galleon.universe.maven.MavenArtifact;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.glow.deployment.openshift.api.AbstractDatabaseDeployer;
 
 /**
@@ -38,5 +40,16 @@ public class PostgreSQLDeployer extends AbstractDatabaseDeployer {
                 ENV_RADICAL,
                 POSTGRESQL_SERVICE_HOST,
                 POSTGRESQL_SERVICE_PORT);
+    }
+
+    @Override
+    protected String computeBuildTimeValue(String name, MavenRepoManager mvnResolver) throws Exception {
+        MavenArtifact ma = new MavenArtifact();
+        ma.setGroupId("org.postgresql");
+        ma.setArtifactId("postgresql");
+        ma.setVersionRange("[1.0,)");
+        ma.setExtension("jar");
+        String vers = mvnResolver.getLatestVersion(ma);
+        return vers;
     }
 }

@@ -39,6 +39,10 @@ public interface Constants {
     String BATCH_OPTION = "--batch";
     String BATCH_OPTION_SHORT = "-B";
 
+    String BUILD_ENV_FILE_OPTION = "--build-env-file";
+    String BUILD_ENV_FILE_OPTION_SHORT = "-bef";
+    String BUILD_ENV_FILE_OPTION_LABEL = "<build env file path>";
+
     String CLOUD_OPTION = "--cloud";
     String CLOUD_OPTION_SHORT = "-c";
     String DISABLE_DEPLOYERS = "--disable-deployers";

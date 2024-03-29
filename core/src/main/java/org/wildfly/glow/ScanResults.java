@@ -31,6 +31,7 @@ public class ScanResults implements AutoCloseable {
     private final Set<Layer> excludedLayers;
     private final Layer baseLayer;
     private final Set<Layer> decorators;
+    private final Set<Layer> metadataOnlyLayers;
     private final Provisioning provisioning;
     private final GalleonProvisioningConfig config;
     private final ErrorIdentificationSession errorSession;
@@ -44,6 +45,7 @@ public class ScanResults implements AutoCloseable {
             Set<Layer> excludedLayers,
             Layer baseLayer,
             Set<Layer> decorators,
+            Set<Layer> metadataOnlyLayers,
             Provisioning provisioning,
             GalleonProvisioningConfig config,
             Set<AddOn> enabledAddOns,
@@ -57,6 +59,7 @@ public class ScanResults implements AutoCloseable {
         this.excludedLayers = excludedLayers;
         this.baseLayer = baseLayer;
         this.decorators = decorators;
+        this.metadataOnlyLayers = metadataOnlyLayers;
         this.provisioning = provisioning;
         this.config = config;
         this.disabledAddOns = disabledAddOns;
@@ -81,6 +84,10 @@ public class ScanResults implements AutoCloseable {
 
     public Set<Layer> getDecorators() {
         return decorators;
+    }
+
+    public Set<Layer> getMetadataOnlyLayers() {
+        return metadataOnlyLayers;
     }
 
     public Provisioning getProvisioning() {

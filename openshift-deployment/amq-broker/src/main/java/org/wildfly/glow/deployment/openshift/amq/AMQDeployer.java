@@ -147,12 +147,7 @@ public class AMQDeployer implements Deployer {
     }
 
     @Override
-    public String getSupportedAddOnFamily() {
-        return "messaging";
-    }
-
-    @Override
-    public Set<String> getSupportedAddOns() {
+    public Set<String> getSupportedLayers() {
         Set<String> ret = new HashSet<>();
         ret.add("cloud-remote-activemq");
         return ret;

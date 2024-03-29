@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.jboss.as.version.Stability;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
@@ -122,6 +123,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
     Optional<Path> envFile;
 
+    @CommandLine.Option(names = {Constants.BUILD_ENV_FILE_OPTION_SHORT, Constants.BUILD_ENV_FILE_OPTION}, paramLabel = Constants.BUILD_ENV_FILE_OPTION_LABEL)
+    Optional<Path> buildEnvFile;
+
     @CommandLine.Option(names = {Constants.INIT_SCRIPT_OPTION_SHORT, Constants.INIT_SCRIPT_OPTION}, paramLabel = Constants.INIT_SCRIPT_OPTION_LABEL)
     Optional<Path> initScriptFile;
 
@@ -182,6 +186,7 @@ public class ScanCommand extends AbstractCommand {
             builder.setVersion(wildflyServerVersion.get());
         }
         Map<String, String> extraEnv = new HashMap<>();
+        Map<String, String> buildExtraEnv = new HashMap<>();
         if (envFile.isPresent()) {
             if (provision.isPresent()) {
                 if (!OPENSHIFT.equals(provision.get())) {
@@ -190,19 +195,29 @@ public class ScanCommand extends AbstractCommand {
             } else {
                 throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
             }
-            Path p = envFile.get();
+            extraEnv.putAll(handleOpenShiftEnvFile(envFile.get()));
+        }
+        if (buildEnvFile.isPresent()) {
+            if (provision.isPresent()) {
+                if (!OPENSHIFT.equals(provision.get())) {
+                    throw new Exception("Build env file is only usable when --provision=" + OPENSHIFT + " option is set.");
+                }
+            } else {
+                throw new Exception("Build env file is only usable when --provision=" + OPENSHIFT + " option is set.");
+            }
+            buildExtraEnv.putAll(handleOpenShiftEnvFile(buildEnvFile.get()));
+        }
+        if (cliScriptFile.isPresent()) {
+            if (provision.isPresent()) {
+                if (!OPENSHIFT.equals(provision.get())) {
+                    throw new Exception("CLI script file is only usable when --provision=" + OPENSHIFT + " option is set.");
+                }
+            } else {
+                throw new Exception("CLI script file file is only usable when --provision=" + OPENSHIFT + " option is set.");
+            }
+            Path p = cliScriptFile.get();
             if (!Files.exists(p)) {
                 throw new Exception(p + " file doesn't exist");
-            }
-            for (String l : Files.readAllLines(p)) {
-                l = l.trim();
-                if (!l.isEmpty() && !l.startsWith("#")) {
-                    int i = l.indexOf("=");
-                    if (i < 0 || i == l.length() - 1) {
-                        throw new Exception("Invalid environment variable " + l + " in " + p);
-                    }
-                    extraEnv.put(l.substring(0, i), l.substring(i + 1));
-                }
             }
         }
         if (initScriptFile.isPresent()) {
@@ -266,7 +281,8 @@ public class ScanCommand extends AbstractCommand {
             }
         }
         builder.setIsCli(true);
-        ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), builder.build(), GlowMessageWriter.DEFAULT);
+        MavenRepoManager directMavenResolver = MavenResolver.newMavenResolver();
+        ScanResults scanResults = GlowSession.scan(directMavenResolver, builder.build(), GlowMessageWriter.DEFAULT);
         scanResults.outputInformation();
         if (provision.isEmpty()) {
             if (!compact) {
@@ -401,16 +417,19 @@ public class ScanCommand extends AbstractCommand {
                     }
                 }
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
-                        target, name == null ? "app-from-wildfly-glow" : name.toLowerCase(),
+                        target, name == null ? "app-from-glow" : name.toLowerCase(),
                         envMap,
                         scanResults.getDiscoveredLayers(),
-                        scanResults.getEnabledAddOns(),
+                        scanResults.getMetadataOnlyLayers(),
                         haProfile.orElse(false),
                         extraEnv,
+                        buildExtraEnv,
+                        scanResults.getSuggestions().getBuildTimeRequiredConfigurations(),
                         disableDeployers,
                         initScriptFile.orElse(null),
                         cliScriptFile.orElse(null),
-                        new OpenShiftConfiguration.Builder().build());
+                        new OpenShiftConfiguration.Builder().build(),
+                        directMavenResolver);
                 print("@|bold \nOpenshift build and deploy DONE.|@");
             } else {
                 if (content.getDockerImageName() != null) {
@@ -429,5 +448,23 @@ public class ScanCommand extends AbstractCommand {
             }
         }
         return 0;
+    }
+
+    private Map<String, String> handleOpenShiftEnvFile(Path envFile) throws Exception {
+        Map<String, String> extraEnv = new HashMap<>();
+        if (!Files.exists(envFile)) {
+            throw new Exception(envFile + " file doesn't exist");
+        }
+        for (String l : Files.readAllLines(envFile)) {
+            l = l.trim();
+            if (!l.isEmpty() && !l.startsWith("#")) {
+                int i = l.indexOf("=");
+                if (i < 0 || i == l.length() - 1) {
+                    throw new Exception("Invalid environment variable " + l + " in " + envFile);
+                }
+                extraEnv.put(l.substring(0, i), l.substring(i + 1));
+            }
+        }
+        return extraEnv;
     }
 }

@@ -58,12 +58,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
         StringBuilder ocBuilder = new StringBuilder();
         ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
         for (Deployer d : ServiceLoader.load(Deployer.class)) {
-            ocBuilder.append("* " + d.getName() + ". Enabled when one of the following ");
-            if (!d.getSupportedLayers().isEmpty()) {
-                ocBuilder.append("layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
-            } else {
-                ocBuilder.append("add-on(s) " + d.getSupportedAddOns() + " is/are enabled.\n");
-            }
+            ocBuilder.append("* " + d.getName() + ". Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
         }
         print(ocBuilder.toString());
 
