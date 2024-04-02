@@ -224,9 +224,10 @@ public class GlowSession {
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
                         //System.out.println("SCAN " + d);
-                        DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan());
+                        try (DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan())) {
                             deploymentScanner.scan(mapping, layers, all, errorSession);
                         }
+                    }
                 } else {
                     for (Path d : arguments.getBinaries()) {
                         layers.addAll(WindupSupport.getLayers(all, windup, d));
