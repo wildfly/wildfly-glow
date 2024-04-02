@@ -151,17 +151,16 @@ public class GlowSession {
         provider.addArtifactResolver(resolver);
         Provisioning provisioning = null;
         GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, writer);
-        Path fakeHome = Files.createTempDirectory("wildfly-glow");
         try {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
                     provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                 }
-                provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
+                provisioning = provider.newProvisioningBuilder(provisioningXML).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
             } else {
-                provisioning = provider.newProvisioningBuilder(config).setInstallationHome(fakeHome).build();
+                provisioning = provider.newProvisioningBuilder(config).build();
             }
 
             // BUILD MODEL
@@ -199,8 +198,9 @@ public class GlowSession {
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
                         //System.out.println("SCAN " + d);
-                        DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan());
-                        deploymentScanner.scan(mapping, layers, all, errorSession);
+                        try (DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan())) {
+                            deploymentScanner.scan(mapping, layers, all, errorSession);
+                        }
                     }
                 } else {
                     for (Path d : arguments.getBinaries()) {
@@ -586,7 +586,6 @@ public class GlowSession {
             return scanResults;
         } finally {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);
-            IoUtils.recursiveDelete(fakeHome);
         }
     }
 
