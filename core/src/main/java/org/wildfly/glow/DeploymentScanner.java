@@ -69,6 +69,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM9;
+import org.wildfly.glow.error.ErrorLevel;
+import org.wildfly.glow.error.IdentifiedError;
 
 public class DeploymentScanner implements AutoCloseable {
 
@@ -629,7 +631,20 @@ public class DeploymentScanner implements AutoCloseable {
                 if (k.startsWith(LayerMetadata.XML_PATH)) {
                     ParsedRule rule = inspector.extractParsedRule(val);
                     rule.iterateMatchedPaths((path, values) -> {
-                        Utils.applyXPath(path, values.get(0).getValue(), values.size() == 1 ? null : values.get(1).getValue(), consumer, l);
+                        try {
+                            Utils.applyXPath(path, values.get(0).getValue(), values.size() == 1 ? null : values.get(1).getValue(), consumer, l);
+                        } catch(Exception ex) {
+                            String id = "invalidXML" + path;
+                            boolean allreadySet = false;
+                            for (IdentifiedError err : ctx.errorSession.getErrors()) {
+                                if (id.equals(err.getId())) {
+                                    allreadySet = true;
+                                }
+                            }
+                            if (!allreadySet) {
+                                ctx.errorSession.addError(new IdentifiedError(id, "Exception parsing " + path + ": " + ex, ErrorLevel.WARN));
+                            }
+                        }
                     });
                 } else if (k.startsWith(LayerMetadata.PROPERTIES_FILE_MATCH)) {
                     ParsedRule parsedRule = inspector.extractParsedRule(val);
