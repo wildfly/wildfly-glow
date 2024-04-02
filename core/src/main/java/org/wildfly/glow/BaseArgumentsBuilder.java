@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.jboss.as.version.Stability;
+import org.wildfly.channel.ChannelSession;
 
 public class BaseArgumentsBuilder {
     protected Set<String> executionProfiles = Collections.emptySet();
@@ -43,6 +44,7 @@ public class BaseArgumentsBuilder {
     protected Stability packageStability;
     protected Stability configStability;
     protected boolean isCli;
+    protected ChannelSession channelSession;
 
     protected BaseArgumentsBuilder() {
 
@@ -69,6 +71,7 @@ public class BaseArgumentsBuilder {
                 excludeJarsFromScan,
                 configStability,
                 packageStability,
-                isCli);
+                isCli,
+                channelSession);
     }
 }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.jboss.as.version.Stability;
+import org.wildfly.channel.ChannelSession;
 
 public interface ScanArguments {
 
@@ -77,6 +78,7 @@ public interface ScanArguments {
     Stability getConfigStability();
     Stability getPackageStability();
     boolean isCli();
+    ChannelSession getChannelSession();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -166,6 +168,10 @@ public interface ScanArguments {
         }
         public Builder setIsCli(boolean isCli) {
             this.isCli = isCli;
+            return this;
+        }
+        public Builder setChannelSession(ChannelSession channelSession) {
+            this.channelSession = channelSession;
             return this;
         }
     }

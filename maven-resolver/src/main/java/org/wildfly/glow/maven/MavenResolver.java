@@ -17,6 +17,7 @@
  */
 package org.wildfly.glow.maven;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -36,6 +37,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.aether.repository.RepositoryPolicy;
+import org.wildfly.channel.Channel;
+import org.wildfly.channel.ChannelMapper;
+import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.maven.VersionResolverFactory;
 
 /**
  *
@@ -83,5 +88,17 @@ public final class MavenResolver {
         locator.addService(TransporterFactory.class, FileTransporterFactory.class);
         locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
         return locator.getService(RepositorySystem.class);
+    }
+
+    public static ChannelSession buildChannelSession(Path path) throws Exception {
+        String content = Files.readString(path);
+        List<Channel> channels = ChannelMapper.fromString(content);
+        Path localCache = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+        LocalRepository localRepo = new LocalRepository(localCache.toFile());
+        RepositorySystem repoSystem = MavenResolver.newRepositorySystem();
+        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
+        VersionResolverFactory factory = new VersionResolverFactory(repoSystem, session);
+        return new ChannelSession(channels, factory);
     }
 }
