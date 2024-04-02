@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 
 public class ScanResults implements AutoCloseable {
 
@@ -40,6 +42,7 @@ public class ScanResults implements AutoCloseable {
     private final Suggestions suggestions;
     private final Set<String> excludedPackages;
     private final Map<Layer, Set<String>> excludedFeatures;
+    private final Map<ProducerSpec, FPID> fpVersions;
     ScanResults(GlowSession glowSession,
             Set<Layer> discoveredLayers,
             Set<Layer> excludedLayers,
@@ -53,7 +56,8 @@ public class ScanResults implements AutoCloseable {
             Suggestions suggestions,
             ErrorIdentificationSession errorSession,
             Set<String> excludedPackages,
-            Map<Layer, Set<String>> excludedFeatures) {
+            Map<Layer, Set<String>> excludedFeatures,
+            Map<ProducerSpec, FPID> fpVersions) {
         this.glowSession = glowSession;
         this.discoveredLayers = discoveredLayers;
         this.excludedLayers = excludedLayers;
@@ -68,6 +72,7 @@ public class ScanResults implements AutoCloseable {
         this.errorSession = errorSession;
         this.excludedPackages = excludedPackages;
         this.excludedFeatures = excludedFeatures;
+        this.fpVersions = fpVersions;
     }
 
     public Set<Layer> getDiscoveredLayers() {
@@ -151,5 +156,9 @@ public class ScanResults implements AutoCloseable {
 
     public Map<Layer, Set<String>> getExcludedFeatures() {
         return excludedFeatures;
+    }
+
+    public Map<ProducerSpec, FPID> getFeaturePackVersions() {
+        return fpVersions;
     }
 }

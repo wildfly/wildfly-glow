@@ -62,6 +62,8 @@ import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
+import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.VersionResult;
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 import org.wildfly.plugin.tools.bootablejar.BootableJarSupport;
 
@@ -162,7 +164,31 @@ public class GlowSession {
             } else {
                 provisioning = provider.newProvisioningBuilder(config).build();
             }
-
+            GalleonProvisioningConfig inputConfig = config;
+            // Channel handling
+            Map<ProducerSpec, FPID> fpVersions = new HashMap<>();
+            if (arguments.getChannelSession() != null) {
+                ChannelSession channelSession = arguments.getChannelSession();
+                // Compute versions based on channel.
+                GalleonProvisioningConfig.Builder outputConfigBuilder = GalleonProvisioningConfig.builder();
+                for (GalleonFeaturePackConfig dep : config.getFeaturePackDeps()) {
+                    FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(dep.getLocation().getFPID(), universeResolver);
+                    String[] coordinates = fpid.toString().split(":");
+                    String groupId = coordinates[0];
+                    String artifactId = coordinates[1];
+                    VersionResult res = channelSession.findLatestMavenArtifactVersion(groupId, artifactId,
+                            "zip", null, null);
+                    FeaturePackLocation loc = dep.getLocation().replaceBuild(res.getVersion());
+                    outputConfigBuilder.addFeaturePackDep(loc);
+                    fpVersions.put(fpid.getProducer(), loc.getFPID());
+                }
+                config = outputConfigBuilder.build();
+            } else {
+                for (GalleonFeaturePackConfig dep : config.getFeaturePackDeps()) {
+                    FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(dep.getLocation().getFPID(), universeResolver);
+                    fpVersions.put(fpid.getProducer(), dep.getLocation().getFPID());
+                }
+            }
             // BUILD MODEL
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all
@@ -198,10 +224,9 @@ public class GlowSession {
                 if (windup == null) {
                     for (Path d : arguments.getBinaries()) {
                         //System.out.println("SCAN " + d);
-                        try (DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan())) {
+                        DeploymentScanner deploymentScanner = new DeploymentScanner(d, arguments.isVerbose(), arguments.getExcludeArchivesFromScan());
                             deploymentScanner.scan(mapping, layers, all, errorSession);
                         }
-                    }
                 } else {
                     for (Path d : arguments.getBinaries()) {
                         layers.addAll(WindupSupport.getLayers(all, windup, d));
@@ -501,7 +526,7 @@ public class GlowSession {
                 envs.addAll(stronglySuggestConfigFixes.get(l));
             }
             // Identify the active feature-packs.
-            GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
+            GalleonProvisioningConfig activeConfig = buildProvisioningConfig(inputConfig,
                     universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability());
 
             // Handle stability
@@ -580,7 +605,8 @@ public class GlowSession {
                     suggestions,
                     errorSession,
                     excludedPackages,
-                    excludedFeatures
+                    excludedFeatures,
+                    fpVersions
             );
 
             return scanResults;
@@ -623,13 +649,6 @@ public class GlowSession {
                 }
                 case SERVER: {
                     files.put(OutputContent.OutputFile.SERVER_DIR, generatedArtifact.toAbsolutePath());
-                    break;
-                }
-                case OPENSHIFT: {
-                    Files.createDirectories(target.resolve("galleon"));
-                    Path prov = target.resolve("provisioning.xml");
-                    provisioning.storeProvisioningConfig(scanResults.getProvisioningConfig(),prov);
-                    files.put(OutputContent.OutputFile.PROVISIONING_XML_FILE, prov.toAbsolutePath());
                     break;
                 }
             }
@@ -930,25 +949,25 @@ public class GlowSession {
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String configName, Stability configStability, Stability packageStability) throws ProvisioningException {
-        Map<FPID, GalleonFeaturePackConfig> map = new HashMap<>();
-        Map<FPID, FPID> universeToGav = new HashMap<>();
+        Map<ProducerSpec, GalleonFeaturePackConfig> map = new HashMap<>();
+        Map<ProducerSpec, FPID> universeToGav = new HashMap<>();
         for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
             FeaturePackLocation.FPID loc = null;
             FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(cfg.getLocation().getFPID(), universeResolver);
             for (FeaturePackLocation.FPID f : fpDependencies.keySet()) {
                 if (fpid.getProducer().equals(f.getProducer())) {
-                    loc = f;
+                    loc = fpid;
                     break;
                 }
             }
             if(loc == null) {
                 throw new ProvisioningException("Input fp "+ cfg.getLocation() + " not found in resolved feature-packs " + fpDependencies.keySet());
             }
-            map.put(loc, cfg);
-            universeToGav.put(cfg.getLocation().getFPID(), loc);
+            map.put(loc.getProducer(), cfg);
+            universeToGav.put(cfg.getLocation().getProducer(), loc);
         }
         Map<ProducerSpec, FeaturePackLocation.FPID> tmpFps = new HashMap<>();
-        FeaturePackLocation.FPID baseFPID = universeToGav.get(input.getFeaturePackDeps().iterator().next().getLocation().getFPID());
+        FeaturePackLocation.FPID baseFPID = universeToGav.get(input.getFeaturePackDeps().iterator().next().getLocation().getProducer());
         tmpFps.put(baseFPID.getProducer(), baseFPID);
         for (Layer l : allBaseLayers) {
             for(FPID fpid : l.getFeaturePacks()) {
@@ -958,30 +977,12 @@ public class GlowSession {
         Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
         // Order follow the one from the input
         for(GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
-            FeaturePackLocation.FPID gav = universeToGav.get(cfg.getLocation().getFPID());
+            FeaturePackLocation.FPID gav = universeToGav.get(cfg.getLocation().getProducer());
             FeaturePackLocation.FPID fpid = tmpFps.get(gav.getProducer());
             if (fpid != null) {
-                activeFeaturePacks.add(fpid);
+                activeFeaturePacks.add(gav);
             }
         }
-        // Remove dependencies that are not Main FP...
-        //System.out.println("Active FP " + activeFeaturePacks);
-        Set<FeaturePackLocation.FPID> toRemove = new HashSet<>();
-        for (FeaturePackLocation.FPID fpid : activeFeaturePacks) {
-            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(fpid);
-            //System.out.println(fpid + "DEPENDENCIES " + deps);
-            if (deps != null) {
-                for (FeaturePackLocation.ProducerSpec spec : deps) {
-                    for (FeaturePackLocation.FPID af : activeFeaturePacks) {
-                        if (spec.equals(af.getProducer()) && !af.getProducer().getName().equals(baseFPID.getProducer().getName())) {
-                            //System.out.println("To remove..." + af);
-                            toRemove.add(af);
-                        }
-                    }
-                }
-            }
-        }
-        activeFeaturePacks.removeAll(toRemove);
         GalleonProvisioningConfig.Builder activeConfigBuilder = GalleonProvisioningConfig.builder();
         //List<GalleonFeaturePack> activeFPs = new ArrayList<>();
         for (FeaturePackLocation.FPID fpid : activeFeaturePacks) {
@@ -989,7 +990,7 @@ public class GlowSession {
             fpBuilder.setInheritConfigs(false);
             fpBuilder.setInheritPackages(false);
             // The input config included packages is to cover some wildfly tests corner cases.
-            GalleonFeaturePackConfig inCfg = map.get(fpid);
+            GalleonFeaturePackConfig inCfg = map.get(fpid.getProducer());
             fpBuilder.includeAllPackages(inCfg.getIncludedPackages());
 
             //GalleonFeaturePack activeFP = new GalleonFeaturePack();

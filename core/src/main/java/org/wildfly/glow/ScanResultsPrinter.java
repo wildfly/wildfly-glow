@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 
 public class ScanResultsPrinter {
 
@@ -90,7 +91,8 @@ public class ScanResultsPrinter {
         StringBuilder builder = new StringBuilder();
         builder.append("- feature-packs").append("\n");
         for (GalleonFeaturePackConfig fp : scanResults.getProvisioningConfig().getFeaturePackDeps()) {
-            builder.append("   ").append(fp.getLocation()).append("\n");
+            FPID fpid = scanResults.getFeaturePackVersions().get(fp.getLocation().getProducer());
+            builder.append("   ").append(fpid == null ? fp.getLocation() : fpid).append("\n");
         }
         builder.append("- layers").append("\n");
         builder.append("   ").append(scanResults.getBaseLayer()).append("\n");

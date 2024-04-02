@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.jboss.as.version.Stability;
+import org.wildfly.channel.ChannelSession;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
 
@@ -36,6 +37,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Stability configStability;
     private final Stability packageStability;
     private final boolean isCli;
+    private final ChannelSession channelSession;
 
     protected Arguments(
             String executionContext,
@@ -53,7 +55,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             Set<Pattern> excludeArchivesFromScan,
             Stability configStability,
             Stability packageStability,
-            boolean isCli) {
+            boolean isCli,
+            ChannelSession channelSession) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -79,6 +82,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             this.manualLayers = new HashSet<>(Arrays.asList(manualLayers.split(",")));
         }
         this.isCli = isCli;
+        this.channelSession = channelSession;
     }
 
     /**
@@ -200,6 +204,14 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public boolean isCli() {
         return isCli;
+    }
+
+    /**
+     * @return the channel session
+     */
+    @Override
+    public ChannelSession getChannelSession() {
+        return channelSession;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

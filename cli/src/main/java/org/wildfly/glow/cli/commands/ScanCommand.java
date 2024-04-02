@@ -21,7 +21,6 @@ import org.wildfly.glow.deployment.openshift.api.OpenShiftConfiguration;
 import java.nio.file.Files;
 import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.Arguments;
-import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.GlowSession;
 import org.wildfly.glow.HiddenPropertiesAccessor;
@@ -44,7 +43,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.jboss.as.version.Stability;
+import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.ChannelSession;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
@@ -52,6 +53,7 @@ import org.wildfly.glow.Env;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
+import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
 
 @CommandLine.Command(
         name = Constants.SCAN_COMMAND,
@@ -142,6 +144,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.FAILS_ON_ERROR_OPTION_SHORT, Constants.FAILS_ON_ERROR_OPTION}, defaultValue = "true")
     Optional<Boolean> failsOnError;
 
+    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    Optional<Path> channelsFile;
+
     @Override
     public Integer call() throws Exception {
         if (!systemProperties.isEmpty()) {
@@ -180,9 +185,15 @@ public class ScanCommand extends AbstractCommand {
             builder.setSuggest(true);
         }
         if (wildflyPreview.orElse(false)) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
             builder.setTechPreview(true);
         }
         if (wildflyServerVersion.isPresent()) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
             builder.setVersion(wildflyServerVersion.get());
         }
         Map<String, String> extraEnv = new HashMap<>();
@@ -243,6 +254,16 @@ public class ScanCommand extends AbstractCommand {
         if (provisioningXml.isPresent()) {
             builder.setProvisoningXML(provisioningXml.get());
         }
+        MavenRepoManager repoManager = null;
+        if (channelsFile.isPresent()) {
+            Path channelsFilePath = this.channelsFile.get();
+            if (!Files.exists(channelsFilePath)) {
+                throw new Exception(channelsFilePath + " file doesn't exist");
+            }
+            ChannelSession session = MavenResolver.buildChannelSession(channelsFilePath);
+            builder.setChannelSession(session);
+            repoManager = new ChannelMavenArtifactRepositoryManager(session);
+        }
         if (provision.isPresent()) {
             if (BOOTABLE_JAR.equals(provision.get()) && cloud.orElse(false)) {
                 throw new Exception("Can't produce a Bootable JAR for cloud. Use the " + Constants.PROVISION_OPTION + "=SERVER option for cloud.");
@@ -282,7 +303,7 @@ public class ScanCommand extends AbstractCommand {
         }
         builder.setIsCli(true);
         MavenRepoManager directMavenResolver = MavenResolver.newMavenResolver();
-        ScanResults scanResults = GlowSession.scan(directMavenResolver, builder.build(), GlowMessageWriter.DEFAULT);
+        ScanResults scanResults = GlowSession.scan(repoManager == null ? directMavenResolver : repoManager, builder.build(), GlowMessageWriter.DEFAULT);
         scanResults.outputInformation();
         if (provision.isEmpty()) {
             if (!compact) {
@@ -318,7 +339,8 @@ public class ScanCommand extends AbstractCommand {
             if (failsOnError.orElse(false) && scanResults.getErrorSession().hasErrors()) {
                 throw new Exception("Your are provisioning although errors have been reported. If you want to enforce provisioning, set --fails-on-error=false to ignore errors.");
             }
-            String vers = wildflyServerVersion.orElse(null) == null ? FeaturePacks.getLatestVersion() : wildflyServerVersion.get();
+            ProducerSpec baseProducer = scanResults.getProvisioningConfig().getFeaturePackDeps().iterator().next().getLocation().getProducer();
+            String vers = scanResults.getFeaturePackVersions().get(baseProducer).getBuild();
             Path target = Paths.get(provisionOutputDir.orElse("server-" + vers));
             IoUtils.recursiveDelete(target);
             switch (provision.get()) {

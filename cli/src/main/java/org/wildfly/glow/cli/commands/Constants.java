@@ -62,6 +62,9 @@ public interface Constants {
 
     String HELP_OPTION = "--help";
     String HELP_OPTION_SHORT = "-h";
+    String CHANNELS_FILE_OPTION = "--channels-file";
+    String CHANNELS_FILE_OPTION_SHORT = "-cf";
+    String CHANNELS_FILE_OPTION_LABEL = "<Channels yaml file path>";
     String CLI_SCRIPT_OPTION = "--cli-script";
     String CLI_SCRIPT_OPTION_SHORT = "-cs";
     String CLI_SCRIPT_OPTION_LABEL = "<CLI script file path>";
