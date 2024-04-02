@@ -49,6 +49,7 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReference;
 import io.fabric8.openshift.api.model.TLSConfig;
 import io.fabric8.openshift.client.OpenShiftClient;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -394,11 +395,15 @@ public class OpenShiftSupport {
     private static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> buildExtraEnv,
             OpenShiftConfiguration config) throws Exception {
-        // To compute a hash we need build time env variables and channel version.
+        // To compute a hash we need build time env variables
+        StringBuilder contentBuilder = new StringBuilder();
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
-        byte[] content = Files.readAllBytes(provisioning);
+        contentBuilder.append(Files.readString(provisioning, Charset.forName("UTF-8")));
+        for (Entry<String, String> entry : buildExtraEnv.entrySet()) {
+            contentBuilder.append(entry.getKey() + "=" + entry.getValue());
+        }
         MessageDigest digest = MessageDigest.getInstance("MD5");
-        byte[] encodedhash = digest.digest(content);
+        byte[] encodedhash = digest.digest(contentBuilder.toString().getBytes());
         String key = bytesToHex(encodedhash);
         String serverImageName = config.getServerImageNameRadical() + key;
 
