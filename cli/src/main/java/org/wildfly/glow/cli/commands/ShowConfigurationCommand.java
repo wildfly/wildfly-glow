@@ -17,6 +17,7 @@
 package org.wildfly.glow.cli.commands;
 
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import java.util.TreeSet;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
@@ -52,6 +55,9 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
+    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    Optional<Path> channelsFile;
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving known provisioning configuration...");
@@ -66,6 +72,16 @@ public class ShowConfigurationCommand extends AbstractCommand {
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;
         }
+        if (wildflyPreview.orElse(false)) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
+        }
+        if (wildflyServerVersion.isPresent()) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
+        }
         String finalContext = context;
         boolean isLatest = wildflyServerVersion.isEmpty();
         String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
@@ -74,33 +90,45 @@ public class ShowConfigurationCommand extends AbstractCommand {
             public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
                     LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
                 String configStr = dumpConfiguration(fpDependencies, finalContext, vers, all,
-                        mapping, provisioning, isLatest, wildflyPreview.orElse(false));
+                        mapping, provisioning, isLatest, wildflyPreview.orElse(false), provisioningXml.orElse(null));
                 print(configStr);
             }
         };
-        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
+        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channelsFile.orElse(null));
 
         return 0;
     }
 
     private static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String context, String serverVersion, Map<String, Layer> allLayers,
-            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview) throws Exception {
+            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview, Path provisioningXml) throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append("Execution context: ").append(context).append("\n");
-        builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
-        builder.append("Tech Preview: ").append(techPreview).append("\n");
+        if (provisioningXml == null) {
+            builder.append("Execution context: ").append(context).append("\n");
+            builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
+            builder.append("Tech Preview: ").append(techPreview).append("\n");
+        } else {
+            builder.append("Input provisioning.xml file: ").append(provisioningXml).append("\n");
+        }
         Set<FeaturePackLocation.ProducerSpec> topLevel = new LinkedHashSet<>();
+         Map<ProducerSpec, FPID> featurepacks = new LinkedHashMap<>();
         for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
             topLevel.add(fp.getLocation().getProducer());
+            for(FPID fpid : fpDependencies.keySet()) {
+                if(fpid.getProducer().equals(fp.getLocation().getProducer())) {
+                    featurepacks.put(fp.getLocation().getProducer(), fpid);
+                    break;
+                }
+            }
         }
-        for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
-            builder.append("\nFeature-pack: ").append("@|bold ").append(fp.getLocation().getFPID()).append("|@\n");
+        for(ProducerSpec p : featurepacks.keySet()) {
+            FPID id = featurepacks.get(p);
+            builder.append("\nFeature-pack: ").append("@|bold ").append(id).append("|@\n");
             builder.append("Contained layers: ");
             Set<String> layers = new TreeSet<>();
-            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(fp.getLocation().getFPID());
+            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(id);
             for(Layer l : allLayers.values()) {
-                if(l.getFeaturePacks().contains(fp.getLocation().getFPID())) {
+                if(l.getFeaturePacks().contains(id)) {
                     layers.add(l.getName());
                 }
                 if(deps != null) {

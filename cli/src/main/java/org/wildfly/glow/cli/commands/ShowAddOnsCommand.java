@@ -48,12 +48,25 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
+    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    Optional<Path> channelsFile;
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving add-ons...");
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;
+        }
+        if (wildflyPreview.orElse(false)) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
+        }
+        if (wildflyServerVersion.isPresent()) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
         }
         CommandsUtils.ProvisioningConsumer consumer = new ProvisioningConsumer() {
             @Override
@@ -74,7 +87,8 @@ public class ShowAddOnsCommand extends AbstractCommand {
             }
 
         };
-        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
+        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
+                wildflyPreview.orElse(false), channelsFile.orElse(null));
         return 0;
     }
 }
