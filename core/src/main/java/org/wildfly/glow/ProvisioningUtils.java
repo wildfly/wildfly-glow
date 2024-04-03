@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.cli.commands;
+package org.wildfly.glow;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,21 +28,13 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
-import org.wildfly.channel.ChannelSession;
-import org.wildfly.glow.FeaturePacks;
-import org.wildfly.glow.GlowMessageWriter;
 import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
-import org.wildfly.glow.Layer;
-import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.Utils;
-import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
-import org.wildfly.glow.maven.MavenResolver;
 
 /**
  *
  * @author jdenise
  */
-public class CommandsUtils {
+public class ProvisioningUtils {
 
     public interface ProvisioningConsumer {
 
@@ -51,18 +42,8 @@ public class CommandsUtils {
                 LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception;
     }
 
-    public static void buildProvisioning(ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, Path channelsFile) throws Exception {
-        MavenRepoManager resolver = null;
-        if (channelsFile != null) {
-            if (!Files.exists(channelsFile)) {
-                throw new Exception(channelsFile + " file doesn't exist");
-            }
-            ChannelSession session = MavenResolver.buildChannelSession(channelsFile);
-            resolver = new ChannelMavenArtifactRepositoryManager(session);
-        } else {
-            resolver = MavenResolver.newMavenResolver();
-        }
+    public static void traverseProvisioning(ProvisioningConsumer consumer,
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, MavenRepoManager resolver) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);

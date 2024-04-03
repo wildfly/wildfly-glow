@@ -16,6 +16,7 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.ProvisioningUtils;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -29,6 +30,7 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
+import org.wildfly.glow.maven.MavenResolver;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
@@ -85,7 +87,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
         String finalContext = context;
         boolean isLatest = wildflyServerVersion.isEmpty();
         String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
-        CommandsUtils.ProvisioningConsumer consumer = new CommandsUtils.ProvisioningConsumer() {
+        ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
             @Override
             public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
                     LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
@@ -94,7 +96,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
                 print(configStr);
             }
         };
-        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channelsFile.orElse(null));
+        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), MavenResolver.buildMavenResolver(channelsFile.orElse(null)));
 
         return 0;
     }

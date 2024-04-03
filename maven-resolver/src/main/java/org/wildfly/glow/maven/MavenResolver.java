@@ -90,6 +90,20 @@ public final class MavenResolver {
         return locator.getService(RepositorySystem.class);
     }
 
+    public static MavenRepoManager buildMavenResolver(Path channelsFile) throws Exception {
+        MavenRepoManager resolver = null;
+        if (channelsFile != null) {
+            if (!Files.exists(channelsFile)) {
+                throw new Exception(channelsFile + " file doesn't exist");
+            }
+            ChannelSession session = buildChannelSession(channelsFile);
+            resolver = new ChannelMavenArtifactRepositoryManager(session);
+        } else {
+            resolver = MavenResolver.newMavenResolver();
+        }
+        return resolver;
+    }
+
     public static ChannelSession buildChannelSession(Path path) throws Exception {
         String content = Files.readString(path);
         List<Channel> channels = ChannelMapper.fromString(content);
