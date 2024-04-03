@@ -16,6 +16,7 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.ProvisioningUtils;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -26,8 +27,8 @@ import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.cli.commands.CommandsUtils.ProvisioningConsumer;
-
+import org.wildfly.glow.ProvisioningUtils.ProvisioningConsumer;
+import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -48,6 +49,9 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
+    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    Optional<Path> channelsFile;
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving add-ons...");
@@ -55,7 +59,17 @@ public class ShowAddOnsCommand extends AbstractCommand {
         if (cloud.orElse(false)) {
             context = Arguments.CLOUD_EXECUTION_CONTEXT;
         }
-        CommandsUtils.ProvisioningConsumer consumer = new ProvisioningConsumer() {
+        if (wildflyPreview.orElse(false)) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
+        }
+        if (wildflyServerVersion.isPresent()) {
+            if (channelsFile.isPresent()) {
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+            }
+        }
+        ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningConsumer() {
             @Override
             public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
                     LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) {
@@ -74,7 +88,8 @@ public class ShowAddOnsCommand extends AbstractCommand {
             }
 
         };
-        CommandsUtils.buildProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), context, wildflyPreview.orElse(false));
+        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
+                wildflyPreview.orElse(false), MavenResolver.buildMavenResolver(channelsFile.orElse(null)));
         return 0;
     }
 }

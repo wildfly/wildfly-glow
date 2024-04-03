@@ -195,8 +195,8 @@ public class GlowSession {
                     = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
             LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles());
             if (mapping.getDefaultBaseLayer() == null) {
-                throw new IllegalArgumentException("No base layer found, WildFly Glow doesn't support WildFly server version. "
-                        + "You must upgrade to a more recent WildFly version.");
+                throw new IllegalArgumentException("No base layer found, server version is not supported. "
+                        + "You must upgrade to a more recent server version.");
             }
             // END BUILD MODEL
 

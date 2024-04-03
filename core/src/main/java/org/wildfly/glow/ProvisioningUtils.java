@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.cli.commands;
+package org.wildfly.glow;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -28,19 +28,13 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
-import org.wildfly.glow.FeaturePacks;
-import org.wildfly.glow.GlowMessageWriter;
 import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
-import org.wildfly.glow.Layer;
-import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.Utils;
-import org.wildfly.glow.maven.MavenResolver;
 
 /**
  *
  * @author jdenise
  */
-public class CommandsUtils {
+public class ProvisioningUtils {
 
     public interface ProvisioningConsumer {
 
@@ -48,13 +42,12 @@ public class CommandsUtils {
                 LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception;
     }
 
-    public static void buildProvisioning(ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview) throws Exception {
-        MavenRepoManager resolver = MavenResolver.newMavenResolver();
+    public static void traverseProvisioning(ProvisioningConsumer consumer,
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, MavenRepoManager resolver) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);
-        String vers = wildflyServerVersion == null ? wildflyServerVersion : FeaturePacks.getLatestVersion();
+        String vers = wildflyServerVersion != null ? wildflyServerVersion : FeaturePacks.getLatestVersion();
         Provisioning provisioning = null;
         try {
             GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, GlowMessageWriter.DEFAULT);
