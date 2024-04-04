@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 import org.wildfly.glow.deployment.openshift.api.Utils;
@@ -60,6 +61,15 @@ public class KeycloakDeployer implements Deployer {
     private static final String MYSECRET = "mysecret";
     private static final String NAMESPACE_ENV = "NAMESPACE";
 
+    private static final Set<String> RESOLVED_ENVS = new HashSet<>();
+    static {
+        RESOLVED_ENVS.add(OIDC_PROVIDER_URL_ENV);
+        RESOLVED_ENVS.add(OIDC_SECURE_DEPLOYMENT_SECRET_ENV);
+        RESOLVED_ENVS.add(OIDC_USER_NAME_ENV);
+        RESOLVED_ENVS.add(OIDC_USER_PASSWORD_ENV);
+        RESOLVED_ENVS.add(OIDC_PROVIDER_NAME_ENV);
+        RESOLVED_ENVS.add(OIDC_HOSTNAME_HTTPS_ENV);
+    }
     @Override
     public Map<String, String> disabledDeploy(String appHost, String appName, String matching, Map<String, String> env) {
         Map<String, String> ret = new HashMap<>();
@@ -81,7 +91,7 @@ public class KeycloakDeployer implements Deployer {
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient, Map<String, String> env,
             String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
-        writer.info("\nDeploying Keycloak server");
+        writer.info("Deploying Keycloak server");
         Map<String, String> parameters = new HashMap<>();
         String adminVal = extraEnv.get(KEYCLOAK_ADMIN_ENV);
         parameters.put(KEYCLOAK_ADMIN_ENV, adminVal == null ? KEYCLOAK_ADMIN : adminVal);
@@ -103,17 +113,17 @@ public class KeycloakDeployer implements Deployer {
                 endMetadata().build();
         String host = osClient.routes().resource(route).get().getSpec().getHost();
         String url = "https://" + host;
-        writer.info("\nKeycloak route: " + url);
+        writer.info("Keycloak route: " + url);
         Map<String, String> retEnv = new HashMap<>();
         String realmUrl = url + WILDFLY_REALM_PATH;
-        writer.warn("\nNOTE: Some actions must be taken from the keycloack console.");
+        writer.warn("NOTE: Some actions must be taken from the keycloack console.");
         writer.warn("1- Use admin/admin to log to the console " + url);
         writer.warn("2- Create a realm named WildFly");
         writer.warn("3- Create a user named demo, password demo");
         writer.warn("4- Create a role needed by your application and assign it to the demo user");
         if (env.containsKey(OIDC_PROVIDER_URL_ENV)) {
             writer.warn("5- Assign the role 'realm-management create-client' to the demo user");
-            writer.warn("\nNOTE: In case your application is deployed prior you completed the keycloak admin tasks, make sure to re-deploy your application.");
+            writer.warn("NOTE: In case your application is deployed prior you completed the keycloak admin tasks, make sure to re-deploy your application.");
         } else {
             writer.warn("5 - Create an OIDC Client named the way your OIDC configuration expects it. "
                     + "Set its Root URL to  'https://" + appHost + ("ROOT.war".equals(appName) ? "" : "/" + appName) + "'");
@@ -126,7 +136,19 @@ public class KeycloakDeployer implements Deployer {
             retEnv.put(OIDC_USER_PASSWORD_ENV, KEYCLOAK_DEMO_PASSWORD);
             retEnv.put(OIDC_HOSTNAME_HTTPS_ENV, appHost);
         }
+        writer.info("Keycloak server has been deployed");
         return retEnv;
+    }
+
+    @Override
+    public Set<Env> getResolvedEnvs(Set<Env> input) {
+        Set<Env> envs = new HashSet<>();
+        for (Env env : input) {
+            if (RESOLVED_ENVS.contains(env.getName())) {
+                envs.add(env);
+            }
+        }
+        return envs;
     }
 
     @Override
