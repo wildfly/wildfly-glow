@@ -20,8 +20,6 @@ package org.wildfly.glow;
 import org.wildfly.glow.error.ErrorLevel;
 import org.wildfly.glow.error.IdentifiedError;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -31,14 +29,20 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
+import org.wildfly.glow.ConfigurationResolver.ResolvedEnvs;
 
 public class ScanResultsPrinter {
 
     private final GlowMessageWriter writer;
+    private final ConfigurationResolver configResolver;
 
     public ScanResultsPrinter(GlowMessageWriter writer) {
+        this(writer, null);
+    }
 
+    public ScanResultsPrinter(GlowMessageWriter writer, ConfigurationResolver configResolver) {
         this.writer = writer;
+        this.configResolver = configResolver;
     }
 
     void print(ScanArguments arguments, ScanResults scanResults) throws Exception {
@@ -284,7 +288,7 @@ public class ScanResultsPrinter {
         }
     }
 
-    private static String buildSuggestions(Map<Layer, Set<Env>> map) throws URISyntaxException, IOException {
+    private String buildSuggestions(Map<Layer, Set<Env>> map) throws Exception {
         StringBuilder suggestedConfigsBuilder = new StringBuilder();
         for (Layer l : map.keySet()) {
             suggestedConfigsBuilder.append(buildSuggestions(l, map.get(l)));
@@ -292,7 +296,7 @@ public class ScanResultsPrinter {
         return suggestedConfigsBuilder.toString();
     }
 
-    private static String buildSuggestions(Layer layer, Set<Env> envs) throws URISyntaxException, IOException {
+    private String buildSuggestions(Layer layer, Set<Env> envs) throws Exception {
         StringBuilder suggestedConfigsBuilder = new StringBuilder();
         Set<Env> envVars = new TreeSet<>();
         Set<Env> properties = new TreeSet<>();
@@ -307,6 +311,21 @@ public class ScanResultsPrinter {
         }
         if (!envVars.isEmpty()) {
             suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" environment variables:\n");
+            if (configResolver != null) {
+                ResolvedEnvs resolvedEnvs = configResolver.getResolvedEnvs(layer, envVars);
+                if (resolvedEnvs != null) {
+                    envVars.removeAll(resolvedEnvs.getEnvs());
+                    if (envVars.isEmpty()) {
+                        suggestedConfigsBuilder.append(" - ").append("Resolver " + resolvedEnvs.getName()).append(" resolved all env variables.");
+                    } else {
+                        suggestedConfigsBuilder.append(" - ").append("Resolver " + resolvedEnvs.getName()).append(" resolved the following env variables:\n");
+                        for (Env env : resolvedEnvs.getEnvs()) {
+                            suggestedConfigsBuilder.append("  - ").append(env.getName() + "\n");
+
+                        }
+                    }
+                }
+            }
             Iterator<Env> it2 = envVars.iterator();
             while (it2.hasNext()) {
                 Env e = it2.next();

@@ -49,7 +49,9 @@ import org.wildfly.channel.ChannelSession;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
+import org.wildfly.glow.ConfigurationResolver;
 import org.wildfly.glow.Env;
+import org.wildfly.glow.Layer;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
@@ -66,6 +68,13 @@ public class ScanCommand extends AbstractCommand {
         @Override
         public Stability convert(String value) throws Exception {
             return Stability.fromString(value);
+        }
+    }
+    private static class ProvisionConverter implements CommandLine.ITypeConverter<OutputFormat> {
+
+        @Override
+        public OutputFormat convert(String value) throws Exception {
+            return OutputFormat.valueOf(value.toUpperCase());
         }
     }
 
@@ -103,7 +112,7 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
-    @CommandLine.Option(names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
+    @CommandLine.Option(converter = ProvisionConverter.class, names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
     Optional<OutputFormat> provision;
 
     @CommandLine.Option(names = {Constants.PROVISION_OUTPUT_DIR_OPTION_SHORT, Constants.PROVISION_OUTPUT_DIR_OPTION}, paramLabel = Constants.PROVISION_OUTPUT_DIR_LABEL)
@@ -304,7 +313,16 @@ public class ScanCommand extends AbstractCommand {
         builder.setIsCli(true);
         MavenRepoManager directMavenResolver = MavenResolver.newMavenResolver();
         ScanResults scanResults = GlowSession.scan(repoManager == null ? directMavenResolver : repoManager, builder.build(), GlowMessageWriter.DEFAULT);
-        scanResults.outputInformation();
+        ConfigurationResolver configurationResolver = new ConfigurationResolver() {
+            @Override
+            public ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input) throws Exception {
+                if(provision.get().equals(OPENSHIFT)) {
+                    return OpenShiftSupport.getResolvedEnvs(layer, input, disableDeployers);
+                }
+                return null;
+            }
+        };
+        scanResults.outputInformation(configurationResolver);
         if (provision.isEmpty()) {
             if (!compact) {
                 if (suggest.orElse(false)) {
@@ -424,13 +442,13 @@ public class ScanCommand extends AbstractCommand {
                 }
             }
             if (OutputFormat.OPENSHIFT.equals(provision.get())) {
-                String name = null;
+                String name = "";
                 Path deploymentsDir = target.resolve("deployments");
                 Files.createDirectories(deploymentsDir);
                 for (Path p : deployments) {
                     Files.copy(p, deploymentsDir.resolve(p.getFileName()));
                     int ext = p.getFileName().toString().indexOf(".");
-                    name = p.getFileName().toString().substring(0, ext);
+                    name += p.getFileName().toString().substring(0, ext);
                 }
                 Map<String, String> envMap = new HashMap<>();
                 for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
@@ -439,7 +457,7 @@ public class ScanCommand extends AbstractCommand {
                     }
                 }
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
-                        target, name == null ? "app-from-glow" : name.toLowerCase(),
+                        target, name.isEmpty() ? "app-from-glow" : name.toLowerCase(),
                         envMap,
                         scanResults.getDiscoveredLayers(),
                         scanResults.getMetadataOnlyLayers(),

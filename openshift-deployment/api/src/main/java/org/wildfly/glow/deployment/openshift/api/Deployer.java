@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 
 /**
@@ -47,4 +48,6 @@ public interface Deployer {
     default Map<String, String> handleBuildTimeDefault(Set<String> buildEnv, MavenRepoManager mvnResolver) throws Exception {
         return Collections.emptyMap();
     }
+
+    public Set<Env> getResolvedEnvs(Set<Env> input);
 }

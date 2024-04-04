@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 import org.wildfly.glow.deployment.openshift.api.Utils;
@@ -56,14 +57,26 @@ public class AMQDeployer implements Deployer {
     private static final String AMQ_PASSWORD_ENV = "AMQ_PASSWORD";
     private static final String BROKER_AMQ_USERNAME_ENV = "BROKER_AMQ_USERNAME";
     private static final String BROKER_AMQ_PASSWORD_ENV = "BROKER_AMQ_PASSWORD";
+    private static final String MQ_SERVICE_PREFIX_MAPPING_ENV = "MQ_SERVICE_PREFIX_MAPPING";
+    private static final String TEMPLATE_PASSWORD_ENV = "{PREFIX}_PASSWORD";
+    private static final String TEMPLATE_USERNAME_ENV = "{PREFIX}_USERNAME";
+    private static final String TEMPLATE_SERVICE_HOST="{SERVICE-NAME}_AMQ7_TCP_SERVICE_HOST";
+    private static final String TEMPLATE_SERVICE_PORT="{SERVICE-NAME}_AMQ7_TCP_SERVICE_PORT";
+
+    private static final Set<String> RESOLVED_ENVS = new HashSet<>();
     static {
+
+        RESOLVED_ENVS.add(MQ_SERVICE_PREFIX_MAPPING_ENV);
+        RESOLVED_ENVS.add(TEMPLATE_PASSWORD_ENV);
+        RESOLVED_ENVS.add(TEMPLATE_USERNAME_ENV);
+        RESOLVED_ENVS.add(TEMPLATE_SERVICE_HOST);
+        RESOLVED_ENVS.add(TEMPLATE_SERVICE_PORT);
 
         REMOTE_BROKER_CONNECTION_MAP.put(AMQ_USER_ENV, REMOTE_BROKER_USER);
         REMOTE_BROKER_CONNECTION_MAP.put(AMQ_PASSWORD_ENV, REMOTE_BROKER_PASSWORD);
         REMOTE_BROKER_CONNECTION_MAP.put("AMQ_DATA_DIR", "/home/jboss/data");
 
-        REMOTE_BROKER_APP_MAP.put("MQ_SERVICE_PREFIX_MAPPING", "broker-amq7=BROKER_AMQ");
-        REMOTE_BROKER_APP_MAP.put("MQ_SERVICE_PREFIX_MAPPING", "broker-amq7=BROKER_AMQ");
+        REMOTE_BROKER_APP_MAP.put(MQ_SERVICE_PREFIX_MAPPING_ENV, "broker-amq7=BROKER_AMQ");
         REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_TCP_SERVICE_HOST", REMOTE_BROKER_NAME);
         REMOTE_BROKER_APP_MAP.put("BROKER_AMQ_TCP_SERVICE_PORT", "61616");
         REMOTE_BROKER_APP_MAP.put(BROKER_AMQ_PASSWORD_ENV, REMOTE_BROKER_PASSWORD);
@@ -73,7 +86,7 @@ public class AMQDeployer implements Deployer {
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
-        writer.info("\nDeploying AMQ Messaging Broker");
+        writer.info("Deploying AMQ Messaging Broker");
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, REMOTE_BROKER_NAME);
         ContainerPort port = new ContainerPort();
@@ -117,8 +130,7 @@ public class AMQDeployer implements Deployer {
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
         Utils.persistResource(target, service, REMOTE_BROKER_NAME + "-service.yaml");
-        Map<String, String> ret = new HashMap<>();
-        ret.putAll(REMOTE_BROKER_APP_MAP);
+        writer.info("AMQ Messaging Broker has been deployed");
         return REMOTE_BROKER_APP_MAP;
     }
 
@@ -144,6 +156,17 @@ public class AMQDeployer implements Deployer {
             }
         }
         return ret;
+    }
+
+    @Override
+    public Set<Env> getResolvedEnvs(Set<Env> input) {
+        Set<Env> envs = new HashSet<>();
+        for (Env env : input) {
+            if (RESOLVED_ENVS.contains(env.getName())) {
+                envs.add(env);
+            }
+        }
+        return envs;
     }
 
     @Override

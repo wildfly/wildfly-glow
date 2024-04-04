@@ -75,6 +75,7 @@ import org.jboss.galleon.config.ConfigId;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
 import org.jboss.galleon.util.ZipUtils;
+import org.wildfly.glow.ConfigurationResolver;
 import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
@@ -217,6 +218,44 @@ public class OpenShiftSupport {
         osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
     }
 
+    public static ConfigurationResolver.ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input, Set<String> disabledDeployers) throws Exception {
+        ConfigurationResolver.ResolvedEnvs resolved = null;
+        List<Deployer> deployers = getEnabledDeployers(disabledDeployers);
+        for (Deployer d : deployers) {
+            if (d.getSupportedLayers().contains(layer.getName())) {
+               Set<Env> envs = d.getResolvedEnvs(input);
+               if (envs != null && !envs.isEmpty()) {
+                   resolved = new ConfigurationResolver.ResolvedEnvs("openshift/"+d.getName(), envs);
+                   break;
+               }
+            }
+        }
+        return resolved;
+    }
+
+    private static List<Deployer> getEnabledDeployers(Set<String> disabledDeployers) throws Exception {
+        Map<String, Deployer> existingDeployers = new HashMap<>();
+
+        for (Deployer d : ServiceLoader.load(Deployer.class)) {
+            existingDeployers.put(d.getName(), d);
+        }
+        for (String disabled : disabledDeployers) {
+            if (!"ALL".equals(disabled)) {
+                if (!existingDeployers.containsKey(disabled)) {
+                    throw new Exception("Invalid deployer to disable: " + disabled);
+                }
+            }
+        }
+        List<Deployer> deployers = new ArrayList<>();
+        for (Deployer d : existingDeployers.values()) {
+            boolean isDisabled = isDisabled(d.getName(), disabledDeployers);
+            if(!isDisabled) {
+                deployers.add(d);
+            }
+        }
+        return deployers;
+    }
+
     public static void deploy(GlowMessageWriter writer,
             Path target,
             String appName,
@@ -249,19 +288,8 @@ public class OpenShiftSupport {
         Utils.persistResource(target, route, appName + "-route.yaml");
         String host = osClient.routes().resource(route).get().getSpec().getHost();
         // Done route creation
-        Map<String, Deployer> existingDeployers = new HashMap<>();
-
-        for (Deployer d : ServiceLoader.load(Deployer.class)) {
-            existingDeployers.put(d.getName(), d);
-        }
-        for (String disabled : disabledDeployers) {
-            if (!"ALL".equals(disabled)) {
-                if (!existingDeployers.containsKey(disabled)) {
-                    throw new Exception("Invalid deployer to disable: " + disabled);
-                }
-            }
-        }
-        for (Deployer d : existingDeployers.values()) {
+        List<Deployer> deployers = getEnabledDeployers(disabledDeployers);
+        for (Deployer d : deployers) {
             boolean isDisabled = isDisabled(d.getName(), disabledDeployers);
             for (Layer l : allLayers) {
                 if (d.getSupportedLayers().contains(l.getName())) {
@@ -285,26 +313,22 @@ public class OpenShiftSupport {
                 }
             }
         }
-        writer.info("\nThe active deployers have resolved the environment variables required at build time and deployment time.");
-
+        actualEnv.put("APPLICATION_ROUTE_HOST", host);
+        actualEnv.putAll(extraEnv);
+        if (!disabledDeployers.isEmpty()) {
+            writer.warn("The following environment variables will be set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
+        } else {
+            writer.warn("The following environment variables will be set in the " + appName + " deployment:\n");
+        }
+        for (Entry<String, String> entry : actualEnv.entrySet()) {
+            writer.warn(entry.getKey() + "=" + entry.getValue());
+        }
         // Can be overriden by user
         actualBuildEnv.putAll(buildExtraEnv);
         createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config);
-        actualEnv.put("APPLICATION_ROUTE_HOST", host);
-        actualEnv.putAll(extraEnv);
         writer.info("Deploying application image on OpenShift");
-        if (!actualEnv.isEmpty()) {
-            if (!disabledDeployers.isEmpty()) {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
-            } else {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment:\n");
-            }
-            for (Entry<String, String> entry : actualEnv.entrySet()) {
-                writer.warn(entry.getKey() + "=" + entry.getValue());
-            }
-        }
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
-        writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
+        writer.info("Application route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
 
     private static void createBuild(GlowMessageWriter writer,

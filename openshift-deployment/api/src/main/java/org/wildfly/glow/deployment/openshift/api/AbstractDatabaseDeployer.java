@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 
 /**
@@ -103,6 +104,7 @@ public class AbstractDatabaseDeployer implements Deployer {
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
+        writer.info("Deploying " + dbName);
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, dbName);
         ContainerPort port = new ContainerPort();
@@ -142,7 +144,7 @@ public class AbstractDatabaseDeployer implements Deployer {
         Map<String, String> ret = new HashMap<>();
         ret.putAll(getExistingEnv(env));
         ret.putAll(APP_MAP);
-        writer.info("\n" + dbName + " server has been deployed");
+        writer.info(dbName + " server has been deployed");
         return ret;
     }
 
@@ -173,5 +175,20 @@ public class AbstractDatabaseDeployer implements Deployer {
 
     protected String computeBuildTimeValue(String name, MavenRepoManager mvnResolver) throws Exception {
         return null;
+    }
+
+    @Override
+    public Set<Env> getResolvedEnvs(Set<Env> input) {
+        Set<Env> envs = new HashSet<>();
+        for(Env env : input) {
+            if(APP_MAP.containsKey(env.getName())) {
+                envs.add(env);
+            } else {
+                if (env.getName().startsWith(envRadical + "_")) {
+                    envs.add(env);
+                }
+            }
+        }
+        return envs;
     }
 }

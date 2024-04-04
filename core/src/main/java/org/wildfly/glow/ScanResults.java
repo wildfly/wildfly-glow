@@ -123,15 +123,23 @@ public class ScanResults implements AutoCloseable {
     }
 
     public void outputInformation() throws Exception {
-        outputInformation(GlowMessageWriter.DEFAULT);
+        outputInformation(GlowMessageWriter.DEFAULT, null);
     }
 
     public void outputCompactInformation() throws Exception {
         outputCompactInformation(GlowMessageWriter.DEFAULT);
     }
 
+    public void outputInformation(ConfigurationResolver resolver) throws Exception {
+        outputInformation(GlowMessageWriter.DEFAULT, resolver);
+    }
+
     public void outputInformation(GlowMessageWriter writer) throws Exception {
-        ScanResultsPrinter printer = new ScanResultsPrinter(writer);
+        outputInformation(writer, null);
+    }
+
+    public void outputInformation(GlowMessageWriter writer, ConfigurationResolver resolver) throws Exception {
+        ScanResultsPrinter printer = new ScanResultsPrinter(writer, resolver);
         glowSession.outputInformation(printer, this);
     }
 
