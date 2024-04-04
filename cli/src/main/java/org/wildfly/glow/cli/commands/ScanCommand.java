@@ -68,6 +68,13 @@ public class ScanCommand extends AbstractCommand {
             return Stability.fromString(value);
         }
     }
+    private static class ProvisionConverter implements CommandLine.ITypeConverter<OutputFormat> {
+
+        @Override
+        public OutputFormat convert(String value) throws Exception {
+            return OutputFormat.valueOf(value.toUpperCase());
+        }
+    }
 
     private static final String ADD_ADD_ONS_MSG = "@|bold To enable add-ons, add the|@ @|fg(yellow) "
             + Constants.ADD_ONS_OPTION + "=<list of add-ons>|@ @|bold option to the|@ @|fg(yellow) "
@@ -103,7 +110,7 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
-    @CommandLine.Option(names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
+    @CommandLine.Option(converter = ProvisionConverter.class, names = {Constants.PROVISION_OPTION_SHORT, Constants.PROVISION_OPTION}, paramLabel = Constants.PROVISION_OPTION_LABEL)
     Optional<OutputFormat> provision;
 
     @CommandLine.Option(names = {Constants.PROVISION_OUTPUT_DIR_OPTION_SHORT, Constants.PROVISION_OUTPUT_DIR_OPTION}, paramLabel = Constants.PROVISION_OUTPUT_DIR_LABEL)

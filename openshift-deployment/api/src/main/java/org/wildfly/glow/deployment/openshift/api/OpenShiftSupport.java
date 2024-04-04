@@ -286,23 +286,20 @@ public class OpenShiftSupport {
             }
         }
         writer.info("\nThe active deployers have resolved the environment variables required at build time and deployment time.");
-
+        actualEnv.put("APPLICATION_ROUTE_HOST", host);
+        actualEnv.putAll(extraEnv);
+        if (!disabledDeployers.isEmpty()) {
+            writer.warn("\nThe following environment variables will be set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
+        } else {
+            writer.warn("\nThe following environment variables will be set in the " + appName + " deployment:\n");
+        }
+        for (Entry<String, String> entry : actualEnv.entrySet()) {
+            writer.warn(entry.getKey() + "=" + entry.getValue());
+        }
         // Can be overriden by user
         actualBuildEnv.putAll(buildExtraEnv);
         createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config);
-        actualEnv.put("APPLICATION_ROUTE_HOST", host);
-        actualEnv.putAll(extraEnv);
         writer.info("Deploying application image on OpenShift");
-        if (!actualEnv.isEmpty()) {
-            if (!disabledDeployers.isEmpty()) {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
-            } else {
-                writer.warn("\nThe following environment variables have been set in the " + appName + " deployment:\n");
-            }
-            for (Entry<String, String> entry : actualEnv.entrySet()) {
-                writer.warn(entry.getKey() + "=" + entry.getValue());
-            }
-        }
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
         writer.info("\nApplication route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
