@@ -57,7 +57,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = Constants.INPUT_FEATURE_PACKS_FILE_OPTION_LABEL)
     Optional<Path> provisioningXml;
 
-    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    @CommandLine.Option(names = {Constants.CHANNELS_OPTION_SHORT, Constants.CHANNELS_OPTION}, paramLabel = Constants.CHANNELS_OPTION_LABEL)
     Optional<Path> channelsFile;
 
     @Override
@@ -76,12 +76,12 @@ public class ShowConfigurationCommand extends AbstractCommand {
         }
         if (wildflyPreview.orElse(false)) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
         }
         if (wildflyServerVersion.isPresent()) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
         }
         String finalContext = context;

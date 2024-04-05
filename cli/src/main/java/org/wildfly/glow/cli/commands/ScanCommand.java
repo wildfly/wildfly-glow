@@ -153,7 +153,7 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.FAILS_ON_ERROR_OPTION_SHORT, Constants.FAILS_ON_ERROR_OPTION}, defaultValue = "true")
     Optional<Boolean> failsOnError;
 
-    @CommandLine.Option(names = {Constants.CHANNELS_FILE_OPTION_SHORT, Constants.CHANNELS_FILE_OPTION}, paramLabel = Constants.CHANNELS_FILE_OPTION_LABEL)
+    @CommandLine.Option(names = {Constants.CHANNELS_OPTION_SHORT, Constants.CHANNELS_OPTION}, paramLabel = Constants.CHANNELS_OPTION_LABEL)
     Optional<Path> channelsFile;
 
     @Override
@@ -195,13 +195,13 @@ public class ScanCommand extends AbstractCommand {
         }
         if (wildflyPreview.orElse(false)) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
             builder.setTechPreview(true);
         }
         if (wildflyServerVersion.isPresent()) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_FILE_OPTION + " is set.");
+                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
             builder.setVersion(wildflyServerVersion.get());
         }
