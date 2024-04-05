@@ -33,7 +33,7 @@ public interface Constants {
     String BUILD_ENV_FILE_OPTION_SHORT = "-bef";
     String BUILD_ENV_FILE_OPTION_LABEL = "<build env file path>";
     String CHANNELS_OPTION = "--channels";
-    String CHANNELS_OPTION_SHORT = "-c";
+    String CHANNELS_OPTION_SHORT = "-cc";
     String CHANNELS_OPTION_LABEL = "<Channels yaml file path>";
     String CLI_SCRIPT_OPTION = "--cli-script";
     String CLI_SCRIPT_OPTION_SHORT = "-cs";
