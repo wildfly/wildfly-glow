@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.jboss.as.version.Stability;
 import org.wildfly.channel.ChannelSession;
 
 public class BaseArgumentsBuilder {
@@ -41,8 +40,8 @@ public class BaseArgumentsBuilder {
     protected boolean techPreview;
 
     protected Set<String> excludeJarsFromScan = Collections.emptySet();
-    protected Stability packageStability;
-    protected Stability configStability;
+    protected String packageStability;
+    protected String configStability;
     protected boolean isCli;
     protected ChannelSession channelSession;
 

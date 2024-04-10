@@ -124,9 +124,10 @@ public class OpenShiftSupport {
         public void close() throws Exception {
         }
     }
-    private static void createAppDeployment(GlowMessageWriter writer, Path target, OpenShiftClient osClient, String name, Map<String, String> env, boolean ha) throws Exception {
-        Map<String, String> labels = new HashMap<>();
-        labels.put(Deployer.LABEL, name);
+    private static void createAppDeployment(GlowMessageWriter writer, Path target,
+            OpenShiftClient osClient, String name, Map<String, String> env, boolean ha, OpenShiftConfiguration config) throws Exception {
+        Map<String, String> matchLabels = new HashMap<>();
+        matchLabels.put(Deployer.LABEL, name);
         ContainerPort port = new ContainerPort();
         port.setContainerPort(8080);
         port.setName("http");
@@ -146,12 +147,9 @@ public class OpenShiftSupport {
         }
         if (ha) {
             writer.info("\n HA enabled, 2 replicas will be started.");
-            vars.add(new EnvVar().toBuilder().withName("JGROUPS_PING_PROTOCOL").withValue("DNS_PING").build());
-            vars.add(new EnvVar().toBuilder().withName("OPENSHIFT_DNS_PING_SERVICE_PORT").withValue("8888").build());
-            vars.add(new EnvVar().toBuilder().withName("OPENSHIFT_DNS_PING_SERVICE_NAME").withValue(name + "-ping").build());
             IntOrString v = new IntOrString();
             v.setValue(8888);
-            Service pingService = new ServiceBuilder().withNewMetadata().withName(name + "-ping").endMetadata().
+            Service pingService = new ServiceBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name + "-ping").endMetadata().
                     withNewSpec().withPorts(new ServicePort().toBuilder().withProtocol("TCP").
                             withPort(8888).
                             withName("ping").
@@ -159,7 +157,7 @@ public class OpenShiftSupport {
                     withClusterIP("None").withPublishNotReadyAddresses().withIpFamilies("IPv4").
                     withInternalTrafficPolicy("Cluster").withClusterIPs("None").
                     withType("ClusterIP").withIpFamilyPolicy("SingleStack").
-                    withSessionAffinity("None").withSelector(labels).endSpec().build();
+                    withSessionAffinity("None").withSelector(matchLabels).endSpec().build();
             osClient.services().resource(pingService).createOr(NonDeletingOperation::update);
             Utils.persistResource(target, pingService, name + "-ping-service.yaml");
         }
@@ -197,9 +195,11 @@ public class OpenShiftSupport {
         livenessProbe.setFailureThreshold(3);
         container.setLivenessProbe(livenessProbe);
 
-        Deployment deployment = new DeploymentBuilder().withNewMetadata().withName(name).endMetadata().
+        Map<String, String> labels = createCommonLabels(config);
+        labels.putAll(matchLabels);
+        Deployment deployment = new DeploymentBuilder().withNewMetadata().withLabels(labels).withName(name).endMetadata().
                 withNewSpec().withReplicas(ha ? 2 : 1).
-                withNewSelector().withMatchLabels(labels).endSelector().
+                withNewSelector().withMatchLabels(matchLabels).endSelector().
                 withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
@@ -207,10 +207,10 @@ public class OpenShiftSupport {
         Utils.persistResource(target, deployment, name + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(8080);
-        Service service = new ServiceBuilder().withNewMetadata().withName(name).endMetadata().
+        Service service = new ServiceBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name).endMetadata().
                 withNewSpec().withPorts(new ServicePort().toBuilder().withProtocol("TCP").
                         withPort(8080).
-                        withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
+                        withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(matchLabels).endSpec().build();
         osClient.services().resource(service).createOr(NonDeletingOperation::update);
         Utils.persistResource(target, service, name + "-service.yaml");
 
@@ -270,7 +270,9 @@ public class OpenShiftSupport {
             Path initScript,
             Path cliScript,
             OpenShiftConfiguration config,
-            MavenRepoManager mvnResolver) throws Exception {
+            MavenRepoManager mvnResolver,
+            String stability,
+            Map<String, String> serverImageBuildLabels) throws Exception {
         Set<Layer> allLayers = new LinkedHashSet<>();
         allLayers.addAll(layers);
         allLayers.addAll(metadataOnlyLayers);
@@ -279,7 +281,7 @@ public class OpenShiftSupport {
         OpenShiftClient osClient = new KubernetesClientBuilder().build().adapt(OpenShiftClient.class);
         writer.info("\nConnected to OpenShift cluster");
         // First create the future route to the application, can be needed by deployers
-        Route route = new RouteBuilder().withNewMetadata().withName(appName).
+        Route route = new RouteBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(appName).
                 endMetadata().withNewSpec().
                 withTo(new RouteTargetReference("Service", appName, 100)).
                 withTls(new TLSConfig().toBuilder().withTermination("edge").
@@ -315,19 +317,41 @@ public class OpenShiftSupport {
         }
         actualEnv.put("APPLICATION_ROUTE_HOST", host);
         actualEnv.putAll(extraEnv);
+        if (stability != null) {
+            String val = actualEnv.get("SERVER_ARGS");
+            String stabilityOption = "--stability=" + stability;
+            boolean alreadySet = false;
+            if (val == null) {
+                val = stabilityOption;
+            } else {
+                if (val.contains("--stability")) {
+                    alreadySet = true;
+                } else {
+                    val += " --stability" + stability;
+                }
+            }
+            if (!alreadySet) {
+                actualEnv.put("SERVER_ARGS", val);
+            }
+        }
         if (!disabledDeployers.isEmpty()) {
             writer.warn("The following environment variables will be set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
         } else {
             writer.warn("The following environment variables will be set in the " + appName + " deployment:\n");
+        }
+        if (ha) {
+            actualEnv.put("JGROUPS_PING_PROTOCOL", "openshift.DNS_PING");
+            actualEnv.put("OPENSHIFT_DNS_PING_SERVICE_PORT", "8888");
+            actualEnv.put("OPENSHIFT_DNS_PING_SERVICE_NAME", appName + "-ping");
         }
         for (Entry<String, String> entry : actualEnv.entrySet()) {
             writer.warn(entry.getKey() + "=" + entry.getValue());
         }
         // Can be overriden by user
         actualBuildEnv.putAll(buildExtraEnv);
-        createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config);
+        createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config, serverImageBuildLabels);
         writer.info("Deploying application image on OpenShift");
-        createAppDeployment(writer, target, osClient, appName, actualEnv, ha);
+        createAppDeployment(writer, target, osClient, appName, actualEnv, ha, config);
         writer.info("Application route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
 
@@ -338,8 +362,9 @@ public class OpenShiftSupport {
             Path initScript,
             Path cliScript,
             Map<String, String> buildExtraEnv,
-            OpenShiftConfiguration config) throws Exception {
-        String serverImageName = doServerImageBuild(writer, target, osClient, buildExtraEnv, config);
+            OpenShiftConfiguration config,
+            Map<String, String> serverImageBuildLabels) throws Exception {
+        String serverImageName = doServerImageBuild(writer, target, osClient, buildExtraEnv, config, serverImageBuildLabels);
         doAppImageBuild(serverImageName, writer, target, osClient, name, initScript, cliScript, config);
     }
 
@@ -384,7 +409,14 @@ public class OpenShiftSupport {
         return hexString.toString();
     }
 
-    private static Map<String, String> createLabels(Path target, Path provisioning, OpenShiftConfiguration osConfig) throws Exception {
+    private static Map<String, String> createCommonLabels(OpenShiftConfiguration osConfig) throws Exception {
+        Map<String, String> labels = new HashMap<>();
+        labels.put(osConfig.getLabelRadical(), "");
+        return labels;
+    }
+
+    private static Map<String, String> createServerImageLabels(Path target, Path provisioning, OpenShiftConfiguration osConfig,
+            Map<String, String> serverImageBuildLabels) throws Exception {
         GalleonBuilder provider = new GalleonBuilder();
         Path dir = target.resolve("tmp").resolve("tmpHome");
         Files.createDirectory(dir);
@@ -410,15 +442,21 @@ public class OpenShiftSupport {
                     producerName = producerName.substring(i + 1);
                 }
                 producerName = producerName.replaceAll(":", "-");
-                labels.put(osConfig.getLabelRadical() + ".feature-pack." + producerName, "");
+                labels.put(osConfig.getLabelRadical() + ".feature-pack." + producerName, gfpc.getLocation().getBuild());
             }
         }
+
+        for (Entry<String, String> entry : serverImageBuildLabels.entrySet()) {
+            labels.put(entry.getKey(), entry.getValue());
+        }
+        labels.putAll(createCommonLabels(osConfig));
         return labels;
     }
 
     private static String doServerImageBuild(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
             Map<String, String> buildExtraEnv,
-            OpenShiftConfiguration config) throws Exception {
+            OpenShiftConfiguration config,
+            Map<String, String> serverImageBuildLabels) throws Exception {
         // To compute a hash we need build time env variables
         StringBuilder contentBuilder = new StringBuilder();
         Path provisioning = target.resolve("galleon").resolve("provisioning.xml");
@@ -431,7 +469,7 @@ public class OpenShiftSupport {
         String key = bytesToHex(encodedhash);
         String serverImageName = config.getServerImageNameRadical() + key;
 
-        ImageStream stream = new ImageStreamBuilder().withNewMetadata().withName(serverImageName).
+        ImageStream stream = new ImageStreamBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(serverImageName).
                 endMetadata().withNewSpec().withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
         // check if it exists
         ImageStream existingStream = osClient.imageStreams().resource(stream).get();
@@ -447,7 +485,7 @@ public class OpenShiftSupport {
             Files.createDirectories(stepOne);
             IoUtils.copy(target.resolve("galleon"), stepOne.resolve("galleon"));
             ZipUtils.zip(stepOne, file);
-            stream = stream.toBuilder().editOrNewMetadata().withLabels(createLabels(target, provisioning, config)).endMetadata().build();
+            stream = stream.toBuilder().editOrNewMetadata().withLabels(createServerImageLabels(target, provisioning, config, serverImageBuildLabels)).endMetadata().build();
             osClient.imageStreams().resource(stream).createOr(NonDeletingOperation::update);
             Utils.persistResource(target, stream, serverImageName + "-image-stream.yaml");
             BuildConfigBuilder builder = new BuildConfigBuilder();
@@ -465,7 +503,7 @@ public class OpenShiftSupport {
                 }
             }
             BuildConfig buildConfig = builder.
-                    withNewMetadata().withName(serverImageName + "-build").endMetadata().withNewSpec().
+                    withNewMetadata().withLabels(createCommonLabels(config)).withName(serverImageName + "-build").endMetadata().withNewSpec().
                     withNewOutput().
                     withNewTo().
                     withKind("ImageStreamTag").
@@ -523,7 +561,7 @@ public class OpenShiftSupport {
         }
         ZipUtils.zip(stepTwo, file2);
         writer.info("\nBuilding application image...");
-        ImageStream appStream = new ImageStreamBuilder().withNewMetadata().withName(name).
+        ImageStream appStream = new ImageStreamBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name).
                 endMetadata().withNewSpec().withLookupPolicy(new ImageLookupPolicy(Boolean.TRUE)).endSpec().build();
         osClient.imageStreams().resource(appStream).createOr(NonDeletingOperation::update);
         BuildConfigBuilder builder = new BuildConfigBuilder();
@@ -533,7 +571,7 @@ public class OpenShiftSupport {
         ImageSourcePath srcPath = new ImageSourcePathBuilder().withSourcePath("/opt/server").withDestinationDir(".").build();
         ImageSource imageSource = new ImageSourceBuilder().withFrom(ref).withPaths(srcPath).build();
         BuildConfig buildConfig2 = builder.
-                withNewMetadata().withName(name + "-build").endMetadata().withNewSpec().
+                withNewMetadata().withLabels(createCommonLabels(config)).withName(name + "-build").endMetadata().withNewSpec().
                 withNewOutput().
                 withNewTo().
                 withKind("ImageStreamTag").

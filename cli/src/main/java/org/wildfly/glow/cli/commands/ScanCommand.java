@@ -35,6 +35,7 @@ import picocli.CommandLine.Parameters;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -42,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.jboss.as.version.Stability;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.channel.ChannelSession;
@@ -55,6 +55,7 @@ import org.wildfly.glow.Layer;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
+import org.wildfly.glow.StabilitySupport;
 import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
 
 @CommandLine.Command(
@@ -63,13 +64,6 @@ import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
 )
 public class ScanCommand extends AbstractCommand {
 
-    private static class StabilityConverter implements CommandLine.ITypeConverter<Stability> {
-
-        @Override
-        public Stability convert(String value) throws Exception {
-            return Stability.fromString(value);
-        }
-    }
     private static class ProvisionConverter implements CommandLine.ITypeConverter<OutputFormat> {
 
         @Override
@@ -122,14 +116,14 @@ public class ScanCommand extends AbstractCommand {
             split = ",", paramLabel = Constants.EXCLUDE_ARCHIVES_FROM_SCAN_OPTION_LABEL)
     Set<String> excludeArchivesFromScan = new HashSet<>();
 
-    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.STABILITY_OPTION, Constants.STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
-    Optional<Stability> stability;
+    @CommandLine.Option(names = {Constants.STABILITY_OPTION, Constants.STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<String> stability;
 
-    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.PACKAGE_STABILITY_OPTION, Constants.PACKAGE_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
-    Optional<Stability> packageStability;
+    @CommandLine.Option(names = {Constants.PACKAGE_STABILITY_OPTION, Constants.PACKAGE_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<String> packageStability;
 
-    @CommandLine.Option(converter = StabilityConverter.class, names = {Constants.CONFIG_STABILITY_OPTION, Constants.CONFIG_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
-    Optional<Stability> configStability;
+    @CommandLine.Option(names = {Constants.CONFIG_STABILITY_OPTION, Constants.CONFIG_STABILITY_OPTION_SHORT}, paramLabel = Constants.STABILITY_LABEL)
+    Optional<String> configStability;
 
     @CommandLine.Option(names = {Constants.ENV_FILE_OPTION_SHORT, Constants.ENV_FILE_OPTION}, paramLabel = Constants.ENV_FILE_OPTION_LABEL)
     Optional<Path> envFile;
@@ -289,6 +283,10 @@ public class ScanCommand extends AbstractCommand {
             builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
+
+        // Enforce community stability level. Doing so, any discovered features at a lower level are advertised
+        String userSetConfigStability = null;
+        builder.setConfigStability(org.jboss.galleon.Constants.STABILITY_COMMUNITY);
         if (stability.isPresent()) {
             if (configStability.isPresent()) {
                 throw new Exception(Constants.CONFIG_STABILITY_OPTION + " can't be set when " + Constants.STABILITY_OPTION + " is set");
@@ -296,13 +294,18 @@ public class ScanCommand extends AbstractCommand {
             if (packageStability.isPresent()) {
                 throw new Exception(Constants.PACKAGE_STABILITY_OPTION + " can't be set when " + Constants.STABILITY_OPTION + " is set");
             }
+            StabilitySupport.checkStability(stability.get());
+            userSetConfigStability = stability.get();
             builder.setConfigStability(stability.get());
             builder.setPackageStability(stability.get());
         }
         if (configStability.isPresent()) {
+            StabilitySupport.checkStability(configStability.get());
+            userSetConfigStability = configStability.get();
             builder.setConfigStability(configStability.get());
         }
         if (packageStability.isPresent()) {
+            StabilitySupport.checkStability(packageStability.get());
             builder.setPackageStability(packageStability.get());
         }
         if (dockerImageName.isPresent()) {
@@ -316,7 +319,7 @@ public class ScanCommand extends AbstractCommand {
         ConfigurationResolver configurationResolver = new ConfigurationResolver() {
             @Override
             public ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input) throws Exception {
-                if(provision.get().equals(OPENSHIFT)) {
+                if(provision.isPresent() && provision.get().equals(OPENSHIFT)) {
                     return OpenShiftSupport.getResolvedEnvs(layer, input, disableDeployers);
                 }
                 return null;
@@ -435,7 +438,7 @@ public class ScanCommand extends AbstractCommand {
                         if (cloud.orElse(false)) {
                             completedMessage = "@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@";
                         } else {
-                            completedMessage = "@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh'|@";
+                            completedMessage = "@|bold To run the server call: 'sh " + rel + "/bin/standalone.sh" + (userSetConfigStability == null ? "" : " --stability=" + userSetConfigStability) + "'|@";
                         }
                         break;
                     }
@@ -456,6 +459,9 @@ public class ScanCommand extends AbstractCommand {
                         envMap.put(env.getName(), env.getDescription());
                     }
                 }
+                // We need the latest plugin,
+                // To be removed once WildFly Maven Plugin is released.
+                buildExtraEnv.put("PROVISIONING_MAVEN_PLUGIN_VERSION", "5.0.0.Beta5");
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
                         target, name.isEmpty() ? "app-from-glow" : name.toLowerCase(),
                         envMap,
@@ -469,7 +475,9 @@ public class ScanCommand extends AbstractCommand {
                         initScriptFile.orElse(null),
                         cliScriptFile.orElse(null),
                         new OpenShiftConfiguration.Builder().build(),
-                        directMavenResolver);
+                        directMavenResolver,
+                        userSetConfigStability,
+                        Collections.emptyMap());
                 print("@|bold \nOpenshift build and deploy DONE.|@");
             } else {
                 if (content.getDockerImageName() != null) {
