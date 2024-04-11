@@ -17,6 +17,7 @@
 
 package org.wildfly.glow.cli;
 
+import java.lang.reflect.InvocationTargetException;
 import org.wildfly.glow.cli.commands.AbstractCommand;
 import picocli.CommandLine;
 
@@ -37,7 +38,11 @@ public class ExecutionExceptionHandler implements CommandLine.IExecutionExceptio
     @Override
     public int handleExecutionException(Exception ex, CommandLine commandLine, CommandLine.ParseResult parseResult)
             throws Exception {
-        command.printError("ERROR: %s",  ex.getLocalizedMessage());
+        String msg = ex.getLocalizedMessage();
+        if (ex instanceof InvocationTargetException) {
+           msg =  ex.getCause().getLocalizedMessage();
+        }
+        command.printError("ERROR: %s",  msg);
         if(isVerbose) {
             ex.printStackTrace(command.getStderr());
         }

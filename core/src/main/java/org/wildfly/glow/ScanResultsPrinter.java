@@ -143,36 +143,6 @@ public class ScanResultsPrinter {
             }
             writer.info(disabledBuilder);
         }
-        if (arguments.getConfigStability() != null || arguments.getPackageStability() != null) {
-            boolean needCR = false;
-            if (!scanResults.getExcludedFeatures().isEmpty()) {
-                writer.info("The following features would be disabled if provisioning a server at the '"
-                        + arguments.getConfigStability().toString() + "' stability level for configs:");
-                needCR = true;
-            }
-            if(!scanResults.getExcludedPackages().isEmpty()) {
-                writer.info("The following packages would be disabled if provisioning a server at the '"
-                        + arguments.getPackageStability().toString() + "' stability level for packages:");
-                needCR = true;
-            }
-            if (!scanResults.getExcludedFeatures().isEmpty()) {
-                for (Layer l : scanResults.getExcludedFeatures().keySet()) {
-                    writer.info(l.getName() + " features:");
-                    for (String f : scanResults.getExcludedFeatures().get(l)) {
-                        writer.info("- " + f);
-                    }
-                }
-            }
-            if (!scanResults.getExcludedPackages().isEmpty()) {
-                writer.info("packages:");
-                for (String p : scanResults.getExcludedPackages()) {
-                    writer.info("- " + p);
-                }
-            }
-            if (needCR) {
-                writer.info("");
-            }
-        }
         List<StringBuilder> fixBuilders = new ArrayList<>();
         List<StringBuilder> errorBuilders = new ArrayList<>();
         List<StringBuilder> warnBuilders = new ArrayList<>();
@@ -234,7 +204,32 @@ public class ScanResultsPrinter {
             }
             writer.warn("");
         }
-
+        if (arguments.getConfigStability() != null || arguments.getPackageStability() != null) {
+            boolean needCR = false;
+            if (!scanResults.getExcludedFeatures().isEmpty()) {
+                writer.warn("The following features would be disabled if provisioning a server at the '"
+                        + arguments.getConfigStability() + "' stability level. Make sure to set the '--config-stability-level=<features expected lowest stability level>' option:");
+                needCR = true;
+                for (Layer l : scanResults.getExcludedFeatures().keySet()) {
+                    writer.warn(l.getName() + " features:");
+                    for (String f : scanResults.getExcludedFeatures().get(l)) {
+                        writer.warn("- " + f);
+                    }
+                }
+            }
+            if (!scanResults.getExcludedPackages().isEmpty()) {
+                writer.warn("The following packages would be disabled if provisioning a server at the '"
+                        + arguments.getPackageStability() + "' stability level for packages:");
+                needCR = true;
+                writer.warn("packages:");
+                for (String p : scanResults.getExcludedPackages()) {
+                    writer.warn("- " + p);
+                }
+            }
+            if (needCR) {
+                writer.info("");
+            }
+        }
         String suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
         String suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations());
 

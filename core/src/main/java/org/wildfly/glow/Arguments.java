@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.jboss.as.version.Stability;
 import org.wildfly.channel.ChannelSession;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
@@ -34,8 +33,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final boolean verbose;
     private final boolean techPreview;
     private final Set<Pattern> excludeArchivesFromScan;
-    private final Stability configStability;
-    private final Stability packageStability;
+    private final String configStability;
+    private final String packageStability;
     private final boolean isCli;
     private final ChannelSession channelSession;
 
@@ -53,8 +52,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             boolean verbose,
             boolean techPreview,
             Set<Pattern> excludeArchivesFromScan,
-            Stability configStability,
-            Stability packageStability,
+            String configStability,
+            String packageStability,
             boolean isCli,
             ChannelSession channelSession) {
         this.executionProfiles = executionProfiles;
@@ -189,12 +188,12 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     }
 
     @Override
-    public Stability getConfigStability() {
+    public String getConfigStability() {
         return configStability;
     }
 
     @Override
-    public Stability getPackageStability() {
+    public String getPackageStability() {
         return packageStability;
     }
 

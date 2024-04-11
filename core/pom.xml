@@ -55,10 +55,6 @@
             <artifactId>galleon-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-version</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.wildfly.channel</groupId>
             <artifactId>channel-core</artifactId>
         </dependency>

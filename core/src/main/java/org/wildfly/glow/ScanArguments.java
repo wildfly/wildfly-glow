@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.jboss.as.version.Stability;
 import org.wildfly.channel.ChannelSession;
 
 public interface ScanArguments {
@@ -75,8 +74,8 @@ public interface ScanArguments {
 
     Set<Pattern> getExcludeArchivesFromScan();
 
-    Stability getConfigStability();
-    Stability getPackageStability();
+    String getConfigStability();
+    String getPackageStability();
     boolean isCli();
     ChannelSession getChannelSession();
 
@@ -158,11 +157,11 @@ public interface ScanArguments {
             return this;
         }
 
-        public Builder setPackageStability(Stability stability) {
+        public Builder setPackageStability(String stability) {
             this.packageStability = stability;
             return this;
         }
-        public Builder setConfigStability(Stability stability) {
+        public Builder setConfigStability(String stability) {
             this.configStability = stability;
             return this;
         }
