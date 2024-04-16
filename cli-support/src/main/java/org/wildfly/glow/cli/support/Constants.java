@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.cli.commands;
+package org.wildfly.glow.cli.support;
 
 /**
  *

@@ -16,6 +16,9 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.CLIConfigurationResolver;
+import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
 import org.wildfly.glow.deployment.openshift.api.OpenShiftConfiguration;
 import java.nio.file.Files;
@@ -50,12 +53,11 @@ import org.wildfly.channel.ChannelSession;
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
 import org.wildfly.glow.ConfigurationResolver;
-import org.wildfly.glow.Env;
-import org.wildfly.glow.Layer;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
 import org.wildfly.glow.StabilitySupport;
+import org.wildfly.glow.cli.support.Utils;
 import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
 
 @CommandLine.Command(
@@ -152,24 +154,7 @@ public class ScanCommand extends AbstractCommand {
 
     @Override
     public Integer call() throws Exception {
-        if (!systemProperties.isEmpty()) {
-            for (String p : systemProperties) {
-                if (p.startsWith("-D")) {
-                    int i = p.indexOf("=");
-                    String propName;
-                    String value = "";
-                    if (i > 0) {
-                        propName = p.substring(2, i);
-                        value = p.substring(i + 1);
-                    } else {
-                        propName = p.substring(2);
-                    }
-                    System.setProperty(propName, value);
-                } else {
-                    throw new Exception("Invalid system property " + p + ". A property must start with -D");
-                }
-            }
-        }
+        Utils.setSystemProperties(systemProperties);
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         boolean compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         if (!compact) {
@@ -209,7 +194,7 @@ public class ScanCommand extends AbstractCommand {
             } else {
                 throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
             }
-            extraEnv.putAll(handleOpenShiftEnvFile(envFile.get()));
+            extraEnv.putAll(Utils.handleOpenShiftEnvFile(envFile.get()));
         }
         if (buildEnvFile.isPresent()) {
             if (provision.isPresent()) {
@@ -219,7 +204,7 @@ public class ScanCommand extends AbstractCommand {
             } else {
                 throw new Exception("Build env file is only usable when --provision=" + OPENSHIFT + " option is set.");
             }
-            buildExtraEnv.putAll(handleOpenShiftEnvFile(buildEnvFile.get()));
+            buildExtraEnv.putAll(Utils.handleOpenShiftEnvFile(buildEnvFile.get()));
         }
         if (cliScriptFile.isPresent()) {
             if (provision.isPresent()) {
@@ -316,15 +301,8 @@ public class ScanCommand extends AbstractCommand {
         builder.setIsCli(true);
         MavenRepoManager directMavenResolver = MavenResolver.newMavenResolver();
         ScanResults scanResults = GlowSession.scan(repoManager == null ? directMavenResolver : repoManager, builder.build(), GlowMessageWriter.DEFAULT);
-        ConfigurationResolver configurationResolver = new ConfigurationResolver() {
-            @Override
-            public ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input) throws Exception {
-                if(provision.isPresent() && provision.get().equals(OPENSHIFT)) {
-                    return OpenShiftSupport.getResolvedEnvs(layer, input, disableDeployers);
-                }
-                return null;
-            }
-        };
+        ConfigurationResolver configurationResolver = new CLIConfigurationResolver((provision.isPresent() && provision.get().equals(OPENSHIFT)),
+                disableDeployers);
         scanResults.outputInformation(configurationResolver);
         if (provision.isEmpty()) {
             if (!compact) {
@@ -445,32 +423,14 @@ public class ScanCommand extends AbstractCommand {
                 }
             }
             if (OutputFormat.OPENSHIFT.equals(provision.get())) {
-                String name = "";
-                Path deploymentsDir = target.resolve("deployments");
-                Files.createDirectories(deploymentsDir);
-                for (Path p : deployments) {
-                    Files.copy(p, deploymentsDir.resolve(p.getFileName()));
-                    int ext = p.getFileName().toString().indexOf(".");
-                    name += p.getFileName().toString().substring(0, ext);
-                }
-                Map<String, String> envMap = new HashMap<>();
-                for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
-                    for (Env env : envs) {
-                        envMap.put(env.getName(), env.getDescription());
-                    }
-                }
-                // We need the latest plugin,
-                // To be removed once WildFly Maven Plugin is released.
-                buildExtraEnv.put("PROVISIONING_MAVEN_PLUGIN_VERSION", "5.0.0.Beta5");
-                OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
-                        target, name.isEmpty() ? "app-from-glow" : name.toLowerCase(),
-                        envMap,
-                        scanResults.getDiscoveredLayers(),
-                        scanResults.getMetadataOnlyLayers(),
+                OpenShiftSupport.deploy(deployments,
+                        "app-from-glow",
+                        GlowMessageWriter.DEFAULT,
+                        target,
+                        scanResults,
                         haProfile.orElse(false),
                         extraEnv,
                         buildExtraEnv,
-                        scanResults.getSuggestions().getBuildTimeRequiredConfigurations(),
                         disableDeployers,
                         initScriptFile.orElse(null),
                         cliScriptFile.orElse(null),
@@ -496,23 +456,5 @@ public class ScanCommand extends AbstractCommand {
             }
         }
         return 0;
-    }
-
-    private Map<String, String> handleOpenShiftEnvFile(Path envFile) throws Exception {
-        Map<String, String> extraEnv = new HashMap<>();
-        if (!Files.exists(envFile)) {
-            throw new Exception(envFile + " file doesn't exist");
-        }
-        for (String l : Files.readAllLines(envFile)) {
-            l = l.trim();
-            if (!l.isEmpty() && !l.startsWith("#")) {
-                int i = l.indexOf("=");
-                if (i < 0 || i == l.length() - 1) {
-                    throw new Exception("Invalid environment variable " + l + " in " + envFile);
-                }
-                extraEnv.put(l.substring(0, i), l.substring(i + 1));
-            }
-        }
-        return extraEnv;
     }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.cli.commands;
+package org.wildfly.glow.cli.support;
 
 import java.io.PrintWriter;
 import java.util.concurrent.Callable;
@@ -39,10 +39,10 @@ public abstract class AbstractCommand implements Callable<Integer> {
     @CommandLine.Option(
             names = {Constants.VERBOSE_OPTION_SHORT, Constants.VERBOSE_OPTION}
     )
-    boolean verbose;
+    protected boolean verbose;
 
     @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
+    protected CommandLine.Model.CommandSpec spec;
 
     private PrintWriter stdout;
 

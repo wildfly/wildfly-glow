@@ -16,6 +16,8 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.Constants;
 import java.util.ResourceBundle;
 import org.wildfly.glow.Version;
 
