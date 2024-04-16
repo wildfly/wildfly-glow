@@ -459,9 +459,6 @@ public class ScanCommand extends AbstractCommand {
                         envMap.put(env.getName(), env.getDescription());
                     }
                 }
-                // We need the latest plugin,
-                // To be removed once WildFly Maven Plugin is released.
-                buildExtraEnv.put("PROVISIONING_MAVEN_PLUGIN_VERSION", "5.0.0.Beta5");
                 OpenShiftSupport.deploy(GlowMessageWriter.DEFAULT,
                         target, name.isEmpty() ? "app-from-glow" : name.toLowerCase(),
                         envMap,
