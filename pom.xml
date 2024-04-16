@@ -204,6 +204,11 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>wildfly-glow-cli-support</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>wildfly-glow-test-galleon-pack</artifactId>
                 <type>zip</type>
                 <version>${project.version}</version>
@@ -517,6 +522,7 @@
         <module>arquillian-plugin-scanner</module>
         <module>core</module>
         <module>cli</module>
+        <module>cli-support</module>
         <module>docs</module>
         <module>doc-plugin</module>
         <module>openshift-deployment</module>

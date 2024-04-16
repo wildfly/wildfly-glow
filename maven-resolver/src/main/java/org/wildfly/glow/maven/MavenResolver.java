@@ -90,6 +90,25 @@ public final class MavenResolver {
         return locator.getService(RepositorySystem.class);
     }
 
+    public static MavenRepoManager newRHMavenResolver() {
+        RepositorySystem repoSystem = newRepositorySystem();
+        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        String localPath = System.getProperty("maven.repo.local");
+        Path localCache = localPath == null ? Paths.get(System.getProperty("user.home"), ".m2", "repository") : Paths.get(localPath);
+        LocalRepository localRepo = new LocalRepository(localCache.toFile());
+        session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
+        List<RemoteRepository> repos = new ArrayList<>();
+        RemoteRepository.Builder ga = new RemoteRepository.Builder("redhat-ga", "default", GA_REPO_URL);
+        ga.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
+        ga.setReleasePolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
+        repos.add(ga.build());
+        MavenArtifactRepositoryManager resolver
+                = new MavenArtifactRepositoryManager(repoSystem, session, repos);
+        return resolver;
+    }
+
     public static MavenRepoManager buildMavenResolver(Path channelsFile) throws Exception {
         MavenRepoManager resolver = null;
         if (channelsFile != null) {

@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package org.wildfly.glow.cli;
+package org.wildfly.glow.cli.support;
 
 import java.lang.reflect.InvocationTargetException;
-import org.wildfly.glow.cli.commands.AbstractCommand;
 import picocli.CommandLine;
 
 

@@ -16,6 +16,8 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.ProvisioningUtils;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -66,7 +68,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
         StringBuilder ocBuilder = new StringBuilder();
         ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
         for (Deployer d : ServiceLoader.load(Deployer.class)) {
-            ocBuilder.append("* " + d.getName() + ". Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
+            ocBuilder.append("* @|bold " + d.getName() + "|@. Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
         }
         print(ocBuilder.toString());
 

@@ -79,6 +79,7 @@ import org.wildfly.glow.ConfigurationResolver;
 import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.Layer;
+import org.wildfly.glow.ScanResults;
 
 /**
  *
@@ -233,6 +234,18 @@ public class OpenShiftSupport {
         return resolved;
     }
 
+    public static String getPossibleDeployer(Set<Layer> layers, Set<String> disabledDeployers) throws Exception {
+        List<Deployer> deployers = getEnabledDeployers(disabledDeployers);
+        for (Deployer d : deployers) {
+            for (Layer l : layers) {
+                if (d.getSupportedLayers().contains(l.getName())) {
+                    return "openshift/" + d.getName();
+                }
+            }
+        }
+        return null;
+    }
+
     private static List<Deployer> getEnabledDeployers(Set<String> disabledDeployers) throws Exception {
         Map<String, Deployer> existingDeployers = new HashMap<>();
 
@@ -256,16 +269,14 @@ public class OpenShiftSupport {
         return deployers;
     }
 
-    public static void deploy(GlowMessageWriter writer,
+    public static void deploy(List<Path> deployments,
+            String defaultName,
+            GlowMessageWriter writer,
             Path target,
-            String appName,
-            Map<String, String> env,
-            Set<Layer> layers,
-            Set<Layer> metadataOnlyLayers,
+            ScanResults scanResults,
             boolean ha,
             Map<String, String> extraEnv,
             Map<String, String> buildExtraEnv,
-            Map<Layer, Set<Env>> requiredBuildTime,
             Set<String> disabledDeployers,
             Path initScript,
             Path cliScript,
@@ -273,6 +284,26 @@ public class OpenShiftSupport {
             MavenRepoManager mvnResolver,
             String stability,
             Map<String, String> serverImageBuildLabels) throws Exception {
+        Set<Layer> layers = scanResults.getDiscoveredLayers();
+        Set<Layer> metadataOnlyLayers = scanResults.getMetadataOnlyLayers();
+        Map<Layer, Set<Env>> requiredBuildTime = scanResults.getSuggestions().getBuildTimeRequiredConfigurations();
+        String appName = "";
+        Path deploymentsDir = target.resolve("deployments");
+        Files.createDirectories(deploymentsDir);
+        for (Path p : deployments) {
+            Files.copy(p, deploymentsDir.resolve(p.getFileName()));
+            int ext = p.getFileName().toString().indexOf(".");
+            appName += p.getFileName().toString().substring(0, ext);
+        }
+        if (appName.isEmpty()) {
+           appName = defaultName;
+        }
+        Map<String, String> env = new HashMap<>();
+        for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
+            for (Env e : envs) {
+                env.put(e.getName(), e.getDescription());
+            }
+        }
         Set<Layer> allLayers = new LinkedHashSet<>();
         allLayers.addAll(layers);
         allLayers.addAll(metadataOnlyLayers);

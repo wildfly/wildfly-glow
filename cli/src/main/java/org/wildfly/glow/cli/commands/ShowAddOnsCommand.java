@@ -16,19 +16,12 @@
  */
 package org.wildfly.glow.cli.commands;
 
-import org.wildfly.glow.ProvisioningUtils;
+import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.Utils;
+import org.wildfly.glow.cli.support.Constants;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import org.jboss.galleon.api.config.GalleonProvisioningConfig;
-import org.jboss.galleon.universe.FeaturePackLocation;
-import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
-import org.wildfly.glow.Layer;
-import org.wildfly.glow.LayerMapping;
-import org.wildfly.glow.ProvisioningUtils.ProvisioningConsumer;
-import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -69,27 +62,8 @@ public class ShowAddOnsCommand extends AbstractCommand {
                 throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
         }
-        ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningConsumer() {
-            @Override
-            public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
-                    LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) {
-                StringBuilder builder = new StringBuilder();
-                for (Map.Entry<String, Set<AddOn>> entry : mapping.getAddOnFamilyMembers().entrySet()) {
-                    builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:%n");
-                    for (AddOn member : mapping.getAddOnFamilyMembers().get(entry.getKey())) {
-                        if (!member.getName().endsWith(":default")) {
-                            builder.append(" - ").append(member.getName()).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
-                        }
-                    }
-                }
-                print(builder.toString());
-                print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
-
-            }
-
-        };
-        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                wildflyPreview.orElse(false), MavenResolver.buildMavenResolver(channelsFile.orElse(null)));
+        Utils.showAddOns(this, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
+                wildflyPreview.orElse(false), channelsFile.orElse(null));
         return 0;
     }
 }

@@ -16,6 +16,7 @@
  */
 package org.wildfly.glow;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -46,4 +47,12 @@ public interface ConfigurationResolver {
         }
     }
     ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input) throws Exception;
+
+    default String getPossibleDeployer(Layer layer) throws Exception {
+        Set<Layer> set = new HashSet<>();
+        set.add(layer);
+        return getPossibleDeployer(set);
+    }
+
+    String getPossibleDeployer(Set<Layer> layers) throws Exception;
 }

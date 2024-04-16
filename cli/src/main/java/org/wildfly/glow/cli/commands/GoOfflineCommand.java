@@ -16,6 +16,8 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.Constants;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.wildfly.glow.Arguments;
