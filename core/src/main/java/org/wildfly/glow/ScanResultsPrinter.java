@@ -158,7 +158,7 @@ public class ScanResultsPrinter {
                 if (!error.getPossibleAddons().isEmpty()) {
                     errorBuilder.append("  To correct this error, enable one of the following add-ons:\n");
                     for (AddOn addOn : error.getPossibleAddons()) {
-                        String deployer = configResolver.getPossibleDeployer(addOn.getLayers());
+                        String deployer = configResolver == null ? null : configResolver.getPossibleDeployer(addOn.getLayers());
                         errorBuilder.append("  - ").append(addOn.getName()).append((deployer == null ? "" : " (supported by "+deployer+" deployer)")).append("\n");
                     }
                 }
@@ -190,25 +190,27 @@ public class ScanResultsPrinter {
             }
         }
 
-        Set<String> deployers = new TreeSet<>();
-        for (Layer l : scanResults.getDiscoveredLayers()) {
-            String deployer = configResolver.getPossibleDeployer(l);
-            if (deployer != null) {
-                deployers.add(deployer);
+        if (configResolver != null) {
+            Set<String> deployers = new TreeSet<>();
+            for (Layer l : scanResults.getDiscoveredLayers()) {
+                String deployer = configResolver.getPossibleDeployer(l);
+                if (deployer != null) {
+                    deployers.add(deployer);
+                }
             }
-        }
-        for (Layer l : scanResults.getMetadataOnlyLayers()) {
-            String deployer = configResolver.getPossibleDeployer(l);
-            if (deployer != null) {
-                deployers.add(deployer);
+            for (Layer l : scanResults.getMetadataOnlyLayers()) {
+                String deployer = configResolver.getPossibleDeployer(l);
+                if (deployer != null) {
+                    deployers.add(deployer);
+                }
             }
-        }
-        if (!deployers.isEmpty()) {
-            writer.info("deployers that would get automatically enabled when deploying to openshift");
-            for (String deployer : deployers) {
-                writer.info("- " + deployer);
+            if (!deployers.isEmpty()) {
+                writer.info("deployers that would get automatically enabled when deploying to openshift");
+                for (String deployer : deployers) {
+                    writer.info("- " + deployer);
+                }
+                writer.info("");
             }
-            writer.info("");
         }
 
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty()) {
