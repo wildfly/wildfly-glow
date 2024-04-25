@@ -289,6 +289,49 @@ public class OpenShiftSupport {
         return deployers;
     }
 
+    static final String generateValidName(String name) {
+        name = name.toLowerCase();
+        StringBuilder validName = new StringBuilder();
+        char[] array = name.toCharArray();
+        for (int i = 0; i < array.length; i++) {
+            char c = array[i];
+            // start with an alphabetic character
+            if (i == 0) {
+                if (c <= 97 || c >= 122) {
+                    validName.append("app-");
+                }
+                validName.append(c);
+            } else {
+                // end with an alphabetic character
+                if (i == array.length - 1) {
+                    if ((c >= 48 && c <= 57) || (c >= 97 && c <= 122)) {
+                        validName.append(c);
+                    } else {
+                        validName.append('0');
+                    }
+                } else {
+                    // - allowed in the middle
+                    if (c == '-') {
+                        validName.append(c);
+                    } else {
+                        // a-z or 0-9
+                        if ((c >= 48 && c <= 57) || (c >= 97 && c <= 122)) {
+                            validName.append(c);
+                        } else {
+                            // Other character are replaced by -
+                            validName.append('-');
+                        }
+                    }
+                }
+            }
+        }
+        String ret = validName.toString();
+        if (ret.length() > 63) {
+            ret = ret.substring(0, 63);
+        }
+        return ret;
+    }
+
     public static void deploy(List<Path> deployments,
             String defaultName,
             GlowMessageWriter writer,
@@ -312,8 +355,9 @@ public class OpenShiftSupport {
         Files.createDirectories(deploymentsDir);
         for (Path p : deployments) {
             Files.copy(p, deploymentsDir.resolve(p.getFileName()));
-            int ext = p.getFileName().toString().indexOf(".");
+            int ext = p.getFileName().toString().lastIndexOf(".");
             appName += p.getFileName().toString().substring(0, ext);
+            appName = generateValidName(appName);
         }
         if (appName.isEmpty()) {
             appName = defaultName;
