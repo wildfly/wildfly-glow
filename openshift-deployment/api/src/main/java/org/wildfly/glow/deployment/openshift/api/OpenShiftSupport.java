@@ -29,6 +29,8 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.apps.StatefulSet;
+import io.fabric8.kubernetes.api.model.apps.StatefulSetBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
@@ -88,12 +90,15 @@ import org.wildfly.glow.ScanResults;
 public class OpenShiftSupport {
 
     private static class BuildWatcher implements Watcher<Build>, AutoCloseable {
+
         private final CountDownLatch latch = new CountDownLatch(1);
         private final GlowMessageWriter writer;
         private boolean failed;
+
         BuildWatcher(GlowMessageWriter writer) {
             this.writer = writer;
         }
+
         @Override
         public void eventReceived(Action action, Build build) {
             String phase = build.getStatus().getPhase();
@@ -114,9 +119,11 @@ public class OpenShiftSupport {
         @Override
         public void onClose(WatcherException cause) {
         }
+
         void await() throws InterruptedException {
             latch.await();
         }
+
         boolean isFailed() {
             return failed;
         }
@@ -125,10 +132,20 @@ public class OpenShiftSupport {
         public void close() throws Exception {
         }
     }
+
     private static void createAppDeployment(GlowMessageWriter writer, Path target,
-            OpenShiftClient osClient, String name, Map<String, String> env, boolean ha, OpenShiftConfiguration config) throws Exception {
+            OpenShiftClient osClient, String name, Map<String, String> env, boolean ha, OpenShiftConfiguration config, String deploymentKind) throws Exception {
         Map<String, String> matchLabels = new HashMap<>();
         matchLabels.put(Deployer.LABEL, name);
+        IntOrString value = new IntOrString();
+        value.setValue(8080);
+        Service service = new ServiceBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name).endMetadata().
+                withNewSpec().withPorts(new ServicePort().toBuilder().withProtocol("TCP").
+                        withPort(8080).
+                        withTargetPort(value).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(matchLabels).endSpec().build();
+        osClient.services().resource(service).createOr(NonDeletingOperation::update);
+        Utils.persistResource(target, service, name + "-service.yaml");
+
         ContainerPort port = new ContainerPort();
         port.setContainerPort(8080);
         port.setName("http");
@@ -147,7 +164,7 @@ public class OpenShiftSupport {
             vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(entry.getValue()).build());
         }
         if (ha) {
-            writer.info("\n HA enabled, 2 replicas will be started.");
+            writer.info("\nHA enabled, 2 replicas will be started.");
             IntOrString v = new IntOrString();
             v.setValue(8888);
             Service pingService = new ServiceBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name + "-ping").endMetadata().
@@ -198,25 +215,28 @@ public class OpenShiftSupport {
 
         Map<String, String> labels = createCommonLabels(config);
         labels.putAll(matchLabels);
-        Deployment deployment = new DeploymentBuilder().withNewMetadata().withLabels(labels).withName(name).endMetadata().
-                withNewSpec().withReplicas(ha ? 2 : 1).
-                withNewSelector().withMatchLabels(matchLabels).endSelector().
-                withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
-                withContainers(container).withRestartPolicy("Always").
-                endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
-        osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, deployment, name + "-deployment.yaml");
-        IntOrString v = new IntOrString();
-        v.setValue(8080);
-        Service service = new ServiceBuilder().withNewMetadata().withLabels(createCommonLabels(config)).withName(name).endMetadata().
-                withNewSpec().withPorts(new ServicePort().toBuilder().withProtocol("TCP").
-                        withPort(8080).
-                        withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(matchLabels).endSpec().build();
-        osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, service, name + "-service.yaml");
-
-        writer.info("\nWaiting until the application is ready ...");
-        osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
+        writer.info("\nWaiting until the application " + deploymentKind + " is ready ...");
+        if (ha) {
+            StatefulSet deployment = new StatefulSetBuilder().withNewMetadata().withLabels(labels).withName(name).endMetadata().
+                    withNewSpec().withReplicas(ha ? 2 : 1).
+                    withNewSelector().withMatchLabels(matchLabels).endSelector().
+                    withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
+                    withContainers(container).withRestartPolicy("Always").
+                    endSpec().endTemplate().withNewUpdateStrategy().withType("RollingUpdate").endUpdateStrategy().endSpec().build();
+            osClient.resources(StatefulSet.class).resource(deployment).createOr(NonDeletingOperation::update);
+            Utils.persistResource(target, deployment, name + "-statefulset.yaml");
+            osClient.resources(StatefulSet.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
+        } else {
+            Deployment deployment = new DeploymentBuilder().withNewMetadata().withLabels(labels).withName(name).endMetadata().
+                    withNewSpec().withReplicas(ha ? 2 : 1).
+                    withNewSelector().withMatchLabels(matchLabels).endSelector().
+                    withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
+                    withContainers(container).withRestartPolicy("Always").
+                    endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
+            osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
+            Utils.persistResource(target, deployment, name + "-deployment.yaml");
+            osClient.resources(Deployment.class).resource(deployment).waitUntilReady(5, TimeUnit.MINUTES);
+        }
     }
 
     public static ConfigurationResolver.ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input, Set<String> disabledDeployers) throws Exception {
@@ -224,11 +244,11 @@ public class OpenShiftSupport {
         List<Deployer> deployers = getEnabledDeployers(disabledDeployers);
         for (Deployer d : deployers) {
             if (d.getSupportedLayers().contains(layer.getName())) {
-               Set<Env> envs = d.getResolvedEnvs(input);
-               if (envs != null && !envs.isEmpty()) {
-                   resolved = new ConfigurationResolver.ResolvedEnvs("openshift/"+d.getName(), envs);
-                   break;
-               }
+                Set<Env> envs = d.getResolvedEnvs(input);
+                if (envs != null && !envs.isEmpty()) {
+                    resolved = new ConfigurationResolver.ResolvedEnvs("openshift/" + d.getName(), envs);
+                    break;
+                }
             }
         }
         return resolved;
@@ -262,11 +282,54 @@ public class OpenShiftSupport {
         List<Deployer> deployers = new ArrayList<>();
         for (Deployer d : existingDeployers.values()) {
             boolean isDisabled = isDisabled(d.getName(), disabledDeployers);
-            if(!isDisabled) {
+            if (!isDisabled) {
                 deployers.add(d);
             }
         }
         return deployers;
+    }
+
+    static final String generateValidName(String name) {
+        name = name.toLowerCase();
+        StringBuilder validName = new StringBuilder();
+        char[] array = name.toCharArray();
+        for (int i = 0; i < array.length; i++) {
+            char c = array[i];
+            // start with an alphabetic character
+            if (i == 0) {
+                if (c <= 97 || c >= 122) {
+                    validName.append("app-");
+                }
+                validName.append(c);
+            } else {
+                // end with an alphabetic character
+                if (i == array.length - 1) {
+                    if ((c >= 48 && c <= 57) || (c >= 97 && c <= 122)) {
+                        validName.append(c);
+                    } else {
+                        validName.append('0');
+                    }
+                } else {
+                    // - allowed in the middle
+                    if (c == '-') {
+                        validName.append(c);
+                    } else {
+                        // a-z or 0-9
+                        if ((c >= 48 && c <= 57) || (c >= 97 && c <= 122)) {
+                            validName.append(c);
+                        } else {
+                            // Other character are replaced by -
+                            validName.append('-');
+                        }
+                    }
+                }
+            }
+        }
+        String ret = validName.toString();
+        if (ret.length() > 63) {
+            ret = ret.substring(0, 63);
+        }
+        return ret;
     }
 
     public static void deploy(List<Path> deployments,
@@ -292,11 +355,12 @@ public class OpenShiftSupport {
         Files.createDirectories(deploymentsDir);
         for (Path p : deployments) {
             Files.copy(p, deploymentsDir.resolve(p.getFileName()));
-            int ext = p.getFileName().toString().indexOf(".");
+            int ext = p.getFileName().toString().lastIndexOf(".");
             appName += p.getFileName().toString().substring(0, ext);
+            appName = generateValidName(appName);
         }
         if (appName.isEmpty()) {
-           appName = defaultName;
+            appName = defaultName;
         }
         Map<String, String> env = new HashMap<>();
         for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
@@ -331,11 +395,11 @@ public class OpenShiftSupport {
                     } else {
                         writer.warn("\nThe deployer " + d.getName() + " has been disabled");
                     }
-                    actualEnv.putAll(isDisabled ? Collections.emptyMap(): d.deploy(writer, target, osClient, env, host, appName, l.getName(), extraEnv));
-                    Set<Env> buildEnv =  requiredBuildTime.get(l);
+                    actualEnv.putAll(isDisabled ? Collections.emptyMap() : d.deploy(writer, target, osClient, env, host, appName, l.getName(), extraEnv));
+                    Set<Env> buildEnv = requiredBuildTime.get(l);
                     if (buildEnv != null) {
                         Set<String> names = new HashSet<>();
-                        for(Env e : buildEnv) {
+                        for (Env e : buildEnv) {
                             if (!buildExtraEnv.containsKey(e.getName())) {
                                 names.add(e.getName());
                             }
@@ -365,10 +429,11 @@ public class OpenShiftSupport {
                 actualEnv.put("SERVER_ARGS", val);
             }
         }
+        String deploymentKind = ha ? "StatefulSet" : "Deployment";
         if (!disabledDeployers.isEmpty()) {
-            writer.warn("The following environment variables will be set in the " + appName + " deployment. Make sure that the required env variables for the disabled deployer(s) have been set:\n");
+            writer.warn("The following environment variables will be set in the " + appName + " " + deploymentKind + ". Make sure that the required env variables for the disabled deployer(s) have been set:\n");
         } else {
-            writer.warn("The following environment variables will be set in the " + appName + " deployment:\n");
+            writer.warn("The following environment variables will be set in the " + appName + " " + deploymentKind + ":\n");
         }
         if (ha) {
             actualEnv.put("JGROUPS_PING_PROTOCOL", "openshift.DNS_PING");
@@ -382,7 +447,7 @@ public class OpenShiftSupport {
         actualBuildEnv.putAll(buildExtraEnv);
         createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config, serverImageBuildLabels);
         writer.info("Deploying application image on OpenShift");
-        createAppDeployment(writer, target, osClient, appName, actualEnv, ha, config);
+        createAppDeployment(writer, target, osClient, appName, actualEnv, ha, config, deploymentKind);
         writer.info("Application route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
     }
 
@@ -529,7 +594,7 @@ public class OpenShiftSupport {
                 writer.warn("\nThe following environment variables have been set in the " + serverImageName + " buildConfig:\n");
                 for (Map.Entry<String, String> entry : buildExtraEnv.entrySet()) {
                     String val = buildExtraEnv.get(entry.getKey());
-                    writer.warn(entry.getKey()+"="+entry.getValue());
+                    writer.warn(entry.getKey() + "=" + entry.getValue());
                     vars.add(new EnvVar().toBuilder().withName(entry.getKey()).withValue(val == null ? entry.getValue() : val).build());
                 }
             }
@@ -553,7 +618,7 @@ public class OpenShiftSupport {
             try (Watch watcher = osClient.builds().withName(build.getMetadata().getName()).watch(buildWatcher)) {
                 buildWatcher.await();
             }
-            if(buildWatcher.isFailed()) {
+            if (buildWatcher.isFailed()) {
                 osClient.imageStreams().resource(stream).delete();
                 throw new Exception("Server image build has failed. Check the OpenShift build log.");
             }
