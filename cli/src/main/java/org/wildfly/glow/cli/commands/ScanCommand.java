@@ -424,7 +424,6 @@ public class ScanCommand extends AbstractCommand {
             }
             if (OutputFormat.OPENSHIFT.equals(provision.get())) {
                 OpenShiftSupport.deploy(deployments,
-                        "app-from-glow",
                         GlowMessageWriter.DEFAULT,
                         target,
                         scanResults,

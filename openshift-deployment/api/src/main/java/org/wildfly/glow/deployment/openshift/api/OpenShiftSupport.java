@@ -333,7 +333,6 @@ public class OpenShiftSupport {
     }
 
     public static void deploy(List<Path> deployments,
-            String defaultName,
             GlowMessageWriter writer,
             Path target,
             ScanResults scanResults,
@@ -351,16 +350,21 @@ public class OpenShiftSupport {
         Set<Layer> metadataOnlyLayers = scanResults.getMetadataOnlyLayers();
         Map<Layer, Set<Env>> requiredBuildTime = scanResults.getSuggestions().getBuildTimeRequiredConfigurations();
         String appName = "";
-        Path deploymentsDir = target.resolve("deployments");
-        Files.createDirectories(deploymentsDir);
-        for (Path p : deployments) {
-            Files.copy(p, deploymentsDir.resolve(p.getFileName()));
-            int ext = p.getFileName().toString().lastIndexOf(".");
-            appName += p.getFileName().toString().substring(0, ext);
-            appName = generateValidName(appName);
-        }
-        if (appName.isEmpty()) {
-            appName = defaultName;
+        String originalAppName = null;
+        if (deployments != null && !deployments.isEmpty()) {
+            Path deploymentsDir = target.resolve("deployments");
+            Files.createDirectories(deploymentsDir);
+            for (Path p : deployments) {
+                Files.copy(p, deploymentsDir.resolve(p.getFileName()));
+                int ext = p.getFileName().toString().lastIndexOf(".");
+                appName += p.getFileName().toString().substring(0, ext);
+                if (originalAppName == null) {
+                    originalAppName = appName;
+                }
+                appName = generateValidName(appName);
+            }
+        } else {
+            throw new Exception("No application to deploy to OpenShift");
         }
         Map<String, String> env = new HashMap<>();
         for (Set<Env> envs : scanResults.getSuggestions().getStronglySuggestedConfigurations().values()) {
@@ -448,7 +452,7 @@ public class OpenShiftSupport {
         createBuild(writer, target, osClient, appName, initScript, cliScript, actualBuildEnv, config, serverImageBuildLabels);
         writer.info("Deploying application image on OpenShift");
         createAppDeployment(writer, target, osClient, appName, actualEnv, ha, config, deploymentKind);
-        writer.info("Application route: https://" + host + ("ROOT.war".equals(appName) ? "" : "/" + appName));
+        writer.info("Application route: https://" + host + ( "ROOT.war".equals(appName) ? "" : "/" + originalAppName));
     }
 
     private static void createBuild(GlowMessageWriter writer,
