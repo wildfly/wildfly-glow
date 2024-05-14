@@ -325,11 +325,14 @@ public class OpenShiftSupport {
                 }
             }
         }
-        String ret = validName.toString();
-        if (ret.length() > 63) {
-            ret = ret.substring(0, 63);
+        return truncateValue(validName.toString());
+    }
+
+    private static String truncateValue(String val) {
+        if (val.length() > 63) {
+            val = val.substring(0, 63);
         }
-        return ret;
+        return val;
     }
 
     public static void deploy(List<Path> deployments,
@@ -511,7 +514,7 @@ public class OpenShiftSupport {
 
     private static Map<String, String> createCommonLabels(OpenShiftConfiguration osConfig) throws Exception {
         Map<String, String> labels = new HashMap<>();
-        labels.put(osConfig.getLabelRadical(), "");
+        labels.put(truncateValue(osConfig.getLabelRadical()), "");
         return labels;
     }
 
@@ -526,10 +529,10 @@ public class OpenShiftSupport {
             GalleonProvisioningConfig config = provider.newProvisioningBuilder(provisioning).setInstallationHome(dir).build().loadProvisioningConfig(provisioning);
             GalleonConfigurationWithLayers cl = config.getDefinedConfig(new ConfigId("standalone", "standalone.xml"));
             for (String s : cl.getIncludedLayers()) {
-                labels.put(osConfig.getLabelRadical() + ".layer." + s, "");
+                labels.put(truncateValue(osConfig.getLabelRadical() + ".layer." + s), "");
             }
             for (String s : cl.getExcludedLayers()) {
-                labels.put(osConfig.getLabelRadical() + ".excluded.layer." + s, "");
+                labels.put(truncateValue(osConfig.getLabelRadical() + ".excluded.layer." + s), "");
             }
             for (GalleonFeaturePackConfig gfpc : config.getFeaturePackDeps()) {
                 if (fps.length() != 0) {
@@ -542,12 +545,12 @@ public class OpenShiftSupport {
                     producerName = producerName.substring(i + 1);
                 }
                 producerName = producerName.replaceAll(":", "-");
-                labels.put(osConfig.getLabelRadical() + ".feature-pack." + producerName, gfpc.getLocation().getBuild());
+                labels.put(truncateValue(osConfig.getLabelRadical() + producerName), gfpc.getLocation().getBuild());
             }
         }
 
         for (Entry<String, String> entry : serverImageBuildLabels.entrySet()) {
-            labels.put(entry.getKey(), entry.getValue());
+            labels.put(truncateValue(entry.getKey()), truncateValue(entry.getValue()));
         }
         labels.putAll(createCommonLabels(osConfig));
         return labels;
