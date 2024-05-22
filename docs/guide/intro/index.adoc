@@ -106,3 +106,20 @@ Feature-packs and Layers.
 
 * A Maven plugin to scan Arquillian deployments in your tests and produce a `provisioning.xml` file that can be consumed by WildFly provisioning tooling.
 
+### Support for WildFly Stability
+
+WildFly Glow CLI has a support 
+for link:http://docs.wildfly.org/32/Admin_Guide.html#Feature_stability_levels[WildFly Stability].
+
+WildFly Glow can detect and report that some of the discovered Galleon layers contain 
+content that are only available at a given stability and advise you to enable this stability level 
+(by using the `--config-stability-level=<stability level>` option.
+
+When provisioning a server, if a stability level has been specified, WildFly Glow will display how 
+a WildFly server must be started to enable the stability level. For example: `standalone.sh --stability=preview`
+
+When provisioning for OpenShift, if a stability level has been specified, WildFly Glow will configure the generated OpenShift Deployment 
+to start the server with the required stability level.
+
+To list the options related to the WildFly stability feature, call `wildfly-glow scan --help` and look for `--*stability-level` options.
+
