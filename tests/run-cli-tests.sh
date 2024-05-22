@@ -124,6 +124,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo Provision a server with a channel
+java -jar $jar scan examples/war/kitchensink.war --provision=SERVER --channels tests/wildfly-29.0.0.Final-channel.yaml
+
+if [ $? -ne 0 ]; then
+    echo "Error, check log"
+    exit 1
+fi
+
 echo Provision a bootable JAR
 java -jar $jar scan examples/war/kitchensink.war --provision=BOOTABLE_JAR
 
