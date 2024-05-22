@@ -76,7 +76,9 @@ public class ChannelMavenArtifactRepositoryManager implements MavenRepoManager, 
 
     @Override
     public void resolveLatestVersion(MavenArtifact artifact) throws MavenUniverseException {
-        throw new MavenUniverseException("Channel resolution can't be applied to Galleon universe");
+        // To resolve community universe
+        MavenRepoManager resolver = MavenResolver.newMavenResolver();
+        resolver.resolveLatestVersion(artifact);
     }
 
     @Override
@@ -92,13 +94,17 @@ public class ChannelMavenArtifactRepositoryManager implements MavenRepoManager, 
     @Override
     public void resolveLatestVersion(MavenArtifact artifact, String lowestQualifier, Pattern includeVersion,
             Pattern excludeVersion) throws MavenUniverseException {
-        throw new MavenUniverseException("Channel resolution can't be applied to Galleon universe");
+         // To resolve community universe
+        MavenRepoManager resolver = MavenResolver.newMavenResolver();
+        resolver.resolveLatestVersion(artifact, lowestQualifier, includeVersion, excludeVersion);
     }
 
     @Override
     public void resolveLatestVersion(MavenArtifact artifact, String lowestQualifier, boolean locallyAvailable)
             throws MavenUniverseException {
-        throw new MavenUniverseException("Channel resolution can't be applied to Galleon universe");
+        // To resolve community universe
+        MavenRepoManager resolver = MavenResolver.newMavenResolver();
+        resolver.resolveLatestVersion(artifact, lowestQualifier, locallyAvailable);
     }
 
     @Override

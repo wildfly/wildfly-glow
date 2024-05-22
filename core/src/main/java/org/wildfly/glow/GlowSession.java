@@ -62,6 +62,7 @@ import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.NoStreamFoundException;
 import org.wildfly.channel.VersionResult;
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 import org.wildfly.plugin.tools.bootablejar.BootableJarSupport;
@@ -164,9 +165,9 @@ public class GlowSession {
             } else {
                 provisioning = provider.newProvisioningBuilder(config).setInstallationHome(fakeHome).build();
             }
-            GalleonProvisioningConfig inputConfig = config;
             // Channel handling
             Map<ProducerSpec, FPID> fpVersions = new HashMap<>();
+            Map<ProducerSpec, FPID> resolvedInChannel = new HashMap<>();
             if (arguments.getChannelSession() != null) {
                 ChannelSession channelSession = arguments.getChannelSession();
                 // Compute versions based on channel.
@@ -176,11 +177,18 @@ public class GlowSession {
                     String[] coordinates = fpid.toString().split(":");
                     String groupId = coordinates[0];
                     String artifactId = coordinates[1];
-                    VersionResult res = channelSession.findLatestMavenArtifactVersion(groupId, artifactId,
+                    FeaturePackLocation loc;
+                    try {
+                        VersionResult res = channelSession.findLatestMavenArtifactVersion(groupId, artifactId,
                             "zip", null, null);
-                    FeaturePackLocation loc = dep.getLocation().replaceBuild(res.getVersion());
+                        loc = dep.getLocation().replaceBuild(res.getVersion());
+                    } catch(NoStreamFoundException ex) {
+                       writer.warn("WARNING: Feature-pack " + dep.getLocation() + " is not present in the configured channel, ignoring it.");
+                       continue;
+                    }
                     outputConfigBuilder.addFeaturePackDep(loc);
                     fpVersions.put(fpid.getProducer(), loc.getFPID());
+                    resolvedInChannel.put(fpid.getProducer(), loc.getFPID());
                 }
                 config = outputConfigBuilder.build();
             } else {
@@ -527,8 +535,8 @@ public class GlowSession {
                 envs.addAll(stronglySuggestConfigFixes.get(l));
             }
             // Identify the active feature-packs.
-            GalleonProvisioningConfig activeConfig = buildProvisioningConfig(inputConfig,
-                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability());
+            GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
+                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability(), resolvedInChannel);
 
             // Handle stability
             if (arguments.getConfigStability() != null) {
@@ -954,7 +962,7 @@ public class GlowSession {
             Set<Layer> decorators,
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
-            String configName, String configStability, String packageStability) throws ProvisioningException {
+            String configName, String configStability, String packageStability, Map<ProducerSpec, FPID> channelVersions) throws ProvisioningException {
         Map<ProducerSpec, GalleonFeaturePackConfig> map = new HashMap<>();
         Map<ProducerSpec, FPID> universeToGav = new HashMap<>();
         for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
@@ -986,6 +994,11 @@ public class GlowSession {
             FeaturePackLocation.FPID gav = universeToGav.get(cfg.getLocation().getProducer());
             FeaturePackLocation.FPID fpid = tmpFps.get(gav.getProducer());
             if (fpid != null) {
+                // Reset the version if ruled by channel
+                FPID orig = channelVersions.get(cfg.getLocation().getProducer());
+                if ( orig != null && orig.getLocation().isMavenCoordinates()) {
+                    gav = gav.getLocation().replaceBuild("").getFPID();
+                }
                 activeFeaturePacks.add(gav);
             }
         }
