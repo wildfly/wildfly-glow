@@ -76,6 +76,8 @@ public interface ScanArguments {
 
     String getConfigStability();
     String getPackageStability();
+    String getDefaultConfigStability();
+
     boolean isCli();
     List<Channel> getChannels();
 
@@ -163,6 +165,10 @@ public interface ScanArguments {
         }
         public Builder setConfigStability(String stability) {
             this.configStability = stability;
+            return this;
+        }
+        public Builder setDefaultConfigStability(String stability) {
+            this.defaultConfigStability = stability;
             return this;
         }
         public Builder setIsCli(boolean isCli) {

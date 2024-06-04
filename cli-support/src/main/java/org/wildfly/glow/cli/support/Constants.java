@@ -27,6 +27,8 @@ public interface Constants {
     String ADD_ONS_OPTION_SHORT = "-ao";
     String ADD_LAYERS_FOR_JNDI_OPTION = "--add-layers-for-jndi";
     String ADD_LAYERS_FOR_JNDI_OPTION_LABEL = "<layer>";
+    String APP_NAME_OPTION = "--app-name";
+    String APP_NAME_OPTION_LABEL = "<application name>";
     String BATCH_OPTION = "--batch";
     String BATCH_OPTION_SHORT = "-B";
     String BUILD_ENV_FILE_OPTION = "--build-env-file";
@@ -35,6 +37,8 @@ public interface Constants {
     String CHANNELS_OPTION = "--channels";
     String CHANNELS_OPTION_SHORT = "-cc";
     String CHANNELS_OPTION_LABEL = "<Channels yaml file path>";
+    String CONFIG_FILE_OPTION_LABEL = "<Path to the configuration file>";
+    String CONFIG_FILE_OPTION = "--config-file";
     String CLI_SCRIPT_OPTION = "--cli-script";
     String CLI_SCRIPT_OPTION_SHORT = "-cs";
     String CLI_SCRIPT_OPTION_LABEL = "<CLI script file path>";
@@ -44,10 +48,13 @@ public interface Constants {
     String CONFIG_STABILITY_OPTION = "--config-stability-level";
     String CONFIG_STABILITY_OPTION_SHORT = "-csl";
     String DISABLE_DEPLOYERS = "--disable-deployers";
-    String DISABLE_DEPLOYERS_LABEL = "<ALL|deployer name>";
+    String DISABLE_DEPLOYERS_OPTION_LABEL = "<ALL|deployer name>";
     String DOCKER_IMAGE_NAME_OPTION = "--docker-image-name";
     String DOCKER_IMAGE_NAME_OPTION_LABEL = "<docker image name>";
     String DOCKER_IMAGE_NAME_OPTION_SHORT = "-di";
+    String DRY_RUN_OPTION = "--dry-run";
+    String ENABLE_DEPLOYERS = "--enable-deployers";
+    String ENABLE_DEPLOYERS_OPTION_LABEL = "<deployer name>";
     String ENV_FILE_OPTION = "--env-file";
     String ENV_FILE_OPTION_SHORT = "-ef";
     String ENV_FILE_OPTION_LABEL = "<env file path>";

@@ -28,9 +28,7 @@ import java.nio.file.Path;
 public class Utils {
 
     public static void persistResource(Path target, Object resource, String name) throws IOException {
-        Path dir = target.resolve("resources");
-        Files.createDirectories(dir);
-        Path resourceFile = dir.resolve(name);
+        Path resourceFile = target.resolve(name);
         Files.write(resourceFile, Serialization.asYaml(resource).getBytes());
     }
 }

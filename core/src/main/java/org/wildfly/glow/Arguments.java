@@ -35,6 +35,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Set<Pattern> excludeArchivesFromScan;
     private final String configStability;
     private final String packageStability;
+    private final String defaultConfigStability;
     private final boolean isCli;
     private final List<Channel> channels;
 
@@ -54,6 +55,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             Set<Pattern> excludeArchivesFromScan,
             String configStability,
             String packageStability,
+            String defaultConfigStability,
             boolean isCli,
             List<Channel> channels) {
         this.executionProfiles = executionProfiles;
@@ -71,7 +73,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.excludeArchivesFromScan = excludeArchivesFromScan;
         this.configStability = configStability;
         this.packageStability = packageStability;
-
+        this.defaultConfigStability = defaultConfigStability;
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         this.compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         String manualLayers = hiddenPropertiesAccessor.getProperty(MANUAL_LAYERS_PROPERTY);
@@ -195,6 +197,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public String getPackageStability() {
         return packageStability;
+    }
+
+    @Override
+    public String getDefaultConfigStability() {
+        return defaultConfigStability;
     }
 
     /**

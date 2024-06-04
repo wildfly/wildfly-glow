@@ -538,7 +538,8 @@ public class GlowSession {
                     universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability(), originalVersions);
 
             // Handle stability
-            if (arguments.getConfigStability() != null) {
+            String configStability = arguments.getConfigStability() == null ? arguments.getDefaultConfigStability() : arguments.getConfigStability();
+            if (configStability != null) {
                 List<Layer> checkLayers = new ArrayList<>();
                 checkLayers.add(baseLayer);
                 checkLayers.addAll(decorators);
@@ -557,7 +558,7 @@ public class GlowSession {
                             List<GalleonFeatureSpec> lst = rt.getAllFeatures();
                             for (GalleonFeatureSpec spec : lst) {
                                 String stab = spec.getStability();
-                                if (stab != null && !StabilitySupport.enables(arguments.getConfigStability(), stab)) {
+                                if (stab != null && !StabilitySupport.enables(configStability, stab)) {
                                     Set<String> set = excludedFeatures.get(layer);
                                     if (set == null) {
                                         set = new HashSet<>();
@@ -567,7 +568,7 @@ public class GlowSession {
                                 }
                                 for (GalleonFeatureParamSpec pspec : spec.getParams()) {
                                     String pstab = pspec.getStability();
-                                    if (pstab != null && !StabilitySupport.enables(arguments.getConfigStability(), pstab)) {
+                                    if (pstab != null && !StabilitySupport.enables(configStability, pstab)) {
                                         Set<String> set = excludedFeatures.get(layer);
                                         if (set == null) {
                                             set = new HashSet<>();
@@ -618,7 +619,8 @@ public class GlowSession {
                     errorSession,
                     excludedPackages,
                     excludedFeatures,
-                    fpVersions
+                    fpVersions,
+                    channels
             );
 
             return scanResults;
@@ -639,7 +641,8 @@ public class GlowSession {
                 writer.warn("You are provisioning a server although some errors still exist. You should first fix them.");
             }
         }
-        if (!OutputFormat.PROVISIONING_XML.equals(arguments.getOutput()) && !OutputFormat.OPENSHIFT.equals(arguments.getOutput())) {
+        if (!OutputFormat.PROVISIONING_XML.equals(arguments.getOutput()) &&
+            !OutputFormat.OPENSHIFT.equals(arguments.getOutput())) {
             Path generatedArtifact = provisionServer(arguments.getBinaries(),
                     scanResults.getProvisioningConfig(), resolver, arguments.getOutput(),
                     arguments.isCloud(), target);

@@ -139,8 +139,11 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CLI_SCRIPT_OPTION_SHORT, Constants.CLI_SCRIPT_OPTION}, paramLabel = Constants.CLI_SCRIPT_OPTION_LABEL)
     Optional<Path> cliScriptFile;
 
-    @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.ADD_ONS_OPTION_LABEL)
+    @CommandLine.Option(names = Constants.DISABLE_DEPLOYERS, split = ",", paramLabel = Constants.DISABLE_DEPLOYERS_OPTION_LABEL)
     Set<String> disableDeployers = new LinkedHashSet<>();
+
+    @CommandLine.Option(names = Constants.ENABLE_DEPLOYERS, split = ",", paramLabel = Constants.ENABLE_DEPLOYERS_OPTION_LABEL)
+    Set<String> enableDeployers = new LinkedHashSet<>();
 
     @CommandLine.Option(names = {Constants.SYSTEM_PROPERTIES_OPTION_SHORT, Constants.SYSTEM_PROPERTIES_OPTION},
             split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
@@ -152,19 +155,35 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CHANNELS_OPTION_SHORT, Constants.CHANNELS_OPTION}, paramLabel = Constants.CHANNELS_OPTION_LABEL)
     Optional<Path> channelsFile;
 
+    @CommandLine.Option(names = {Constants.CONFIG_FILE_OPTION}, paramLabel = Constants.CONFIG_FILE_OPTION_LABEL)
+    Optional<Path> configFile;
+
+    @CommandLine.Option(names = {Constants.APP_NAME_OPTION}, paramLabel = Constants.APP_NAME_OPTION_LABEL)
+    Optional<String> appName;
+
+    @CommandLine.Option(names = Constants.DRY_RUN_OPTION)
+    Optional<Boolean> dryRun;
+
     @Override
     public Integer call() throws Exception {
         Utils.setSystemProperties(systemProperties);
+        Map<String, String> configMap = Utils.readConfigFile(configFile.orElse(null));
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         boolean compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         if (!compact) {
             print("Wildfly Glow is scanning...");
         }
         Builder builder = Arguments.scanBuilder();
-        if (haProfile.orElse(false)) {
-            Set<String> profiles = new HashSet<>();
-            profiles.add(Constants.HA);
+        Set<String> profiles = new HashSet<>();
+        profiles.add(Constants.HA);
+        boolean haProfileEnabled = haProfile.orElse(false);
+        if (haProfileEnabled) {
             builder.setExecutionProfiles(profiles);
+        } else {
+            haProfileEnabled = Utils.getHaFromConfig(configMap);
+            if (haProfileEnabled) {
+                builder.setExecutionProfiles(profiles);
+            }
         }
         if (!layersForJndi.isEmpty()) {
             builder.setJndiLayers(layersForJndi);
@@ -183,6 +202,11 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
             builder.setVersion(wildflyServerVersion.get());
+        } else {
+            String vers = Utils.getServerVersionFromConfig(configMap);
+            if (vers != null) {
+                builder.setVersion(vers);
+            }
         }
         Map<String, String> extraEnv = new HashMap<>();
         Map<String, String> buildExtraEnv = new HashMap<>();
@@ -195,6 +219,15 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
             }
             extraEnv.putAll(Utils.handleOpenShiftEnvFile(envFile.get()));
+        }
+        if (dryRun.isPresent()) {
+            if (provision.isPresent()) {
+                if (!OPENSHIFT.equals(provision.get())) {
+                    throw new Exception("--dry-run is only usable when --provision=" + OPENSHIFT + " option is set.");
+                }
+            } else {
+                throw new Exception("--dry-run is only usable when --provision=" + OPENSHIFT + " option is set.");
+            }
         }
         if (buildEnvFile.isPresent()) {
             if (provision.isPresent()) {
@@ -233,6 +266,7 @@ public class ScanCommand extends AbstractCommand {
             }
         }
         builder.setVerbose(verbose);
+        Utils.addAddOnsFromConfig(configMap, addOns);
         if (!addOns.isEmpty()) {
             builder.setUserEnabledAddOns(addOns);
         }
@@ -272,9 +306,9 @@ public class ScanCommand extends AbstractCommand {
         }
         builder.setExcludeArchivesFromScan(excludeArchivesFromScan);
 
-        // Enforce community stability level. Doing so, any discovered features at a lower level are advertised
+        // Set a default community stability level. Doing so, any discovered features at a lower level are advertised
         String userSetConfigStability = null;
-        builder.setConfigStability(org.jboss.galleon.Constants.STABILITY_COMMUNITY);
+        builder.setDefaultConfigStability(org.jboss.galleon.Constants.STABILITY_COMMUNITY);
         if (stability.isPresent()) {
             if (configStability.isPresent()) {
                 throw new Exception(Constants.CONFIG_STABILITY_OPTION + " can't be set when " + Constants.STABILITY_OPTION + " is set");
@@ -301,10 +335,12 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Can only set a docker image name when provisioning a docker image. Remove the " + Constants.DOCKER_IMAGE_NAME_OPTION + " option");
             }
         }
+        Utils.addDisableDeployersFromConfig(configMap, disableDeployers);
+        Utils.addEnableDeployersFromConfig(configMap, enableDeployers);
         builder.setIsCli(true);
         ScanResults scanResults = GlowSession.scan(repoManager, builder.build(), GlowMessageWriter.DEFAULT);
         ConfigurationResolver configurationResolver = new CLIConfigurationResolver((provision.isPresent() && provision.get().equals(OPENSHIFT)),
-                disableDeployers);
+                disableDeployers, enableDeployers);
         scanResults.outputInformation(configurationResolver);
         if (provision.isEmpty()) {
             if (!compact) {
@@ -365,7 +401,11 @@ public class ScanCommand extends AbstractCommand {
                     break;
                 }
                 case OPENSHIFT: {
-                    print("@|bold Openshift build and deploy...|@");
+                    if(dryRun.isPresent()) {
+                        print("@|bold Openshift resources generation...|@");
+                    } else {
+                        print("@|bold Openshift build and deploy...|@");
+                    }
                     break;
                 }
             }
@@ -435,20 +475,27 @@ public class ScanCommand extends AbstractCommand {
             }
             if (OutputFormat.OPENSHIFT.equals(provision.get())) {
                 OpenShiftSupport.deploy(deployments,
+                        appName.orElse(null),
                         GlowMessageWriter.DEFAULT,
                         target,
                         scanResults,
-                        haProfile.orElse(false),
+                        haProfileEnabled,
                         extraEnv,
                         buildExtraEnv,
                         disableDeployers,
+                        enableDeployers,
                         initScriptFile.orElse(null),
                         cliScriptFile.orElse(null),
                         new OpenShiftConfiguration.Builder().build(),
                         MavenResolver.newMavenResolver(),
                         userSetConfigStability,
-                        Collections.emptyMap());
-                print("@|bold \nOpenshift build and deploy DONE.|@");
+                        Collections.emptyMap(), dryRun.isPresent(),
+                        scanResults.getChannels());
+                if(dryRun.isPresent()) {
+                    print("@|bold \nCloud resources generation DONE.|@");
+                } else {
+                    print("@|bold \nOpenshift build and deploy DONE.|@");
+                }
             } else {
                 if (content.getDockerImageName() != null) {
                     print("@|bold To run the image call: '[docker | podman] run -p 8080:8080 -p 9990:9990 " + content.getDockerImageName() + "'|@");
