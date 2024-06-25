@@ -19,14 +19,20 @@ package org.wildfly.glow.cli.support;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.Channel;
+import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.AddOn;
+import org.wildfly.glow.Arguments;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.ProvisioningUtils;
+import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.maven.MavenResolver;
 
 /**
@@ -58,8 +64,19 @@ public class Utils {
             }
 
         };
+        ScanArguments.Builder builder = Arguments.scanBuilder();
+        MavenRepoManager repoManager;
+        List<Channel> channels = Collections.emptyList();
+        if (channelsFile != null) {
+            String content = Files.readString(channelsFile);
+            channels = ChannelMapper.fromString(content);
+            builder.setChannels(channels);
+            repoManager = MavenResolver.newMavenResolver(channels);
+        } else {
+            repoManager = MavenResolver.newMavenResolver();
+        }
         ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml, isLatest, serverVersion,
-                isPreview, MavenResolver.buildMavenResolver(channelsFile));
+                isPreview, channels, repoManager);
     }
 
     public static void setSystemProperties(Set<String> systemProperties) throws Exception {

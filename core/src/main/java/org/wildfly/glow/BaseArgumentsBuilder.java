@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.Channel;
 
 public class BaseArgumentsBuilder {
     protected Set<String> executionProfiles = Collections.emptySet();
@@ -43,7 +43,7 @@ public class BaseArgumentsBuilder {
     protected String packageStability;
     protected String configStability;
     protected boolean isCli;
-    protected ChannelSession channelSession;
+    protected List<Channel> channels;
 
     protected BaseArgumentsBuilder() {
 
@@ -71,6 +71,6 @@ public class BaseArgumentsBuilder {
                 configStability,
                 packageStability,
                 isCli,
-                channelSession);
+                channels);
     }
 }

@@ -49,16 +49,26 @@ public class ConfiguredChannels {
         if (channels.isEmpty()) {
             throw new MojoExecutionException("No channel specified.");
         }
-        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-        session.setLocalRepositoryManager(contextSession.getLocalRepositoryManager());
-        session.setOffline(offline);
-        Map<String, RemoteRepository> mapping = new HashMap<>();
-        for (RemoteRepository r : repositories) {
-            mapping.put(r.getId(), r);
-        }
         List<Channel> channelDefinitions = new ArrayList<>();
         for (ChannelConfiguration channelConfiguration : channels) {
             channelDefinitions.add(channelConfiguration.toChannel(repositories));
+        }
+        channelSession = buildChannelSession(system, contextSession, repositories, channelDefinitions);
+    }
+
+    ChannelSession getChannelSession() {
+        return channelSession;
+    }
+
+    public static ChannelSession buildChannelSession(RepositorySystem system,
+            RepositorySystemSession contextSession,
+            List<RemoteRepository> repositories,
+            List<org.wildfly.channel.Channel> channels) {
+        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        session.setLocalRepositoryManager(contextSession.getLocalRepositoryManager());
+        Map<String, RemoteRepository> mapping = new HashMap<>();
+        for (RemoteRepository r : repositories) {
+            mapping.put(r.getId(), r);
         }
         Function<Repository, RemoteRepository> mapper = r -> {
             RemoteRepository rep = mapping.get(r.getId());
@@ -68,11 +78,6 @@ public class ConfiguredChannels {
             return rep;
         };
         VersionResolverFactory factory = new VersionResolverFactory(system, session, mapper);
-        channelSession = new ChannelSession(channelDefinitions, factory);
+        return new ChannelSession(channels, factory);
     }
-
-    ChannelSession getChannelSession() {
-        return channelSession;
-    }
-
 }

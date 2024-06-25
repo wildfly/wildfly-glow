@@ -48,7 +48,8 @@ import java.util.Optional;
 import java.util.Set;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
-import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.Channel;
+import org.wildfly.channel.ChannelMapper;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
@@ -58,7 +59,6 @@ import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
 import org.wildfly.glow.StabilitySupport;
 import org.wildfly.glow.cli.support.Utils;
-import org.wildfly.glow.maven.ChannelMavenArtifactRepositoryManager;
 
 @CommandLine.Command(
         name = Constants.SCAN_COMMAND,
@@ -248,9 +248,12 @@ public class ScanCommand extends AbstractCommand {
             if (!Files.exists(channelsFilePath)) {
                 throw new Exception(channelsFilePath + " file doesn't exist");
             }
-            ChannelSession session = MavenResolver.buildChannelSession(channelsFilePath);
-            builder.setChannelSession(session);
-            repoManager = new ChannelMavenArtifactRepositoryManager(session);
+            String content = Files.readString(channelsFilePath);
+            List<Channel> channels = ChannelMapper.fromString(content);
+            builder.setChannels(channels);
+            repoManager = MavenResolver.newMavenResolver(channels);
+        } else {
+            repoManager = MavenResolver.newMavenResolver();
         }
         if (provision.isPresent()) {
             if (BOOTABLE_JAR.equals(provision.get()) && cloud.orElse(false)) {
@@ -299,8 +302,7 @@ public class ScanCommand extends AbstractCommand {
             }
         }
         builder.setIsCli(true);
-        MavenRepoManager directMavenResolver = MavenResolver.newMavenResolver();
-        ScanResults scanResults = GlowSession.scan(repoManager == null ? directMavenResolver : repoManager, builder.build(), GlowMessageWriter.DEFAULT);
+        ScanResults scanResults = GlowSession.scan(repoManager, builder.build(), GlowMessageWriter.DEFAULT);
         ConfigurationResolver configurationResolver = new CLIConfigurationResolver((provision.isPresent() && provision.get().equals(OPENSHIFT)),
                 disableDeployers);
         scanResults.outputInformation(configurationResolver);
@@ -412,6 +414,15 @@ public class ScanCommand extends AbstractCommand {
                         break;
 
                     }
+                    case CHANNEL_FILE: {
+                        switch (provision.get()) {
+                            case PROVISIONING_XML: {
+                                print("@|bold WildFly Channel is located in " + rel + " file|@");
+                            }
+                        }
+                        break;
+
+                    }
                     case SERVER_DIR: {
                         if (cloud.orElse(false)) {
                             completedMessage = "@|bold To run the server call: 'JBOSS_HOME=" + rel + " sh " + rel + "/bin/openshift-launch.sh'|@";
@@ -434,7 +445,7 @@ public class ScanCommand extends AbstractCommand {
                         initScriptFile.orElse(null),
                         cliScriptFile.orElse(null),
                         new OpenShiftConfiguration.Builder().build(),
-                        directMavenResolver,
+                        MavenResolver.newMavenResolver(),
                         userSetConfigStability,
                         Collections.emptyMap());
                 print("@|bold \nOpenshift build and deploy DONE.|@");

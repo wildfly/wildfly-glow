@@ -61,9 +61,9 @@ import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
-import org.wildfly.channel.ChannelSession;
-import org.wildfly.channel.NoStreamFoundException;
-import org.wildfly.channel.VersionResult;
+import org.jboss.galleon.universe.maven.MavenArtifact;
+import org.wildfly.channel.Channel;
+import org.wildfly.channel.ChannelMapper;
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 import org.wildfly.plugin.tools.bootablejar.BootableJarSupport;
 
@@ -82,11 +82,17 @@ public class GlowSession {
     private final MavenRepoManager resolver;
     private final Arguments arguments;
     private final GlowMessageWriter writer;
-
-    private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer) {
-        this.resolver = resolver;
+    private final List<Channel> channels = new ArrayList<>();
+    private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer) throws Exception {
         this.arguments = arguments;
         this.writer = writer;
+        MavenRepoManager repoManager = resolver;
+        if (!Files.exists(OFFLINE_ZIP)) {
+            if (arguments.getChannels() != null) {
+                channels.addAll(arguments.getChannels());
+            }
+        }
+        this.resolver = repoManager;
     }
 
     public static void goOffline(MavenRepoManager resolver, GoOfflineArguments arguments, GlowMessageWriter writer) throws Exception {
@@ -137,7 +143,6 @@ public class GlowSession {
     }
 
     public ScanResults scan() throws Exception {
-
         Set<Layer> layers = new LinkedHashSet<>();
         Set<AddOn> possibleAddOns = new TreeSet<>();
         ErrorIdentificationSession errorSession = new ErrorIdentificationSession();
@@ -165,38 +170,32 @@ public class GlowSession {
             } else {
                 provisioning = provider.newProvisioningBuilder(config).setInstallationHome(fakeHome).build();
             }
-            // Channel handling
+            // Handle cases were no version is provided
             Map<ProducerSpec, FPID> fpVersions = new HashMap<>();
-            Map<ProducerSpec, FPID> resolvedInChannel = new HashMap<>();
-            if (arguments.getChannelSession() != null) {
-                ChannelSession channelSession = arguments.getChannelSession();
-                // Compute versions based on channel.
-                GalleonProvisioningConfig.Builder outputConfigBuilder = GalleonProvisioningConfig.builder();
-                for (GalleonFeaturePackConfig dep : config.getFeaturePackDeps()) {
-                    FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(dep.getLocation().getFPID(), universeResolver);
-                    String[] coordinates = fpid.toString().split(":");
-                    String groupId = coordinates[0];
-                    String artifactId = coordinates[1];
-                    FeaturePackLocation loc;
-                    try {
-                        VersionResult res = channelSession.findLatestMavenArtifactVersion(groupId, artifactId,
-                            "zip", null, null);
-                        loc = dep.getLocation().replaceBuild(res.getVersion());
-                    } catch(NoStreamFoundException ex) {
-                       writer.warn("WARNING: Feature-pack " + dep.getLocation() + " is not present in the configured channel, ignoring it.");
-                       continue;
-                    }
-                    outputConfigBuilder.addFeaturePackDep(loc);
-                    fpVersions.put(fpid.getProducer(), loc.getFPID());
-                    resolvedInChannel.put(fpid.getProducer(), loc.getFPID());
+            Map<ProducerSpec, FPID> originalVersions = new HashMap<>();
+            // Resolve feature-packs
+            GalleonProvisioningConfig.Builder outputConfigBuilder = GalleonProvisioningConfig.builder();
+            for (GalleonFeaturePackConfig dep : config.getFeaturePackDeps()) {
+                FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(dep.getLocation().getFPID(), universeResolver);
+                String[] coordinates = fpid.toString().split(":");
+                String groupId = coordinates[0];
+                String artifactId = coordinates[1];
+                String version = null;
+                MavenArtifact artifact = new MavenArtifact();
+                artifact.setArtifactId(artifactId);
+                artifact.setGroupId(groupId);
+                if(coordinates.length >= 3) {
+                    version = coordinates[2];
                 }
-                config = outputConfigBuilder.build();
-            } else {
-                for (GalleonFeaturePackConfig dep : config.getFeaturePackDeps()) {
-                    FeaturePackLocation.FPID fpid = Utils.toMavenCoordinates(dep.getLocation().getFPID(), universeResolver);
-                    fpVersions.put(fpid.getProducer(), dep.getLocation().getFPID());
-                }
+                artifact.setVersion(version);
+                artifact.setExtension("zip");
+                resolver.resolve(artifact);
+                FeaturePackLocation loc = dep.getLocation().replaceBuild(artifact.getVersion());
+                outputConfigBuilder.addFeaturePackDep(loc);
+                fpVersions.put(fpid.getProducer(), loc.getFPID());
+                originalVersions.put(fpid.getProducer(), fpid);
             }
+            config = outputConfigBuilder.build();
             // BUILD MODEL
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all
@@ -536,7 +535,7 @@ public class GlowSession {
             }
             // Identify the active feature-packs.
             GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
-                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability(), resolvedInChannel);
+                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability(), originalVersions);
 
             // Handle stability
             if (arguments.getConfigStability() != null) {
@@ -674,6 +673,12 @@ public class GlowSession {
             Path prov = target.resolve("provisioning.xml");
             provisioning.storeProvisioningConfig(scanResults.getProvisioningConfig(),prov);
             files.put(OutputContent.OutputFile.PROVISIONING_XML_FILE, prov.toAbsolutePath());
+            if(!channels.isEmpty()) {
+                String channelsContent = ChannelMapper.toYaml(channels);
+                Path channelsFile = target.resolve("channel.yaml");
+                Files.write(channelsFile, channelsContent.getBytes());
+                files.put(OutputContent.OutputFile.CHANNEL_FILE, channelsFile.toAbsolutePath());
+            }
         }
         StringBuilder envFileContent = new StringBuilder();
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty() ||
@@ -997,7 +1002,7 @@ public class GlowSession {
                 // Reset the version if ruled by channel
                 FPID orig = channelVersions.get(cfg.getLocation().getProducer());
                 if ( orig != null && orig.getLocation().isMavenCoordinates()) {
-                    gav = gav.getLocation().replaceBuild("").getFPID();
+                    gav = gav.getLocation().replaceBuild(orig.getBuild()).getFPID();
                 }
                 activeFeaturePacks.add(gav);
             }

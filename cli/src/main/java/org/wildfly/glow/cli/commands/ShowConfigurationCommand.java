@@ -16,12 +16,15 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.nio.file.Files;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.ProvisioningUtils;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -32,11 +35,15 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.Channel;
+import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.maven.MavenResolver;
 import org.wildfly.glow.Arguments;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
+import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 
 import picocli.CommandLine;
@@ -98,7 +105,18 @@ public class ShowConfigurationCommand extends AbstractCommand {
                 print(configStr);
             }
         };
-        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), MavenResolver.buildMavenResolver(channelsFile.orElse(null)));
+        ScanArguments.Builder builder = Arguments.scanBuilder();
+        MavenRepoManager repoManager;
+        List<Channel> channels = Collections.emptyList();
+        if (channelsFile.isPresent()) {
+            String content = Files.readString(channelsFile.get());
+            channels = ChannelMapper.fromString(content);
+            builder.setChannels(channels);
+            repoManager = MavenResolver.newMavenResolver(channels);
+        } else {
+            repoManager = MavenResolver.newMavenResolver();
+        }
+        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
 
         return 0;
     }
