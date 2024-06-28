@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.0.6.Final,</span>
-<span id="revdate">2024-05-22T12:39:06Z</span>
+<span id="revnumber">version 1.1.0.Final,</span>
+<span id="revdate">2024-06-28T09:46:04Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -625,7 +625,83 @@ The JGroups <code>dns.DNS_PING</code> protocol is enabled for the members of the
 </div>
 </div>
 <div class="sect3">
-<h4 id="_wildfly_additional_features_discovery"><a class="anchor" href="#_wildfly_additional_features_discovery"></a><a class="link" href="#_wildfly_additional_features_discovery">1.3.2. WildFly additional features discovery</a></h4>
+<h4 id="_openshift_dry_run_mode"><a class="anchor" href="#_openshift_dry_run_mode"></a><a class="link" href="#_openshift_dry_run_mode">1.3.2. OpenShift dry-run mode</a></h4>
+<div class="paragraph">
+<p>When using the <code>--dry-run</code> option, WildFly glow will not interact with the cluster but will generate all the needed resources that are required to build
+and deploy your application in the cluster of your choice. You can then assemble the images and deploy to your cluster in a flexible way.
+The generated resources allow, for example, to setup a <a href="https://tekton.dev/">Tekton</a> pipeline to produce images,
+and use <a href="https://argoproj.github.io/cd/">Argo CD</a> to manage your k8s resources.</p>
+</div>
+<div class="sect4">
+<h5 id="_docker_files_for_the_server_and_application_images"><a class="anchor" href="#_docker_files_for_the_server_and_application_images"></a><a class="link" href="#_docker_files_for_the_server_and_application_images">Docker files for the server and application images</a></h5>
+<div class="paragraph">
+<p>WildFly Glow separates the build of your application image into 2 steps. A first step to build the server image that only contains the WildFly server.
+A second step that, from the server image, produces an application image that contains the deployments, the WildFly CLI script (if any) and the bash initialization script (if any).</p>
+</div>
+<div class="paragraph">
+<p>In order to share the server image between various applications, a server image tag is computed based on all that makes the content of the server unique:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The generated provisioning XML file</p>
+</li>
+<li>
+<p>Env variables (if any) used at provisioning time.</p>
+</li>
+<li>
+<p>WildFly channel (if any) used at provisioning time.</p>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_bulding_and_pushing_the_server_image"><a class="anchor" href="#_bulding_and_pushing_the_server_image"></a><a class="link" href="#_bulding_and_pushing_the_server_image">Bulding and pushing the server image</a></h6>
+<div class="paragraph">
+<p>Once WildFly Glow has generated the resources, you need to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Provision the server using the generated <code>&lt;server-version&gt;/galleon/provisioning.xml</code> file (using Galleon CLI) inside the directory <code>&lt;server-version&gt;/docker/server/server</code>.</p>
+</li>
+<li>
+<p>Build and push the server image using the server tag generated in <code>&lt;server-version&gt;/docker/image.properties</code> and the docker file <code>&lt;server-version&gt;/docker/server/Dockerfile</code>.
+Makes sure to run the build inside the directory <code>&lt;server-version&gt;/docker/server</code>, that is the expected build docker context.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_bulding_and_pushing_the_application_image"><a class="anchor" href="#_bulding_and_pushing_the_application_image"></a><a class="link" href="#_bulding_and_pushing_the_application_image">Bulding and pushing the application image</a></h6>
+<div class="paragraph">
+<p>Once you have pushed the server in a container image repository, you need to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In the <code>&lt;server-version&gt;/docker/app/Dockerfile</code> file replace the <code>WILDFLY_GLOW_SERVER_IMAGE_REPOSITORY</code> placeholder with the pushed server image repository.</p>
+</li>
+<li>
+<p>Build and push the application image using the application tag generated in <code>&lt;server-version&gt;/docker/image.properties</code> and the docker file <code>&lt;server-version&gt;/docker/app/Dockerfile</code>.
+Makes sure to run the build inside the directory <code>&lt;server-version&gt;/docker/app</code>, that is the expected build docker context.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_updating_the_k8s_deployment_with_the_generated_application_image"><a class="anchor" href="#_updating_the_k8s_deployment_with_the_generated_application_image"></a><a class="link" href="#_updating_the_k8s_deployment_with_the_generated_application_image">Updating the k8s deployment with the generated application image</a></h5>
+<div class="paragraph">
+<p>The generated deployment (or the statefulSet in case of HA application) in <code>&lt;server-version&gt;/resources/deployment/</code> directory references the container image using the placeholder <code>WILDFLY_GLOW_APP_IMAGE_REPOSITORY</code>. Replaces it
+with the actual application image repository.</p>
+</div>
+<div class="paragraph">
+<p>You are good to go. You can now create the k8s resources in your cluster.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_wildfly_additional_features_discovery"><a class="anchor" href="#_wildfly_additional_features_discovery"></a><a class="link" href="#_wildfly_additional_features_discovery">1.3.3. WildFly additional features discovery</a></h4>
 <div class="paragraph">
 <p>Some WildFly server features can&#8217;t be discovered by scanning application deployment. A good example is the usage of SSL to secure the http
 access. Another one is the need for WildFly tooling (e,g,: WildFly CLI, elytron tooling, &#8230;&#8203;).
@@ -634,7 +710,7 @@ for your application.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_connection_to_databases"><a class="anchor" href="#_connection_to_databases"></a><a class="link" href="#_connection_to_databases">1.3.3. Connection to databases</a></h4>
+<h4 id="_connection_to_databases"><a class="anchor" href="#_connection_to_databases"></a><a class="link" href="#_connection_to_databases">1.3.4. Connection to databases</a></h4>
 <div class="paragraph">
 <p>WildFly Glow detects that your application requires a datasource and will suggest you with database <code>add-ons</code> to be included in order
 to connect to the DB of your choice (postgresql, mysql, &#8230;&#8203;).</p>
@@ -1040,7 +1116,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.6.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.1.0.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1385,7 +1461,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.6.Final:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.1.0.Final:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1545,7 +1621,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.0.6.Final:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.1.0.Final:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2151,8 +2227,8 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.0.6.Final<br>
-Last updated 2024-05-22 14:39:26 +0200
+Version 1.1.0.Final<br>
+Last updated 2024-06-28 11:46:24 +0200
 </div>
 </div>
 </body>
