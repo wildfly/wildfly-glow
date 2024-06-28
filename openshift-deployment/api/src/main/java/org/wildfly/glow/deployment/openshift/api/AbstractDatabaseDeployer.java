@@ -103,7 +103,7 @@ public class AbstractDatabaseDeployer implements Deployer {
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
-            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
+            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv, boolean dryRun) throws Exception {
         writer.info("Deploying " + dbName);
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, dbName);
@@ -131,20 +131,28 @@ public class AbstractDatabaseDeployer implements Deployer {
                 withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
-        osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, deployment, dbName + "-deployment.yaml");
+        if (!dryRun) {
+            osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
+        }
+        Utils.persistResource(OpenShiftSupport.getDeployersDirectory(target), deployment, dbName + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(this.port);
         Service service = new ServiceBuilder().withNewMetadata().withName(dbName).endMetadata().
                 withNewSpec().withPorts(new ServicePort().toBuilder().withName(this.port + "-tcp").withProtocol("TCP").
                         withPort(this.port).
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
-        osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, service, dbName + "-service.yaml");
+        if (!dryRun) {
+            osClient.services().resource(service).createOr(NonDeletingOperation::update);
+        }
+        Utils.persistResource(OpenShiftSupport.getDeployersDirectory(target), service, dbName + "-service.yaml");
         Map<String, String> ret = new HashMap<>();
         ret.putAll(getExistingEnv(env));
         ret.putAll(APP_MAP);
-        writer.info(dbName + " server has been deployed");
+        if(dryRun) {
+            writer.info("Resources for " + dbName + " have been generated");
+        } else {
+            writer.info(dbName + " server has been deployed");
+        }
         return ret;
     }
 

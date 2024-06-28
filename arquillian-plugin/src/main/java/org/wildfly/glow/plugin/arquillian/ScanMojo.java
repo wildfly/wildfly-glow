@@ -44,7 +44,6 @@ import org.wildfly.glow.ScanResults;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -60,8 +59,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.maven.plugin.logging.Log;
-import org.wildfly.channel.UnresolvedMavenArtifactException;
-import org.wildfly.channel.VersionResult;
 import org.jboss.galleon.ProvisioningException;
 import org.jboss.galleon.api.GalleonBuilder;
 import org.jboss.galleon.api.GalleonFeaturePack;
@@ -70,10 +67,9 @@ import org.jboss.galleon.api.config.GalleonConfigurationWithLayers;
 import org.jboss.galleon.api.config.GalleonConfigurationWithLayersBuilder;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
-import org.jboss.galleon.universe.Channel;
 import org.jboss.galleon.universe.FeaturePackLocation;
-import org.jboss.galleon.universe.UniverseResolver;
-import org.jboss.galleon.universe.maven.MavenChannel;
+import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.Channel;
 import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
@@ -322,66 +318,17 @@ public class ScanMojo extends AbstractMojo {
             for (String s : project.getTestClasspathElements()) {
                 paths.add(new File(s).getAbsolutePath());
             }
-            MavenArtifactRepositoryManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+            MavenRepoManager artifactResolver;
+             ConfiguredChannels cr = null;
             if (channels != null && !channels.isEmpty()) {
-                getLog().debug("WildFly channel enabled, feature-pack versions are retrieved from channels (if stream known).");
-                try {
-                    ConfiguredChannels cr = new ConfiguredChannels(channels,
-                            repoSystem, repoSession, repositories,
-                            getLog(), true);
-                    UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
-                    for (GalleonFeaturePack fp : featurePacks) {
-                        if (fp.getLocation() == null && (fp.getGroupId() == null || fp.getArtifactId() == null)) {
-                            throw new IllegalArgumentException("Feature-pack location or Maven GAV is missing");
-                        }
-                        String groupId;
-                        String artifactId;
-                        String loc = fp.getLocation();
-                        if (loc == null) {
-                            groupId = fp.getGroupId();
-                            artifactId = fp.getArtifactId();
-                        } else {
-                            // Special case for G:A that conflicts with producer:channel that we can't have in the plugin.
-                            if (!FeaturePackLocation.fromString(loc).hasUniverse()) {
-                                long numSeparators = loc.chars().filter(ch -> ch == ':').count();
-                                if (numSeparators <= 1) {
-                                    loc += ":";
-                                }
-                            }
-                            FeaturePackLocation location = FeaturePackLocation.fromString(loc);
-                            if (location.isMavenCoordinates()) {
-                                String[] coordinates = loc.split(":");
-                                groupId = coordinates[0];
-                                artifactId = coordinates[1];
-                            } else {
-                                Channel c = universeResolver.getChannel(location);
-                                MavenChannel mc = (MavenChannel) c;
-                                groupId = mc.getFeaturePackGroupId();
-                                artifactId = mc.getFeaturePackArtifactId();
-                            }
-                        }
-                        try {
-                            VersionResult res = cr.getChannelSession().findLatestMavenArtifactVersion(groupId, artifactId,
-                                    fp.getExtension(), fp.getClassifier(), null);
-                            getLog().debug(fp.getGroupId() + ":" + fp.getArtifactId() + ", Channel resolved version " + res.getVersion());
-                            if (fp.getLocation() == null) {
-                                fp.setVersion(res.getVersion());
-                            } else {
-                                FeaturePackLocation l = FeaturePackLocation.fromString(loc);
-                                FeaturePackLocation resolved = new FeaturePackLocation(l.getUniverse(),
-                                        l.getProducerName(),
-                                        l.getChannelName(),
-                                        l.getFrequency(),
-                                        res.getVersion());
-                                fp.setLocation(resolved.toString());
-                            }
-                        } catch (Exception ex) {
-                            getLog().debug("Got exception trying to resolve " + fp.getGroupId() + ":" + fp.getArtifactId(), ex);
-                        }
-                    }
-                } catch (MalformedURLException | UnresolvedMavenArtifactException ex) {
-                    throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
+                getLog().debug("WildFly channel enabled.");
+                List<Channel> lst = new ArrayList<>();
+                for (ChannelConfiguration conf : channels) {
+                    lst.add(conf.toChannel(repositories));
                 }
+                artifactResolver = new ChannelMavenArtifactRepositoryManager(lst, repoSystem, repoSession, repositories);
+            } else {
+                artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
             }
             Set<String> profiles = new HashSet<>();
             if (profile != null) {
@@ -404,7 +351,6 @@ public class ScanMojo extends AbstractMojo {
             }
 
             Arguments arguments = argumentsBuilder.build();
-
             try (ScanResults results = GlowSession.scan(artifactResolver,
                     arguments, writer)) {
                 boolean skipTests = Boolean.getBoolean("maven.test.skip") || Boolean.getBoolean("skipTests");
@@ -626,7 +572,7 @@ public class ScanMojo extends AbstractMojo {
         }
     }
 
-    private Path buildInputConfig(Path outputFolder, MavenArtifactRepositoryManager artifactResolver) throws ProvisioningException, IOException, XMLStreamException {
+    private Path buildInputConfig(Path outputFolder, MavenRepoManager artifactResolver) throws ProvisioningException, IOException, XMLStreamException {
         GalleonProvisioningConfig.Builder inBuilder = GalleonProvisioningConfig.builder();
         // Build config
         for (GalleonFeaturePack fp : featurePacks) {

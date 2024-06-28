@@ -35,7 +35,7 @@ public interface Deployer {
 
     String getName();
 
-    Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient, Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception;
+    Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient, Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv, boolean dryRun) throws Exception;
 
     default Map<String, String> disabledDeploy(String appHost, String appName, String matching, Map<String, String> env) {
         return Collections.emptyMap();

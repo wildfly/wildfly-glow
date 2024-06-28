@@ -19,6 +19,7 @@ package org.wildfly.glow;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jboss.galleon.api.GalleonBuilder;
@@ -28,6 +29,7 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.jboss.galleon.util.IoUtils;
+import org.wildfly.channel.Channel;
 import static org.wildfly.glow.GlowSession.OFFLINE_CONTENT;
 
 /**
@@ -43,7 +45,7 @@ public class ProvisioningUtils {
     }
 
     public static void traverseProvisioning(ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, MavenRepoManager resolver) throws Exception {
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels, MavenRepoManager resolver) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);

@@ -228,11 +228,11 @@ public class ScanResultsPrinter {
             }
             writer.warn("");
         }
-        if (arguments.getConfigStability() != null || arguments.getPackageStability() != null) {
+        if (arguments.getDefaultConfigStability() != null || arguments.getConfigStability() != null || arguments.getPackageStability() != null) {
             boolean needCR = false;
             if (!scanResults.getExcludedFeatures().isEmpty()) {
-                writer.warn("The following features would be disabled if provisioning a server at the '"
-                        + arguments.getConfigStability() + "' stability level. Make sure to set the '--config-stability-level=<features expected lowest stability level>' option:");
+                String msg = arguments.getConfigStability() == null ? "" : " at the '" + arguments.getConfigStability() + "' stability level";
+                writer.warn("The following features would be disabled if provisioning a server" + msg + ". Make sure to set the '--config-stability-level=<features expected lowest stability level>' option:");
                 needCR = true;
                 for (Layer l : scanResults.getExcludedFeatures().keySet()) {
                     writer.warn(l.getName() + " features:");

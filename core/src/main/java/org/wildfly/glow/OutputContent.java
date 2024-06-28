@@ -17,6 +17,7 @@ public class OutputContent {
         DOCKER_FILE,
         SERVER_DIR,
         PROVISIONING_XML_FILE,
+        CHANNEL_FILE,
         ENV_FILE
     }
 

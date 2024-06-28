@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
+import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
 import org.wildfly.glow.deployment.openshift.api.Utils;
 
 /**
@@ -90,7 +91,7 @@ public class KeycloakDeployer implements Deployer {
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient, Map<String, String> env,
-            String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
+            String appHost, String appName, String matching, Map<String, String> extraEnv, boolean dryRun) throws Exception {
         writer.info("Deploying Keycloak server");
         Map<String, String> parameters = new HashMap<>();
         String adminVal = extraEnv.get(KEYCLOAK_ADMIN_ENV);
@@ -103,15 +104,19 @@ public class KeycloakDeployer implements Deployer {
         final KubernetesList processedTemplateWithCustomParameters = osClient.templates().
                 withName(KEYCLOAK_NAME)
                 .process(parameters);
-        osClient.resourceList(processedTemplateWithCustomParameters).createOrReplace();
-        Utils.persistResource(target, processedTemplateWithCustomParameters, KEYCLOAK_NAME + "-resources.yaml");
+        if (!dryRun) {
+            osClient.resourceList(processedTemplateWithCustomParameters).createOrReplace();
+        }
+        Utils.persistResource(OpenShiftSupport.getDeployersDirectory(target), processedTemplateWithCustomParameters, KEYCLOAK_NAME + "-resources.yaml");
         writer.info("Waiting until keycloak is ready ...");
         DeploymentConfig dc = new DeploymentConfigBuilder().withNewMetadata().withName(KEYCLOAK_NAME).endMetadata().build();
-        osClient.resources(DeploymentConfig.class).resource(dc).waitUntilReady(5, TimeUnit.MINUTES);
+        if (!dryRun) {
+            osClient.resources(DeploymentConfig.class).resource(dc).waitUntilReady(5, TimeUnit.MINUTES);
+        }
 
         Route route = new RouteBuilder().withNewMetadata().withName(KEYCLOAK_NAME).
                 endMetadata().build();
-        String host = osClient.routes().resource(route).get().getSpec().getHost();
+        String host = dryRun ? "TO_BE_DEFINED" : osClient.routes().resource(route).get().getSpec().getHost();
         String url = "https://" + host;
         writer.info("Keycloak route: " + url);
         Map<String, String> retEnv = new HashMap<>();
@@ -136,7 +141,11 @@ public class KeycloakDeployer implements Deployer {
             retEnv.put(OIDC_USER_PASSWORD_ENV, KEYCLOAK_DEMO_PASSWORD);
             retEnv.put(OIDC_HOSTNAME_HTTPS_ENV, appHost);
         }
-        writer.info("Keycloak server has been deployed");
+        if (dryRun) {
+            writer.info("Resources for Keycloak server have been generated");
+        } else {
+            writer.info("Keycloak server has been deployed");
+        }
         return retEnv;
     }
 

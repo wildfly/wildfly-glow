@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.wildfly.channel.ChannelSession;
+import org.wildfly.channel.Channel;
 
 public class Arguments implements GoOfflineArguments, ScanArguments {
 
@@ -35,8 +35,9 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Set<Pattern> excludeArchivesFromScan;
     private final String configStability;
     private final String packageStability;
+    private final String defaultConfigStability;
     private final boolean isCli;
-    private final ChannelSession channelSession;
+    private final List<Channel> channels;
 
     protected Arguments(
             String executionContext,
@@ -54,8 +55,9 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             Set<Pattern> excludeArchivesFromScan,
             String configStability,
             String packageStability,
+            String defaultConfigStability,
             boolean isCli,
-            ChannelSession channelSession) {
+            List<Channel> channels) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -71,7 +73,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.excludeArchivesFromScan = excludeArchivesFromScan;
         this.configStability = configStability;
         this.packageStability = packageStability;
-
+        this.defaultConfigStability = defaultConfigStability;
         HiddenPropertiesAccessor hiddenPropertiesAccessor = new HiddenPropertiesAccessor();
         this.compact = Boolean.parseBoolean(hiddenPropertiesAccessor.getProperty(COMPACT_PROPERTY));
         String manualLayers = hiddenPropertiesAccessor.getProperty(MANUAL_LAYERS_PROPERTY);
@@ -81,7 +83,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             this.manualLayers = new HashSet<>(Arrays.asList(manualLayers.split(",")));
         }
         this.isCli = isCli;
-        this.channelSession = channelSession;
+        this.channels = channels;
     }
 
     /**
@@ -197,6 +199,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         return packageStability;
     }
 
+    @Override
+    public String getDefaultConfigStability() {
+        return defaultConfigStability;
+    }
+
     /**
      * @return the isCli
      */
@@ -209,8 +216,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
      * @return the channel session
      */
     @Override
-    public ChannelSession getChannelSession() {
-        return channelSession;
+    public List<Channel> getChannels() {
+        return channels;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

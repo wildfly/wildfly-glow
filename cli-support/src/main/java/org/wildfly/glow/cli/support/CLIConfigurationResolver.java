@@ -30,26 +30,29 @@ import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
 public class CLIConfigurationResolver implements ConfigurationResolver {
 
     private final Set<String> disabledDeployers;
+    private final Set<String> enabledDeployers;
     private final boolean isOpenShift;
     public CLIConfigurationResolver() {
-        this(true, null);
+        this(true, null, null);
     }
     public CLIConfigurationResolver(boolean isOpenShift,
-            Set<String> disabledDeployers) {
+            Set<String> disabledDeployers,
+            Set<String> enabledDeployers) {
         this.disabledDeployers = disabledDeployers == null ? Collections.emptySet() : disabledDeployers;
+        this.enabledDeployers = enabledDeployers == null ? Collections.emptySet() : enabledDeployers;
         this.isOpenShift = isOpenShift;
     }
 
     @Override
     public ResolvedEnvs getResolvedEnvs(Layer layer, Set<Env> input) throws Exception {
         if (isOpenShift) {
-            return OpenShiftSupport.getResolvedEnvs(layer, input, disabledDeployers);
+            return OpenShiftSupport.getResolvedEnvs(layer, input, disabledDeployers, enabledDeployers);
         }
         return null;
     }
 
     @Override
     public String getPossibleDeployer(Set<Layer> layers) throws Exception {
-        return OpenShiftSupport.getPossibleDeployer(layers, disabledDeployers);
+        return OpenShiftSupport.getPossibleDeployer(layers, disabledDeployers, enabledDeployers);
     }
 }

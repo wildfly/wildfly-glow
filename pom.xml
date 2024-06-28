@@ -9,7 +9,7 @@
     </parent>
     <groupId>org.wildfly.glow</groupId>
     <artifactId>wildfly-glow-parent</artifactId>
-    <version>1.0.7.Final-SNAPSHOT</version>
+    <version>1.1.0.Final-SNAPSHOT</version>
     <packaging>pom</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,13 +24,13 @@
         <version.org.wildfly.plugins.wildfly-plugin-tools>1.0.0.Final</version.org.wildfly.plugins.wildfly-plugin-tools>
         <version.org.wildfly.common.wildfly-common>1.7.0.Final</version.org.wildfly.common.wildfly-common>
         <version.com.puppycrawl.tools.checkstyle>8.18</version.com.puppycrawl.tools.checkstyle>
-        <version.com.fasterxml.jackson.core>2.14.2</version.com.fasterxml.jackson.core>
+        <version.com.fasterxml.jackson.core>2.17.0</version.com.fasterxml.jackson.core>
         <version.io.smallrye.jandex>3.1.6</version.io.smallrye.jandex>
         <version.org.apache.maven>3.8.6</version.org.apache.maven>
         <version.org.apache.maven.checkstyle>3.0.0</version.org.apache.maven.checkstyle>
         <version.org.apache.maven.resolver>1.6.3</version.org.apache.maven.resolver>
         <version.org.jboss.galleon>6.0.0.Final</version.org.jboss.galleon>
-        <version.org.wildfly.channel>1.0.5.Final</version.org.wildfly.channel>
+        <version.org.wildfly.channel>1.1.0.Final</version.org.wildfly.channel>
         <version.org.jboss.logging.slf4j-jboss-logging>1.2.1.Final</version.org.jboss.logging.slf4j-jboss-logging>
         <version.org.yaml.snakeyaml>2.0</version.org.yaml.snakeyaml>
         <version.org.apache.commons>3.12.0</version.org.apache.commons>

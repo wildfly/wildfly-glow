@@ -38,6 +38,7 @@ import java.util.Set;
 import org.wildfly.glow.Env;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
+import org.wildfly.glow.deployment.openshift.api.OpenShiftSupport;
 import org.wildfly.glow.deployment.openshift.api.Utils;
 
 /**
@@ -85,7 +86,7 @@ public class AMQDeployer implements Deployer {
 
     @Override
     public Map<String, String> deploy(GlowMessageWriter writer, Path target, OpenShiftClient osClient,
-            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv) throws Exception {
+            Map<String, String> env, String appHost, String appName, String matching, Map<String, String> extraEnv, boolean dryRun) throws Exception {
         writer.info("Deploying AMQ Messaging Broker");
         Map<String, String> labels = new HashMap<>();
         labels.put(LABEL, REMOTE_BROKER_NAME);
@@ -120,17 +121,25 @@ public class AMQDeployer implements Deployer {
                 withNewTemplate().withNewMetadata().withLabels(labels).endMetadata().withNewSpec().
                 withContainers(container).withRestartPolicy("Always").
                 endSpec().endTemplate().withNewStrategy().withType("RollingUpdate").endStrategy().endSpec().build();
-        osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, deployment, REMOTE_BROKER_NAME + "-deployment.yaml");
+        if (!dryRun) {
+            osClient.resources(Deployment.class).resource(deployment).createOr(NonDeletingOperation::update);
+        }
+        Utils.persistResource(OpenShiftSupport.getDeployersDirectory(target), deployment, REMOTE_BROKER_NAME + "-deployment.yaml");
         IntOrString v = new IntOrString();
         v.setValue(61616);
         Service service = new ServiceBuilder().withNewMetadata().withName(REMOTE_BROKER_NAME).endMetadata().
                 withNewSpec().withPorts(new ServicePort().toBuilder().withName("61616-tcp").withProtocol("TCP").
                         withPort(61616).
                         withTargetPort(v).build()).withType("ClusterIP").withSessionAffinity("None").withSelector(labels).endSpec().build();
-        osClient.services().resource(service).createOr(NonDeletingOperation::update);
-        Utils.persistResource(target, service, REMOTE_BROKER_NAME + "-service.yaml");
-        writer.info("AMQ Messaging Broker has been deployed");
+        if (!dryRun) {
+            osClient.services().resource(service).createOr(NonDeletingOperation::update);
+        }
+        Utils.persistResource(OpenShiftSupport.getDeployersDirectory(target), service, REMOTE_BROKER_NAME + "-service.yaml");
+        if (dryRun) {
+            writer.info("Resources for AMQ Messaging Broker have been generated");
+        } else {
+            writer.info("AMQ Messaging Broker has been deployed");
+        }
         return REMOTE_BROKER_APP_MAP;
     }
 

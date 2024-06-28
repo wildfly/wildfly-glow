@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.glow.maven;
+package org.wildfly.glow.plugin.arquillian;
 
 import static org.wildfly.channel.maven.VersionResolverFactory.DEFAULT_REPOSITORY_MAPPER;
 
@@ -117,7 +117,7 @@ public class ChannelMavenArtifactRepositoryManager implements MavenRepoManager, 
 
     @Override
     public void resolveLatestVersion(MavenArtifact artifact) throws MavenUniverseException {
-        resolveLatestVersion(artifact, null, false);
+        throw new MavenUniverseException("Channel resolution can't be applied to Galleon universe");
     }
 
     @Override
