@@ -604,7 +604,7 @@ public class OpenShiftSupport {
             writer.info("NOTE: The file '" + getDockerDirectory(target).resolve(IMAGE_PROPERTIES_FILE) + "' contains the server image tag that is expected by the application Dockerfile.\n");
             writer.info("* Directory '" + getDockerAppDirectory(target) + "' contains the Dockerfile to build the application image. Make sure to replace the '" + WILDFLY_GLOW_SERVER_IMAGE_REPOSITORY + "' string with the repository where the server image has been pushed (e.g.: 'quay.io/my-organization/wildfly-servers').\n");
             writer.info("NOTE: The file '" + getDockerDirectory(target).resolve(IMAGE_PROPERTIES_FILE) + "' contains the aplication image tag that is expected by the Deployment.\n");
-            writer.info("* Directory '" + getResourcesDirectory(target) + "' contains the openshift resources. Make sure to replace the '" +WILDFLY_GLOW_APP_IMAGE_REPOSITORY +"' string with the repository where the application image has been pushed (e.g.: 'quay.io/my-organization/" + applicationName + "-image').\n");
+            writer.info("* Directory '" + getDeploymentDirectory(target) + "' contains the openshift resources. Make sure to replace the '" +WILDFLY_GLOW_APP_IMAGE_REPOSITORY +"' string with the repository where the application image has been pushed (e.g.: 'quay.io/my-organization/" + applicationName + "-image').\n");
         } else {
             writer.info("Application route: https://" + host + ( "ROOT.war".equals(applicationName) ? "" : "/" + originalAppName));
         }

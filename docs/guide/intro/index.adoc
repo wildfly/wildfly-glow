@@ -80,6 +80,47 @@ If WildFly Glow detects the need for these technologies, it will automatically d
 When the HA profile is enabled, 2 pods will be created for the deployment. 
 The JGroups `dns.DNS_PING` protocol is enabled for the members of the cluster to discover each others.
 
+#### OpenShift dry-run mode
+
+When using the `--dry-run` option, WildFly glow will not interact with the cluster but will generate all the needed resources that are required to build 
+and deploy your application in the cluster of your choice. You can then assemble the images and deploy to your cluster in a flexible way. 
+The generated resources allow, for example, to setup a link:https://tekton.dev/[Tekton] pipeline to produce images, 
+and use link:https://argoproj.github.io/cd/[Argo CD] to manage your k8s resources.
+
+##### Docker files for the server and application images
+
+WildFly Glow separates the build of your application image into 2 steps. A first step to build the server image that only contains the WildFly server.
+A second step that, from the server image, produces an application image that contains the deployments, the WildFly CLI script (if any) and the bash initialization script (if any).
+
+In order to share the server image between various applications, a server image tag is computed based on all that makes the content of the server unique:
+
+* The generated provisioning XML file
+* Env variables (if any) used at provisioning time.
+* WildFly channel (if any) used at provisioning time.
+
+###### Bulding and pushing the server image
+
+Once WildFly Glow has generated the resources, you need to:
+
+* Provision the server using the generated `<server-version>/galleon/provisioning.xml` file (using Galleon CLI) inside the directory `<server-version>/docker/server/server`.
+* Build and push the server image using the server tag generated in `<server-version>/docker/image.properties` and the docker file `<server-version>/docker/server/Dockerfile`.
+Makes sure to run the build inside the directory `<server-version>/docker/server`, that is the expected build docker context.
+
+###### Bulding and pushing the application image
+
+Once you have pushed the server in a container image repository, you need to:
+
+* In the `<server-version>/docker/app/Dockerfile` file replace the `WILDFLY_GLOW_SERVER_IMAGE_REPOSITORY` placeholder with the pushed server image repository.
+* Build and push the application image using the application tag generated in `<server-version>/docker/image.properties` and the docker file `<server-version>/docker/app/Dockerfile`.
+Makes sure to run the build inside the directory `<server-version>/docker/app`, that is the expected build docker context.
+
+##### Updating the k8s deployment with the generated application image
+
+The generated deployment (or the statefulSet in case of HA application) in `<server-version>/resources/deployment/` directory references the container image using the placeholder `WILDFLY_GLOW_APP_IMAGE_REPOSITORY`. Replaces it 
+with the actual application image repository.
+
+You are good to go. You can now create the k8s resources in your cluster.
+
 #### WildFly additional features discovery
 
 Some WildFly server features can't be discovered by scanning application deployment. A good example is the usage of SSL to secure the http 
