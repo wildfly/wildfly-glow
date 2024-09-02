@@ -37,6 +37,7 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.wildfly.glow.Layer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,7 @@ import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.wildfly.channel.Channel;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.LayerMapping;
@@ -95,6 +97,37 @@ public class ScanDocMojo extends AbstractMojo {
     @Parameter(required = false)
     String repoPath;
 
+    /**
+     * A list of channels used for resolving artifacts while provisioning.
+     * <p>
+     * Defining a channel:
+     *
+     * <pre>
+     * <channels>
+     *     <channel>
+     *         <manifest>
+     *             <groupId>org.wildfly.channels</groupId>
+     *             <artifactId>wildfly-30.0</artifactId>
+     *         </manifest>
+     *     </channel>
+     *     <channel>
+     *         <manifest>
+     *             <url>https://example.example.org/channel/30</url>
+     *         </manifest>
+     *     </channel>
+     * </channels>
+     * </pre>
+     * </p>
+     */
+    @Parameter(required = false)
+    List<ChannelConfiguration> channels;
+
+    @Parameter(required = false, defaultValue = "true")
+    boolean preview;
+
+    @Parameter(required = false, defaultValue = "WildFly")
+    String serverType;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
@@ -134,8 +167,17 @@ public class ScanDocMojo extends AbstractMojo {
                 }
                 try {
                     //Typically under target
-                    Path outputFolder = Paths.get(project.getBuild().getDirectory());
-                    MavenRepoManager artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+                    MavenRepoManager artifactResolver;
+                    if (channels != null && !channels.isEmpty()) {
+                        getLog().debug("WildFly channel enabled.");
+                        List<Channel> lst = new ArrayList<>();
+                        for (ChannelConfiguration conf : channels) {
+                            lst.add(conf.toChannel(repositories));
+                        }
+                        artifactResolver = new ChannelMavenArtifactRepositoryManager(lst, repoSystem, repoSession, repositories);
+                    } else {
+                        artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
+                    }
                     UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
                     GalleonBuilder provider = new GalleonBuilder();
                     provider.addArtifactResolver(artifactResolver);
@@ -144,15 +186,14 @@ public class ScanDocMojo extends AbstractMojo {
                     getRules(provider, "bare-metal", universeResolver, rules);
                     Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
                     getRules(provider,"cloud", universeResolver, cloudRules);
-                    rulesBuilder.append("## Support for WildFly " + FeaturePacks.getLatestVersion() + "\n\n");
-
+                    rulesBuilder.append("## Support for " + serverType + " " + FeaturePacks.getLatestVersion() + "\n\n");
                     rulesBuilder.append(buildTable(provider,"bare-metal", rules, false));
                     rulesBuilder.append(buildTable(provider,"cloud", cloudRules, false));
-
-                    rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
-
-                    rulesBuilder.append(buildTable(provider, "bare-metal", rules, true));
-                    rulesBuilder.append(buildTable(provider, "cloud", cloudRules, true));
+                    if (preview) {
+                        rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
+                        rulesBuilder.append(buildTable(provider, "bare-metal", rules, true));
+                        rulesBuilder.append(buildTable(provider, "cloud", cloudRules, true));
+                    }
                 } finally {
                     System.clearProperty(FeaturePacks.URL_PROPERTY);
                 }
