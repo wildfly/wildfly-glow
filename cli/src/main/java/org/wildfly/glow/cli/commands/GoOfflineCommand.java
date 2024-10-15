@@ -19,7 +19,9 @@ package org.wildfly.glow.cli.commands;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.wildfly.glow.Arguments;
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import org.wildfly.glow.GlowMessageWriter;
@@ -48,6 +50,9 @@ public class GoOfflineCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.INPUT_FEATURE_PACKS_FILE_OPTION, paramLabel = "<provisioning file path>")
     Optional<Path> provisioningXml;
 
+    @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
+    Set<String> spaces = new LinkedHashSet<>();
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is assembling offline content...");
@@ -64,6 +69,9 @@ public class GoOfflineCommand extends AbstractCommand {
         builder.setVerbose(verbose);
         if (provisioningXml.isPresent()) {
             builder.setProvisoningXML(provisioningXml.get());
+        }
+        if (!spaces.isEmpty()) {
+            builder.setSpaces(spaces);
         }
         GlowSession.goOffline(MavenResolver.newMavenResolver(), builder.build(), GlowMessageWriter.DEFAULT);
         print("Offline zip file %s generated", OFFLINE_ZIP);

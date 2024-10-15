@@ -111,6 +111,7 @@ public class GlowSession {
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);
         Provisioning provisioning = null;
+        Path fakeHome = Files.createTempDirectory("wildfly-glow");
         try {
             GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, writer);
             if (config == null) {
@@ -118,8 +119,10 @@ public class GlowSession {
                 if (provisioningXML == null) {
                     provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                 }
-                provisioning = provider.newProvisioningBuilder(provisioningXML).build();
+                provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
+                // Compute extra config from configured spaces
+                config = mergeSpaces(provider, config);
             } else {
                 provisioning = provider.newProvisioningBuilder(config).build();
             }
@@ -128,6 +131,7 @@ public class GlowSession {
             if (provisioning != null) {
                 provisioning.close();
             }
+            IoUtils.recursiveDelete(fakeHome);
         }
         Files.deleteIfExists(OFFLINE_ZIP);
         ZipUtils.zip(OFFLINE_CONTENT, OFFLINE_ZIP);
@@ -142,6 +146,28 @@ public class GlowSession {
         return session.scan();
     }
 
+    private GalleonProvisioningConfig mergeSpaces(GalleonBuilder provider, GalleonProvisioningConfig defaultConfig) throws Exception {
+        if (!arguments.getSpaces().isEmpty()) {
+            GalleonProvisioningConfig.Builder mergedConfigBuilder = GalleonProvisioningConfig.builder(defaultConfig);
+            for (String spaceName : arguments.getSpaces()) {
+                Space space = FeaturePacks.getSpace(spaceName);
+                Set<String> versions = FeaturePacks.getAllVersions(spaceName);
+                String vers = arguments.getVersion() == null ? FeaturePacks.getLatestVersion() : arguments.getVersion();
+                if (versions.contains(vers)) {
+                    Path spaceProvisioningXML = FeaturePacks.getFeaturePacks(space,
+                            arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    try (Provisioning spaceProvisioning = provider.newProvisioningBuilder(spaceProvisioningXML).build()) {
+                        GalleonProvisioningConfig spaceConfig = spaceProvisioning.loadProvisioningConfig(spaceProvisioningXML);
+                        for (GalleonFeaturePackConfig fpSpaceConfig : spaceConfig.getFeaturePackDeps()) {
+                            mergedConfigBuilder.addFeaturePackDep(fpSpaceConfig);
+                        }
+                    }
+                }
+            }
+            defaultConfig = mergedConfigBuilder.build();
+        }
+        return defaultConfig;
+    }
     public ScanResults scan() throws Exception {
         Set<Layer> layers = new LinkedHashSet<>();
         Set<AddOn> possibleAddOns = new TreeSet<>();
@@ -167,6 +193,8 @@ public class GlowSession {
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
+                // Compute extra config from configured spaces
+                config = mergeSpaces(provider, config);
             } else {
                 provisioning = provider.newProvisioningBuilder(config).setInstallationHome(fakeHome).build();
             }
