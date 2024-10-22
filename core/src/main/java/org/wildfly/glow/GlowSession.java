@@ -929,21 +929,22 @@ public class GlowSession {
         }
         // handle the case of layers expecting addOn
         for (Layer l : layers) {
-            String familyExpected = l.getExpectFamily();
-            if (familyExpected != null) {
-                boolean found = false;
-                for (AddOn addOn : allEnabledAddOns) {
-                    if (addOn.getFamily().equals(familyExpected)) {
-                        found = true;
-                        break;
+            for (String familyExpected : l.getExpectFamilies()) {
+                if (familyExpected != null) {
+                    boolean found = false;
+                    for (AddOn addOn : allEnabledAddOns) {
+                        if (addOn.getFamily().equals(familyExpected)) {
+                            found = true;
+                            break;
+                        }
                     }
-                }
-                if (!found) {
-                    Set<AddOn> members = mapping.getAddOnFamilyMembers().get(familyExpected);
-                    IdentifiedError err = new IdentifiedError("expected add-on not found",
-                            "an add-on of the " + familyExpected + " family is expected by the " + l + " layer", ERROR);
-                    err.getPossibleAddons().addAll(members);
-                    errorSession.addError(err);
+                    if (!found) {
+                        Set<AddOn> members = mapping.getAddOnFamilyMembers().get(familyExpected);
+                        IdentifiedError err = new IdentifiedError("expected add-on not found",
+                                "an add-on of the " + familyExpected + " family is expected by the " + l + " layer", ERROR);
+                        err.getPossibleAddons().addAll(members);
+                        errorSession.addError(err);
+                    }
                 }
             }
         }

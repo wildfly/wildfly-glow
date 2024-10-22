@@ -41,7 +41,7 @@ public class Layer implements Comparable<Layer> {
     private final Set<String> bringDatasources = new TreeSet<>();
     private boolean isAutomaticInjection;
     private final Set<String> configuration = new TreeSet<>();
-    private String expectFamily;
+    private final Set<String> expectFamilies = new TreeSet<>();
     private boolean banned;
 
     Layer(String name) {
@@ -157,15 +157,15 @@ public class Layer implements Comparable<Layer> {
     /**
      * @return the expectFamily
      */
-    public String getExpectFamily() {
-        return expectFamily;
+    public Set<String> getExpectFamilies() {
+        return expectFamilies;
     }
 
     /**
      * @param expectFamily the expectFamily to set
      */
-    public void setExpectFamily(String expectFamily) {
-        this.expectFamily = expectFamily;
+    public void addExpectFamily(String expectFamily) {
+        expectFamilies.add(expectFamily);
     }
 
     /**

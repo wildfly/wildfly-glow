@@ -452,7 +452,15 @@ public final class Utils {
                     continue;
                 }
                 if (LayerMetadata.EXPECT_ADD_ON_FAMILY.equals(k)) {
-                    l.setExpectFamily(l.getProperties().get(k));
+                    l.addExpectFamily(l.getProperties().get(k));
+                    continue;
+                }
+                if (LayerMetadata.EXPECT_ADD_ON_FAMILIES.equals(k)) {
+                    String val = l.getProperties().get(k);
+                    String[] split = val.split(",");
+                    for(String v : split) {
+                        l.addExpectFamily(v.trim());
+                    }
                     continue;
                 }
                 if (LayerMetadata.ADD_ON.equals(k)) {
