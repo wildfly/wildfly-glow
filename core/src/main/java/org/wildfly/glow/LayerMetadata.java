@@ -38,6 +38,7 @@ public abstract class LayerMetadata {
     public static final String CLASS = PREFIX + "class";
     public static final String CONFIGURATION = PREFIX + "configuration";
     public static final String EXPECT_ADD_ON_FAMILY = PREFIX + "expect-add-on-family";
+    public static final String SELECT_ADD_ON_FAMILY = PREFIX + "select-add-on-family-";
     public static final String EXPECTED_FILE = PREFIX + "expected-file";
     public static final String HIDDEN_IF = PREFIX + "hidden-if";
     public static final String INCLUSION_MODE = PREFIX + "inclusion-mode";
@@ -72,6 +73,7 @@ public abstract class LayerMetadata {
         RULES_WITH_SUFFIX.add(PROFILE);
         RULES_WITH_SUFFIX.add(PROPERTIES_FILE_MATCH);
         RULES_WITH_SUFFIX.add(XML_PATH);
+        RULES_WITH_SUFFIX.add(SELECT_ADD_ON_FAMILY);
 
         CONDITION_RULES.add(HIDDEN_IF);
         CONDITION_RULES.add(NO_CONFIGURATION_IF);

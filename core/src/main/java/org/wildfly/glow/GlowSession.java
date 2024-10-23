@@ -430,7 +430,7 @@ public class GlowSession {
             }
             // Fix addOns
             Map<AddOn, String> disabledAddOns = new TreeMap<>();
-            fixAddOns(errorSession, layers, mapping, allEnabledAddOns, possibleAddOns, disabledAddOns, arguments);
+            fixAddOns(errorSession, layers, decorators, mapping, allEnabledAddOns, possibleAddOns, disabledAddOns, arguments);
             // END ADD-ON
 
             // DECORATORS CLEANUP
@@ -819,6 +819,7 @@ public class GlowSession {
 
     private static void fixAddOns(ErrorIdentificationSession errorSession,
             Set<Layer> layers,
+            Set<Layer> decorators,
             LayerMapping mapping,
             Set<AddOn> allEnabledAddOns,
             Set<AddOn> possibleAddOns,
@@ -828,6 +829,97 @@ public class GlowSession {
         Set<String> familyOfAddOnsComplete = new TreeSet<>();
         Map<String, Set<AddOn>> membersInFamily = new HashMap<>();
         Map<String, Set<AddOn>> defaultMembersInFamily = new HashMap<>();
+        // Handle inclusion mode
+        Map<String, Set<AddOn>> selectedAddOnsForFamily = new HashMap<>();
+        Map<String, Set<AddOn>> candidatesForFamily = new HashMap<>();
+        Set<AddOn> toBeRemoved = new HashSet<>();
+        for(AddOn ao : allEnabledAddOns) {
+            AddOnSelectionMode mode = mapping.getFamilySelectionMode().get(ao.getFamily());
+            // We have a selection mode for this family
+            // A selection means that such add-ons must be included by the user and not automatically discovered.
+            if (mode != null) {
+                Set<AddOn> selectedAddOns = selectedAddOnsForFamily.computeIfAbsent(ao.getFamily(), s -> new HashSet<>());
+                if (!arguments.getUserEnabledAddOns().contains(ao.getName())) {
+                    toBeRemoved.add(ao);
+                    for(Layer l : ao.getLayers()) {
+                        for(Layer dep : l.getDependencies()) {
+                            AddOn addOn = dep.getAddOn();
+                            if (addOn != null) {
+                                if(!arguments.getUserEnabledAddOns().contains(addOn.getName())) {
+                                    toBeRemoved.add(addOn);
+                                }
+                            }
+                        }
+                    }
+                    Set<AddOn> candidates = candidatesForFamily.computeIfAbsent(ao.getFamily(), s -> new HashSet<>());
+                    candidates.add(ao);
+                } else {
+                    selectedAddOns.add(ao);
+                }
+            }
+        }
+        // At this point we know the addOn that have been included by the user
+        // and the one that should be removed because not explicitly included.
+        for(String k : selectedAddOnsForFamily.keySet()) {
+            // Empty selection...
+            if (selectedAddOnsForFamily.get(k).isEmpty()) {
+                Set<AddOn> candidates = candidatesForFamily.get(k);
+                // None have been selected but we found candidates in the set of discovered ones
+                // Or we remove them and create an error, asking user to select somes.
+                if (candidates != null) {
+                    if(candidates.size() == 1) {
+                        // Simply keep it, we have a match
+                        // The add-on will be not removed.
+                        toBeRemoved.remove(candidates.iterator().next());
+                    } else {
+                        AddOnSelectionMode mode = mapping.getFamilySelectionMode().get(k);
+                        StringBuilder errorBuilder = new StringBuilder();
+                        if (mode.isExactlyOne()) {
+                            errorBuilder.append("one ");
+                        } else {
+                            errorBuilder.append("At least one ");
+                        }
+                        errorBuilder.append("add-on of the " + k + " family is expected by the " +
+                                mode.getTargetLayer() + " layer\n"
+                                + "  To correct this error, enable one of the following add-ons:\n");
+                        Iterator<AddOn> it = candidates.iterator();
+                        while(it.hasNext()) {
+                            AddOn ao = it.next();
+                            errorBuilder.append("  - ").append(ao.getName());
+                            if(it.hasNext()) {
+                                errorBuilder.append("\n");
+                            }
+                        }
+                        IdentifiedError error = new IdentifiedError("missing-add-on", errorBuilder.toString(), ERROR);
+                        errorSession.addError(error);
+                    }
+                }
+            } else {
+                // We have a selection of add-ons, is it in the boundaries of the max number?
+                AddOnSelectionMode mode = mapping.getFamilySelectionMode().get(k);
+                if (!mode.isUnBounded() && selectedAddOnsForFamily.get(k).size() > 1) {
+                    StringBuilder errorBuilder = new StringBuilder();
+                    errorBuilder.append("Only one add-on of the " + k + " family is expected by the "
+                            + mode.getTargetLayer() + " layer\n"
+                            + "  To correct this error, remove some of the following add-ons:\n");
+                    Iterator<AddOn> it = selectedAddOnsForFamily.get(k).iterator();
+                    while (it.hasNext()) {
+                        AddOn ao = it.next();
+                        errorBuilder.append("  - ").append(ao.getName());
+                        if (it.hasNext()) {
+                            errorBuilder.append("\n");
+                        }
+                    }
+                    IdentifiedError error = new IdentifiedError("too-many-add-on", errorBuilder.toString(), ERROR);
+                    errorSession.addError(error);
+                }
+            }
+        }
+        for(AddOn ao : toBeRemoved) {
+            allEnabledAddOns.remove(ao);
+            layers.removeAll(ao.getLayers());
+            decorators.removeAll(ao.getLayers());
+        }
         for (AddOn addOn : allEnabledAddOns) {
             if (addOn.isDefault()) {
                 Set<AddOn> members = defaultMembersInFamily.get(addOn.getFamily());

@@ -64,6 +64,7 @@ public class LayerMapping {
 
     private final Map<Layer, String> noConfigurationConditions = new HashMap<>();
     private final Map<Layer, String> hiddenConditions = new HashMap<>();
+    private final Map<String, AddOnSelectionMode> familySelectionMode = new HashMap<>();
     /**
      * @return the constantPoolClassInfos
      */
@@ -83,6 +84,13 @@ public class LayerMapping {
      */
     public Map<String, Layer> getActiveProfilesLayers() {
         return activeProfilesLayers;
+    }
+
+    /**
+     * @return the selectionModes
+     */
+    public Map<String, AddOnSelectionMode> getFamilySelectionMode() {
+        return familySelectionMode;
     }
 
     /**

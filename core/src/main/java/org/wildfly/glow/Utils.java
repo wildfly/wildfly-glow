@@ -403,7 +403,7 @@ public final class Utils {
         return s.contains("*");
     }
 
-    public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles) {
+    public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles) throws Exception {
         LayerMapping mapping = new LayerMapping();
         for (Layer l : layers.values()) {
             for (String k : l.getProperties().keySet()) {
@@ -453,6 +453,18 @@ public final class Utils {
                 }
                 if (LayerMetadata.EXPECT_ADD_ON_FAMILY.equals(k)) {
                     l.setExpectFamily(l.getProperties().get(k));
+                    continue;
+                }
+                if (k.startsWith(LayerMetadata.SELECT_ADD_ON_FAMILY)) {
+                    int i = LayerMetadata.SELECT_ADD_ON_FAMILY.length();
+                    String family = k.substring(i);
+                    AddOnSelectionMode mode = mapping.getFamilySelectionMode().get(family);
+                    if (mode != null) {
+                        throw new Exception("More than one layer defines a selection mode for the family " +
+                                family + " : " + mode.getTargetLayer().getName() + " and " + l.getName());
+                    }
+                    mode = new AddOnSelectionMode(l, family, Integer.parseInt(l.getProperties().get(k)));
+                    mapping.getFamilySelectionMode().put(family, mode);
                     continue;
                 }
                 if (LayerMetadata.ADD_ON.equals(k)) {

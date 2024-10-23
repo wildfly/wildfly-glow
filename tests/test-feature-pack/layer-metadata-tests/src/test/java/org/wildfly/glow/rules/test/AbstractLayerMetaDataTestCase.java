@@ -130,6 +130,9 @@ public class AbstractLayerMetaDataTestCase {
         return sb.toString();
     }
 
+    protected void manualCheck() {
+        checkMethodCalled = true;
+    }
     protected Set<String> checkLayersForArchive(Path archivePath, String...expectedLayers) {
         return checkLayersForArchive(archivePath, null, expectedLayers);
     }
