@@ -455,6 +455,18 @@ public final class Utils {
                     l.setExpectFamily(l.getProperties().get(k));
                     continue;
                 }
+                if (k.startsWith(LayerMetadata.SELECT_ADD_ON_FAMILY)) {
+                    int i = LayerMetadata.SELECT_ADD_ON_FAMILY.length();
+                    String family = k.substring(i);
+                    SelectionMode mode = mapping.getFamilySelectionMode().get(family);
+                    if (mode != null) {
+                        throw new RuntimeException("More than one layer defines a selection mode for the family " +
+                                family + " : " + mode.getTargetLayer().getName() + " and " + l.getName());
+                    }
+                    mode = new SelectionMode(l, family, Integer.parseInt(l.getProperties().get(k)));
+                    mapping.getFamilySelectionMode().put(family, mode);
+                    continue;
+                }
                 if (LayerMetadata.ADD_ON.equals(k)) {
                     String familyAndName = l.getProperties().get(k);
                     String[] split = familyAndName.split(",");
