@@ -78,7 +78,7 @@ public class GlowSession {
     public static final Path OFFLINE_FEATURE_PACKS_DIR = OFFLINE_CONTENT.resolve("feature-packs");
     public static final Path OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR = OFFLINE_CONTENT.resolve("feature-pack-dependencies");
     public static final String STANDALONE_PROFILE = "standalone";
-
+    private static final String GALLEON_DISABLE_CAPABILITIES_CHECK_PROPERTY = "org.jboss.galleon.internal.ignore.capability.providers";
     private final MavenRepoManager resolver;
     private final Arguments arguments;
     private final GlowMessageWriter writer;
@@ -544,44 +544,52 @@ public class GlowSession {
                 checkLayers.add(baseLayer);
                 checkLayers.addAll(decorators);
                 // Retrieve the features of each layer
-                for (Layer layer : checkLayers) {
-                    try {
-                        GalleonConfigurationWithLayers configLayers = GalleonConfigurationWithLayersBuilder.builder("standalone", "standalone.xml").includeLayer(layer.getName()).build();
-                        GalleonProvisioningConfig.Builder config2Builder = GalleonProvisioningConfig.builder().addConfig(configLayers).addOption(Constants.CONFIG_STABILITY_LEVEL, Constants.STABILITY_EXPERIMENTAL);
-                        for (GalleonFeaturePackConfig fp : activeConfig.getFeaturePackDeps()) {
-                            config2Builder.addFeaturePackDep(GalleonFeaturePackConfig.
-                                    builder(fp.getLocation(), false).setInheritConfigs(false).build());
-                        }
-                        GalleonProvisioningConfig config2 = config2Builder.build();
+                try {
+                    System.setProperty(GALLEON_DISABLE_CAPABILITIES_CHECK_PROPERTY, "true");
+                    for (Layer layer : checkLayers) {
+                        try {
+                            GalleonConfigurationWithLayers configLayers = GalleonConfigurationWithLayersBuilder.builder("standalone", "standalone.xml").includeLayer(layer.getName()).build();
+                            GalleonProvisioningConfig.Builder config2Builder = GalleonProvisioningConfig.builder().addConfig(configLayers).addOption(Constants.CONFIG_STABILITY_LEVEL, Constants.STABILITY_EXPERIMENTAL);
+                            for (GalleonFeaturePackConfig fp : activeConfig.getFeaturePackDeps()) {
+                                config2Builder.addFeaturePackDep(GalleonFeaturePackConfig.
+                                        builder(fp.getLocation(), false).setInheritConfigs(false).build());
+                            }
+                            GalleonProvisioningConfig config2 = config2Builder.build();
 
-                        try (GalleonProvisioningRuntime rt = provisioning.getProvisioningRuntime(config2)) {
-                            List<GalleonFeatureSpec> lst = rt.getAllFeatures();
-                            for (GalleonFeatureSpec spec : lst) {
-                                String stab = spec.getStability();
-                                if (stab != null && !StabilitySupport.enables(configStability, stab)) {
-                                    Set<String> set = excludedFeatures.get(layer);
-                                    if (set == null) {
-                                        set = new HashSet<>();
-                                        excludedFeatures.put(layer, set);
-                                    }
-                                    set.add(spec.getName() + "[stability=" + spec.getStability() + "]");
-                                }
-                                for (GalleonFeatureParamSpec pspec : spec.getParams()) {
-                                    String pstab = pspec.getStability();
-                                    if (pstab != null && !StabilitySupport.enables(configStability, pstab)) {
+                            try (GalleonProvisioningRuntime rt = provisioning.getProvisioningRuntime(config2)) {
+                                List<GalleonFeatureSpec> lst = rt.getAllFeatures();
+                                for (GalleonFeatureSpec spec : lst) {
+                                    String stab = spec.getStability();
+                                    if (stab != null && !StabilitySupport.enables(configStability, stab)) {
                                         Set<String> set = excludedFeatures.get(layer);
                                         if (set == null) {
                                             set = new HashSet<>();
                                             excludedFeatures.put(layer, set);
                                         }
-                                        set.add(spec.getName() + "." + pspec.getName() + "[stability=" + pspec.getStability() + "]");
+                                        set.add(spec.getName() + "[stability=" + spec.getStability() + "]");
+                                    }
+                                    for (GalleonFeatureParamSpec pspec : spec.getParams()) {
+                                        String pstab = pspec.getStability();
+                                        if (pstab != null && !StabilitySupport.enables(configStability, pstab)) {
+                                            Set<String> set = excludedFeatures.get(layer);
+                                            if (set == null) {
+                                                set = new HashSet<>();
+                                                excludedFeatures.put(layer, set);
+                                            }
+                                            set.add(spec.getName() + "." + pspec.getName() + "[stability=" + pspec.getStability() + "]");
+                                        }
                                     }
                                 }
                             }
+                        } catch (Exception ex) {
+                            if (arguments.isVerbose()) {
+                                ex.printStackTrace();
+                            }
+                            writer.warn("Got unexpected exception dealing with " + layer + " features. Exception" + ex + ". Please report the issue. Enable verbose to display the stack trace.");
                         }
-                    } catch (Exception ex) {
-                        writer.warn("Got unexpected exception dealing with " + layer + " features. Exception" + ex +". Please report the issue.");
                     }
+                } finally {
+                    System.clearProperty(GALLEON_DISABLE_CAPABILITIES_CHECK_PROPERTY);
                 }
             }
             if(arguments.getPackageStability() != null) {
