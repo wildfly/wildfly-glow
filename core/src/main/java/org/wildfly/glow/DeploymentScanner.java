@@ -140,7 +140,7 @@ public class DeploymentScanner implements AutoCloseable {
             }
         }
 
-        errorSession.collectEndOfScanErrors(verbose, ctx.resourceInjectionJndiInfos, ctx.contextLookupInfos, ctx.allClasses);
+        errorSession.collectEndOfScanErrors(verbose, ctx.resourceInjectionJndiInfos, ctx.contextLookupInfos, ctx.dataSourceDefinitionInfos, ctx.allClasses);
     }
 
     private void scan(DeploymentScanContext ctx) throws Exception {
@@ -219,6 +219,8 @@ public class DeploymentScanner implements AutoCloseable {
                                 }
                             }
                         }
+                        // DataSourceDefinition are only added based on layers discovered in the above nested loop.
+                        handleDataSourceDefinitionAnnotations(ai, ctx, foundLayer);
                     }
                 }
             }
@@ -284,6 +286,18 @@ public class DeploymentScanner implements AutoCloseable {
                 ctx.resourceInjectionJndiInfos.put(resourceClassName, info);
             }
 
+        }
+    }
+
+    private void handleDataSourceDefinitionAnnotations(AnnotationInstance annotationInstance, DeploymentScanContext ctx, Layer foundLayer) {
+        if (annotationInstance.name().toString().equals("jakarta.annotation.sql.DataSourceDefinition")) {
+            String name = getAnnotationValue(annotationInstance, "name");
+            String url = getAnnotationValue(annotationInstance, "url");
+            String className = getAnnotationValue(annotationInstance, "className");
+            if (name != null) {
+                DataSourceDefinitionInfo di = new DataSourceDefinitionInfo(name, url, className, foundLayer);
+                ctx.dataSourceDefinitionInfos.put(name, di);
+            }
         }
     }
 
@@ -867,6 +881,7 @@ public class DeploymentScanner implements AutoCloseable {
         private final ErrorIdentificationSession errorSession;
         private final Set<String> allClasses = new HashSet<>();
         private final Map<String, ResourceInjectionJndiInfo> resourceInjectionJndiInfos = new HashMap<>();
+        private final Map<String, DataSourceDefinitionInfo> dataSourceDefinitionInfos = new HashMap<>();
         public Set<ContextLookupInfo> contextLookupInfos = new HashSet<>();
 
         private DeploymentScanContext(LayerMapping mapping, Set<Layer> layers, Map<String, Layer> allLayers, ErrorIdentificationSession errorSession) {
