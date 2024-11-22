@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.wildfly.glow.DataSourceDefinitionInfo;
 import org.wildfly.glow.Env;
 
 /**
@@ -52,8 +53,10 @@ public class ErrorIdentificationSession {
             boolean verbose,
             Map<String, ResourceInjectionJndiInfo> resourceInjectionInfos,
             Set<ContextLookupInfo> initialContextLookupInfos,
+            Map<String, DataSourceDefinitionInfo> datasourceDefinitionInfos,
             Set<String> allClasses) {
         jndiErrorIdentification.collectErrors(verbose, resourceInjectionInfos, initialContextLookupInfos, allClasses);
+        ds.setDataSourceDefinitionInfos(datasourceDefinitionInfos);
     }
 
     public Map<Layer, Set<Env>> refreshErrors(Set<Layer> allBaseLayers, LayerMapping mapping, Set<AddOn> enabledAddOns) throws Exception {
