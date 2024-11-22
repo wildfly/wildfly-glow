@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -188,6 +189,32 @@ public class DeploymentScanner implements AutoCloseable {
                                     if  (layers != null) {
                                         LayerMapping.addRule(LayerMapping.RULE.ANNOTATION, layers, s);
                                         ctx.layers.addAll(layers);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Map<String, List<AnnotationFieldValue>> fields = ctx.mapping.getAnnotationFieldValues().get(ai.name().toString());
+                    if (fields != null) {
+                        Layer foundLayer = null;
+                        for(Entry<String, List<AnnotationFieldValue>> f : fields.entrySet()) {
+                            String val = getAnnotationValue(ai, f.getKey());
+                            if (val != null) {
+                                List<AnnotationFieldValue> lstFields = f.getValue();
+                                for (AnnotationFieldValue fv : lstFields) {
+                                    if (Utils.isPattern(fv.getFieldValue())) {
+                                        Pattern p = Pattern.compile(fv.getFieldValue());
+                                        if (p.matcher(val).matches()) {
+                                            foundLayer = fv.getLayer();
+                                            LayerMapping.addRule(LayerMapping.RULE.ANNOTATION_VALUE, foundLayer, ai.name().toString() + "_" + f.getKey() + "=" + fv.getFieldValue());
+                                            ctx.layers.add(fv.getLayer());
+                                        }
+                                    } else {
+                                        if (val.equals(fv.getFieldValue())) {
+                                            foundLayer = fv.getLayer();
+                                            LayerMapping.addRule(LayerMapping.RULE.ANNOTATION_VALUE, foundLayer, ai.name().toString() + "_" + f.getKey() + "=" + fv.getFieldValue());
+                                            ctx.layers.add(fv.getLayer());
+                                        }
                                     }
                                 }
                             }

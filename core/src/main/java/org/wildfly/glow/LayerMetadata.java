@@ -34,6 +34,7 @@ public abstract class LayerMetadata {
     public static final String ADD_ON_DESCRIPTION = PREFIX + "add-on-description";
     public static final String ADD_ON_FIX = PREFIX + "add-on-fix-";
     public static final String ANNOTATIONS = PREFIX + "annotations";
+    public static final String ANNOTATION_FIELD_VALUE = PREFIX + "annotation.field.value";
     public static final String BRING_DATASOURCE = PREFIX + "bring-datasource";
     public static final String CLASS = PREFIX + "class";
     public static final String CONFIGURATION = PREFIX + "configuration";
@@ -67,6 +68,7 @@ public abstract class LayerMetadata {
         FULLY_NAMED_RULES.add(KIND);
 
         RULES_WITH_SUFFIX.add(ADD_ON_FIX);
+        RULES_WITH_SUFFIX.add(ANNOTATION_FIELD_VALUE);
         RULES_WITH_SUFFIX.add(EXPECTED_FILE);
         RULES_WITH_SUFFIX.add(NOT_EXPECTED_FILE);
         RULES_WITH_SUFFIX.add(PROFILE);
