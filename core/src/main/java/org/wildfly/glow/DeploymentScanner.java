@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -139,7 +140,7 @@ public class DeploymentScanner implements AutoCloseable {
             }
         }
 
-        errorSession.collectEndOfScanErrors(verbose, ctx.resourceInjectionJndiInfos, ctx.contextLookupInfos, ctx.allClasses);
+        errorSession.collectEndOfScanErrors(verbose, ctx.resourceInjectionJndiInfos, ctx.contextLookupInfos, ctx.dataSourceDefinitionInfos, ctx.allClasses);
     }
 
     private void scan(DeploymentScanContext ctx) throws Exception {
@@ -192,6 +193,34 @@ public class DeploymentScanner implements AutoCloseable {
                                 }
                             }
                         }
+                    }
+                    Map<String, List<AnnotationFieldValue>> fields = ctx.mapping.getAnnotationFieldValues().get(ai.name().toString());
+                    if (fields != null) {
+                        Layer foundLayer = null;
+                        for(Entry<String, List<AnnotationFieldValue>> f : fields.entrySet()) {
+                            String val = getAnnotationValue(ai, f.getKey());
+                            if (val != null) {
+                                List<AnnotationFieldValue> lstFields = f.getValue();
+                                for (AnnotationFieldValue fv : lstFields) {
+                                    if (Utils.isPattern(fv.getFieldValue())) {
+                                        Pattern p = Pattern.compile(fv.getFieldValue());
+                                        if (p.matcher(val).matches()) {
+                                            foundLayer = fv.getLayer();
+                                            LayerMapping.addRule(LayerMapping.RULE.ANNOTATION_VALUE, foundLayer, ai.name().toString() + "_" + f.getKey() + "=" + fv.getFieldValue());
+                                            ctx.layers.add(fv.getLayer());
+                                        }
+                                    } else {
+                                        if (val.equals(fv.getFieldValue())) {
+                                            foundLayer = fv.getLayer();
+                                            LayerMapping.addRule(LayerMapping.RULE.ANNOTATION_VALUE, foundLayer, ai.name().toString() + "_" + f.getKey() + "=" + fv.getFieldValue());
+                                            ctx.layers.add(fv.getLayer());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // DataSourceDefinition are only added based on layers discovered in the above nested loop.
+                        handleDataSourceDefinitionAnnotations(ai, ctx, foundLayer);
                     }
                 }
             }
@@ -257,6 +286,18 @@ public class DeploymentScanner implements AutoCloseable {
                 ctx.resourceInjectionJndiInfos.put(resourceClassName, info);
             }
 
+        }
+    }
+
+    private void handleDataSourceDefinitionAnnotations(AnnotationInstance annotationInstance, DeploymentScanContext ctx, Layer foundLayer) {
+        if (annotationInstance.name().toString().equals("jakarta.annotation.sql.DataSourceDefinition")) {
+            String name = getAnnotationValue(annotationInstance, "name");
+            String url = getAnnotationValue(annotationInstance, "url");
+            String className = getAnnotationValue(annotationInstance, "className");
+            if (name != null) {
+                DataSourceDefinitionInfo di = new DataSourceDefinitionInfo(name, url, className, foundLayer);
+                ctx.dataSourceDefinitionInfos.put(name, di);
+            }
         }
     }
 
@@ -840,6 +881,7 @@ public class DeploymentScanner implements AutoCloseable {
         private final ErrorIdentificationSession errorSession;
         private final Set<String> allClasses = new HashSet<>();
         private final Map<String, ResourceInjectionJndiInfo> resourceInjectionJndiInfos = new HashMap<>();
+        private final Map<String, DataSourceDefinitionInfo> dataSourceDefinitionInfos = new HashMap<>();
         public Set<ContextLookupInfo> contextLookupInfos = new HashSet<>();
 
         private DeploymentScanContext(LayerMapping mapping, Set<Layer> layers, Map<String, Layer> allLayers, ErrorIdentificationSession errorSession) {

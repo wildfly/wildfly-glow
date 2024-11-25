@@ -46,6 +46,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -415,6 +416,22 @@ public final class Utils {
                         Set<Layer> ll = mapping.getAnnotations().computeIfAbsent(s, value -> new HashSet<>());
                         ll.add(l);
                     }
+                    continue;
+                }
+                if (k.startsWith(LayerMetadata.ANNOTATION_FIELD_VALUE)) {
+                    String val = l.getProperties().get(k);
+                    int i = val.indexOf(",");
+                    String annotation = val.substring(0, i);
+                    String annotationFieldValue = val.substring(i+1);
+                    int j = annotationFieldValue.indexOf("=");
+                    String field = annotationFieldValue.substring(0,j);
+                    String fieldValue = annotationFieldValue.substring(j+1);
+                    if (Utils.isPattern(fieldValue)) {
+                        fieldValue = Utils.escapePattern(fieldValue);
+                    }
+                    Map<String, List<AnnotationFieldValue>> ll = mapping.getAnnotationFieldValues().computeIfAbsent(annotation, value -> new HashMap<>());
+                    List<AnnotationFieldValue> lst = ll.computeIfAbsent(field, value -> new ArrayList<>());
+                    lst.add(new AnnotationFieldValue(annotation, field, fieldValue, l));
                     continue;
                 }
                 if (LayerMetadata.CLASS.equals(k)) {

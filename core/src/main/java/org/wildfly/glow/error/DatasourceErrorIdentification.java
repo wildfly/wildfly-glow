@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import org.wildfly.glow.DataSourceDefinitionInfo;
 import org.wildfly.glow.Env;
 
 import static org.wildfly.glow.Utils.getAddOnFix;
@@ -51,9 +52,11 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
 
     private static final String UNBOUND_DATASOURCES_ERROR = "unbound-datasources";
     private static final String NO_DEFAULT_DATASOURCE_ERROR = "no-default-datasource";
+    private static final String UNKNOWN_DRIVER_ERROR = "unknown-driver";
     private static final String UNBOUND_DATASOURCES_ERROR_DESCRIPTION = "unbound datasources error";
     private static final String NO_DEFAULT_DATASOURCE_ERROR_DESCRIPTION = "no default datasource found error";
     Map<String, Set<IdentifiedError>> errors = new HashMap<>();
+    private Map<String, DataSourceDefinitionInfo> datasourceDefinitionInfos;
 
     @Override
     public void collectErrors(Path rootPath) throws Exception {
@@ -130,32 +133,42 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
         if (unboundDatasourcesErrors != null) {
             for (IdentifiedError error : unboundDatasourcesErrors) {
                 UnboundDatasourceError uds = (UnboundDatasourceError) error;
-                for (Layer l : allBaseLayers) {
-                    if (l.getBringDatasources().contains(uds.unboundDatasource)) {
-                        // The error is directly handled, we can remove it.
-                        toRemove.add(uds.unboundDatasource);
-                        break;
-                    } else {
-                        if (l.getAddOn() != null) {
-                            Fix fix = l.getAddOn().getFixes().get(error.getId());
-                            if (fix != null) {
-                                String content = null;
-                                if (!l.getBringDatasources().contains(uds.unboundDatasource)) {
-                                    content = fix.getContent();
-                                    if (content != null) {
-                                        content = content.replaceAll("##ITEM##", uds.unboundDatasource);
-                                    }
-                                    if (fix.isEnv()) {
-                                        Set<Env> envs = ret.get(l);
-                                        if (envs == null) {
-                                            envs = new HashSet<>();
-                                            ret.put(l, envs);
+                if (datasourceDefinitionInfos.containsKey(uds.unboundDatasource)) {
+                    toRemove.add(uds.unboundDatasource);
+                    DataSourceDefinitionInfo di = datasourceDefinitionInfos.get(uds.unboundDatasource);
+                    if (di.getDriverLayer() == null) {
+                        Set<IdentifiedError> errs = errors.computeIfAbsent(UNKNOWN_DRIVER_ERROR, res -> new HashSet<>());
+                        errs.add(new IdentifiedError("Unknown driver", "The driver located in the URL [" + di.getUrl() + "] for the datasource " + uds.unboundDatasource
+                                + " injected thanks to the jakarta.annotation.sql.DataSourceDefinition annotation is not known.", ErrorLevel.WARN));
+                    }
+                } else {
+                    for (Layer l : allBaseLayers) {
+                        if (l.getBringDatasources().contains(uds.unboundDatasource)) {
+                            // The error is directly handled, we can remove it.
+                            toRemove.add(uds.unboundDatasource);
+                            break;
+                        } else {
+                            if (l.getAddOn() != null) {
+                                Fix fix = l.getAddOn().getFixes().get(error.getId());
+                                if (fix != null) {
+                                    String content = null;
+                                    if (!l.getBringDatasources().contains(uds.unboundDatasource)) {
+                                        content = fix.getContent();
+                                        if (content != null) {
+                                            content = content.replaceAll("##ITEM##", uds.unboundDatasource);
                                         }
-                                        envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true, false));
+                                        if (fix.isEnv()) {
+                                            Set<Env> envs = ret.get(l);
+                                            if (envs == null) {
+                                                envs = new HashSet<>();
+                                                ret.put(l, envs);
+                                            }
+                                            envs.add(new Env(fix.getEnvName(), Fix.getEnvValue(content), false, true, false));
+                                        }
                                     }
+                                    String errorMessage = getAddOnFix(l.getAddOn(), content);
+                                    error.setFixed(errorMessage);
                                 }
-                                String errorMessage = getAddOnFix(l.getAddOn(), content);
-                                error.setFixed(errorMessage);
                             }
                         }
                     }
@@ -202,5 +215,9 @@ public class DatasourceErrorIdentification implements ErrorIdentification {
             ret.addAll(err);
         }
         return ret;
+    }
+
+    void setDataSourceDefinitionInfos(Map<String, DataSourceDefinitionInfo> datasourceDefinitionInfos) {
+        this.datasourceDefinitionInfos = datasourceDefinitionInfos;
     }
 }

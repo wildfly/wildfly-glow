@@ -19,6 +19,7 @@ package org.wildfly.glow;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -35,6 +36,7 @@ public class LayerMapping {
         ADD_ON_ALWAYS_INCLUDED,
         ALWAYS_INCLUDED,
         ANNOTATION,
+        ANNOTATION_VALUE,
         BASE_LAYER,
         BRING_DATASOURCE,
         EXPECTED_FILE,
@@ -48,6 +50,7 @@ public class LayerMapping {
     }
     private final Map<String, Set<Layer>> constantPoolClassInfos = new HashMap<>();
     private final Map<String, Set<Layer>> annotations = new HashMap<>();
+    private final Map<String, Map<String, List<AnnotationFieldValue>>> annotationFieldValues = new HashMap<>();
     private final Map<String, Layer> activeProfilesLayers = new HashMap<>();
     private final Map<String, Set<Layer>> allProfilesLayers = new HashMap<>();
     private Layer defaultBaseLayer;
@@ -174,6 +177,10 @@ public class LayerMapping {
      */
     public Map<Layer, String> getHiddenConditions() {
         return hiddenConditions;
+    }
+
+    public Map<String, Map<String, List<AnnotationFieldValue>>> getAnnotationFieldValues() {
+        return annotationFieldValues;
     }
 
     public static String cleanupKey(String key) {
