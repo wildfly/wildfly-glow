@@ -38,6 +38,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final String defaultConfigStability;
     private final boolean isCli;
     private final List<Channel> channels;
+    private final Set<String> spaces;
 
     protected Arguments(
             String executionContext,
@@ -57,7 +58,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             String packageStability,
             String defaultConfigStability,
             boolean isCli,
-            List<Channel> channels) {
+            List<Channel> channels,
+            Set<String> spaces) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -84,6 +86,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         }
         this.isCli = isCli;
         this.channels = channels;
+        this.spaces = spaces == null ? Collections.emptySet() : spaces;
     }
 
     /**
@@ -218,6 +221,14 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public List<Channel> getChannels() {
         return channels;
+    }
+
+    /**
+     * @return the set of spaces
+     */
+    @Override
+    public Set<String> getSpaces() {
+        return spaces;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

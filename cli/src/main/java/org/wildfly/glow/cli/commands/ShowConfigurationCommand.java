@@ -44,6 +44,7 @@ import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.ScanArguments;
+import org.wildfly.glow.Space;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 
 import picocli.CommandLine;
@@ -69,6 +70,11 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CHANNELS_OPTION_SHORT, Constants.CHANNELS_OPTION}, paramLabel = Constants.CHANNELS_OPTION_LABEL)
     Optional<Path> channelsFile;
 
+    @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
+    Set<String> spaces = new LinkedHashSet<>();
+
+    private Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> defaultSpaceFpDependencies;
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving known provisioning configuration...");
@@ -78,6 +84,12 @@ public class ShowConfigurationCommand extends AbstractCommand {
             ocBuilder.append("* @|bold " + d.getName() + "|@. Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
         }
         print(ocBuilder.toString());
+        StringBuilder spacesBuilder = new StringBuilder();
+        spacesBuilder.append("\nSpaces from which more feature-packs can be used when scanning deployments (use the " + Constants.SPACES_OPTION + " option to enable the space(s):\n");
+        for(Space space : FeaturePacks.getAllSpaces()) {
+            spacesBuilder.append("* @|bold " + space.getName() + "|@. " + space.getDescription() + "\n");
+        }
+        print(spacesBuilder.toString());
 
         String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
         if (cloud.orElse(false)) {
@@ -98,9 +110,12 @@ public class ShowConfigurationCommand extends AbstractCommand {
         String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
         ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
             @Override
-            public void consume(GalleonProvisioningConfig provisioning, Map<String, Layer> all,
+            public void consume(Space space, GalleonProvisioningConfig provisioning, Map<String, Layer> all,
                     LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
-                String configStr = dumpConfiguration(fpDependencies, finalContext, vers, all,
+                if (Space.DEFAULT.equals(space)) {
+                    defaultSpaceFpDependencies = fpDependencies;
+                }
+                String configStr = dumpConfiguration(space, fpDependencies, finalContext, vers, all,
                         mapping, provisioning, isLatest, wildflyPreview.orElse(false), provisioningXml.orElse(null));
                 print(configStr);
             }
@@ -116,24 +131,39 @@ public class ShowConfigurationCommand extends AbstractCommand {
         } else {
             repoManager = MavenResolver.newMavenResolver();
         }
-        ProvisioningUtils.traverseProvisioning(consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
-
+        ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
+        for(String spaceName : spaces) {
+            Set<String> versions = FeaturePacks.getAllVersions(spaceName);
+            if (versions.contains(vers)) {
+                Space space = FeaturePacks.getSpace(spaceName);
+                ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
+            }
+        }
         return 0;
     }
 
-    private static String dumpConfiguration(Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
+    private String dumpConfiguration(Space space, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String context, String serverVersion, Map<String, Layer> allLayers,
             LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview, Path provisioningXml) throws Exception {
         StringBuilder builder = new StringBuilder();
-        if (provisioningXml == null) {
-            builder.append("Execution context: ").append(context).append("\n");
-            builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
-            builder.append("Tech Preview: ").append(techPreview).append("\n");
-        } else {
-            builder.append("Input provisioning.xml file: ").append(provisioningXml).append("\n");
+        if (config == null) {
+            builder.append("\nFeature-packs in the @|bold ").append(space.getName()).append("|@ space:\n");
+            builder.append("No feature-packs found in the " + space.getName() + " space for context " + context + ", server version " +serverVersion + ".");
+            return builder.toString();
         }
+
+        if (Space.DEFAULT.equals(space)) {
+            if (provisioningXml == null) {
+                builder.append("Execution context: ").append(context).append("\n");
+                builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
+                builder.append("Tech Preview: ").append(techPreview).append("\n");
+            } else {
+                builder.append("Input provisioning.xml file: ").append(provisioningXml).append("\n");
+            }
+        }
+        builder.append("\nFeature-packs in the @|bold ").append(space.getName()).append("|@ space:\n");
         Set<FeaturePackLocation.ProducerSpec> topLevel = new LinkedHashSet<>();
-         Map<ProducerSpec, FPID> featurepacks = new LinkedHashMap<>();
+        Map<ProducerSpec, FPID> featurepacks = new LinkedHashMap<>();
         for(GalleonFeaturePackConfig fp : config.getFeaturePackDeps()) {
             topLevel.add(fp.getLocation().getProducer());
             for(FPID fpid : fpDependencies.keySet()) {
@@ -155,7 +185,16 @@ public class ShowConfigurationCommand extends AbstractCommand {
                 }
                 if(deps != null) {
                     for (FeaturePackLocation.ProducerSpec dep : deps) {
-                        if (!topLevel.contains(dep)) {
+                        boolean inDefaultSpace = false;
+                        if (!Space.DEFAULT.equals(space)) {
+                            for (FPID fpid : defaultSpaceFpDependencies.keySet()) {
+                                if (fpid.getProducer().equals(dep)) {
+                                    inDefaultSpace = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!topLevel.contains(dep) && !inDefaultSpace) {
                             for (FeaturePackLocation.FPID fpid : l.getFeaturePacks()) {
                                 if (fpid.getProducer().equals(dep)) {
                                     layers.add(l.getName());

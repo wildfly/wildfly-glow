@@ -16,9 +16,12 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.FeaturePacks;
+import org.wildfly.glow.Space;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -27,9 +30,17 @@ import picocli.CommandLine;
 )
 public class ShowServerVersionsCommand extends AbstractCommand {
 
+    @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
+    Set<String> spaces = new LinkedHashSet<>();
+
     @Override
     public Integer call() throws Exception {
+        print("WildFly server versions in the " + Space.DEFAULT.getName() + " space:");
         print(FeaturePacks.getAllVersions());
+        for(String space : spaces) {
+            print("WildFly server versions in the " + space + " space:");
+            print(FeaturePacks.getAllVersions(space));
+        }
         print("@|bold WildFly server version can be set using the|@ @|fg(yellow) %s=<server version>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.SERVER_VERSION_OPTION, Constants.SCAN_COMMAND);
         return 0;
     }

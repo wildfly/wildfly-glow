@@ -164,6 +164,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = Constants.DRY_RUN_OPTION)
     Optional<Boolean> dryRun;
 
+    @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
+    Set<String> spaces = new LinkedHashSet<>();
+
     @Override
     public Integer call() throws Exception {
         Utils.setSystemProperties(systemProperties);
@@ -187,6 +190,9 @@ public class ScanCommand extends AbstractCommand {
         }
         if (!layersForJndi.isEmpty()) {
             builder.setJndiLayers(layersForJndi);
+        }
+        if (!spaces.isEmpty()) {
+            builder.setSpaces(spaces);
         }
         if (suggest.orElse(false)) {
             builder.setSuggest(true);
