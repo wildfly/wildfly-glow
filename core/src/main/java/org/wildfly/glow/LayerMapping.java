@@ -37,6 +37,7 @@ public class LayerMapping {
         ALWAYS_INCLUDED,
         ANNOTATION,
         ANNOTATION_VALUE,
+        ANNOTATED_TYPE,
         BASE_LAYER,
         BRING_DATASOURCE,
         EXPECTED_FILE,
@@ -51,6 +52,7 @@ public class LayerMapping {
     private final Map<String, Set<Layer>> constantPoolClassInfos = new HashMap<>();
     private final Map<String, Set<Layer>> annotations = new HashMap<>();
     private final Map<String, Map<String, List<AnnotationFieldValue>>> annotationFieldValues = new HashMap<>();
+    private final Map<String, Map<String, List<AnnotatedType>>> annotatedTypes = new HashMap<>();
     private final Map<String, Layer> activeProfilesLayers = new HashMap<>();
     private final Map<String, Set<Layer>> allProfilesLayers = new HashMap<>();
     private Layer defaultBaseLayer;
@@ -181,6 +183,10 @@ public class LayerMapping {
 
     public Map<String, Map<String, List<AnnotationFieldValue>>> getAnnotationFieldValues() {
         return annotationFieldValues;
+    }
+
+    public Map<String, Map<String, List<AnnotatedType>>> getAnnotatedTypes() {
+        return annotatedTypes;
     }
 
     public static String cleanupKey(String key) {
