@@ -244,6 +244,20 @@ In case your application packages some jars, you can exclude such jars from the 
 </discover-provisioning-info>
 ----
 
+### Enabling spaces
+
+In case you want to have access to feature-packs registered in some additional spaces (e.g.: in the 'incubating' space), 
+you can provide the list of spaces to enable. To do so evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <spaces>
+        <space>incubating</space>
+    </spaces>
+</discover-provisioning-info>
+----
+
 ### Printing matching rules
 
 You can print the rules that selected the Galleon Layers. To do so set the `<verbose>` argument. 

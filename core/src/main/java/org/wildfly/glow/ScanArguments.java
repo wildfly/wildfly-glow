@@ -80,7 +80,7 @@ public interface ScanArguments {
 
     boolean isCli();
     List<Channel> getChannels();
-
+    Set<String> getSpaces();
     default Builder createScanArgumentsBuilder() {
         return new Builder();
     }
@@ -177,6 +177,10 @@ public interface ScanArguments {
         }
         public Builder setChannels(List<Channel> channels) {
             this.channels = channels;
+            return this;
+        }
+        public Builder setSpaces(Set<String> spaces) {
+            this.spaces = spaces;
             return this;
         }
     }

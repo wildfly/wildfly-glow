@@ -667,6 +667,7 @@ public class DeploymentScanner implements AutoCloseable {
                         }
                         if (l != null) {
                             LayerMapping.addRule(LayerMapping.RULE.JAVA_TYPE,l, s);
+                            break;
                         }
                     }
                 }

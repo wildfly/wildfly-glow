@@ -45,6 +45,7 @@ public class BaseArgumentsBuilder {
     protected String defaultConfigStability;
     protected boolean isCli;
     protected List<Channel> channels;
+    protected Set<String> spaces;
 
     protected BaseArgumentsBuilder() {
 
@@ -73,6 +74,7 @@ public class BaseArgumentsBuilder {
                 packageStability,
                 defaultConfigStability,
                 isCli,
-                channels);
+                channels,
+                spaces);
     }
 }

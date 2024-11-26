@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -49,6 +50,7 @@ import org.jboss.galleon.api.GalleonBuilder;
 import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.api.config.GalleonFeaturePackConfig;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
+import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import org.wildfly.channel.Channel;
@@ -56,6 +58,7 @@ import org.wildfly.glow.AddOn;
 import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.LayerMetadata;
+import org.wildfly.glow.Space;
 import org.wildfly.glow.Utils;
 
 /**
@@ -128,6 +131,9 @@ public class ScanDocMojo extends AbstractMojo {
     @Parameter(required = false, defaultValue = "WildFly")
     String serverType;
 
+    @Parameter(required = false, defaultValue = "true")
+    boolean spaces;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
@@ -183,16 +189,56 @@ public class ScanDocMojo extends AbstractMojo {
                     provider.addArtifactResolver(artifactResolver);
                     Map<Layer, Map<String, String>> rules = new TreeMap<>();
 
-                    getRules(provider, "bare-metal", universeResolver, rules);
+                    getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, rules, false);
                     Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-                    getRules(provider,"cloud", universeResolver, cloudRules);
+                    getRules(Space.DEFAULT, provider,"cloud", universeResolver, cloudRules, false);
                     rulesBuilder.append("## Support for " + serverType + " " + FeaturePacks.getLatestVersion() + "\n\n");
-                    rulesBuilder.append(buildTable(provider,"bare-metal", rules, false));
-                    rulesBuilder.append(buildTable(provider,"cloud", cloudRules, false));
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"bare-metal", rules, false));
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"cloud", cloudRules, false));
                     if (preview) {
+                        Map<Layer, Map<String, String>> previewRules = new TreeMap<>();
+                        getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, previewRules, true);
+                        Map<Layer, Map<String, String>> previewCloudRules = new TreeMap<>();
+                        getRules(Space.DEFAULT, provider,"cloud", universeResolver, previewCloudRules, true);
                         rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
-                        rulesBuilder.append(buildTable(provider, "bare-metal", rules, true));
-                        rulesBuilder.append(buildTable(provider, "cloud", cloudRules, true));
+                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "bare-metal", previewRules, true));
+                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "cloud", previewCloudRules, true));
+                    }
+                    if (spaces) {
+                        for (Space space : FeaturePacks.getAllSpaces()) {
+                            if (FeaturePacks.getAllVersions(space.getName()).contains(FeaturePacks.getLatestVersion())) {
+                                Map<Layer, Map<String, String>> spaceRules = new TreeMap<>();
+                                getRules(space, provider, "bare-metal", universeResolver, spaceRules, false);
+                                Map<Layer, Map<String, String>> spaceCloudRules = new TreeMap<>();
+                                getRules(space, provider, "cloud", universeResolver, spaceCloudRules, false);
+                                if (!spaceRules.isEmpty() || !spaceCloudRules.isEmpty()) {
+                                    rulesBuilder.append("##  Additional '" + space.getName() + "' space\n\n");
+                                    rulesBuilder.append(space.getDescription() + "\n\n");
+                                    rulesBuilder.append("### Support for " + serverType + " " + FeaturePacks.getLatestVersion() + "\n\n");
+                                }
+                                if (!spaceRules.isEmpty()) {
+                                    rulesBuilder.append(buildTable(space, provider, "bare-metal", spaceRules, false));
+                                }
+                                if (!spaceCloudRules.isEmpty()) {
+                                    rulesBuilder.append(buildTable(space, provider, "cloud", spaceCloudRules, false));
+                                }
+                                if (preview) {
+                                    Map<Layer, Map<String, String>> spacePreviewRules = new TreeMap<>();
+                                    getRules(space, provider, "bare-metal", universeResolver, spacePreviewRules, true);
+                                    Map<Layer, Map<String, String>> spacePreviewCloudRules = new TreeMap<>();
+                                    getRules(space, provider, "cloud", universeResolver, spacePreviewCloudRules, true);
+                                    if (!spacePreviewRules.isEmpty() || !spacePreviewCloudRules.isEmpty()) {
+                                        rulesBuilder.append("### Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
+                                        if (!spacePreviewRules.isEmpty()) {
+                                            rulesBuilder.append(buildTable(space, provider, "bare-metal", spacePreviewRules, true));
+                                        }
+                                        if (!spacePreviewCloudRules.isEmpty()) {
+                                            rulesBuilder.append(buildTable(space, provider, "cloud", spacePreviewCloudRules, true));
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 } finally {
                     System.clearProperty(FeaturePacks.URL_PROPERTY);
@@ -206,12 +252,12 @@ public class ScanDocMojo extends AbstractMojo {
         }
     }
 
-    private String buildTable(GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
+    private String buildTable(Space space, GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
 
         StringBuilder rulesBuilder = new StringBuilder();
         rulesBuilder.append("\n### " + context + "\n");
         rulesBuilder.append("\n#### Supported Galleon feature-packs \n");
-        Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, preview);
+        Path provisioningXML = FeaturePacks.getFeaturePacks(space, null, context, preview);
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig pConfig = p.loadProvisioningConfig(provisioningXML);
             for (GalleonFeaturePackConfig c : pConfig.getFeaturePackDeps()) {
@@ -240,35 +286,59 @@ public class ScanDocMojo extends AbstractMojo {
         }
         rulesBuilder.append("|===\n");
 
-        rulesBuilder.append("\n#### [[glow.table.addons." + context + "]]Add-ons\n");
-        rulesBuilder.append("[cols=\"25%,25%,50%\"]\n");
-        rulesBuilder.append("|===\n");
-        rulesBuilder.append("|Add-on |Family |Description\n");
         Map<String, AddOn> addOns = new TreeMap<>();
         for (Layer l : rules.keySet()) {
             if (l.getAddOn() != null) {
                 addOns.put(l.getAddOn().getName(), l.getAddOn());
             }
         }
-        for (String a : addOns.keySet()) {
-            AddOn addon = addOns.get(a);
-            rulesBuilder.append("|" + addon.getName() + "\n");
-            rulesBuilder.append("|" + addon.getFamily() + "\n");
-            rulesBuilder.append("|" + addon.getDescription() + "\n");
+        if (!addOns.isEmpty()) {
+            rulesBuilder.append("\n#### [[glow.table.addons." + context + "]]Add-ons\n");
+            rulesBuilder.append("[cols=\"25%,25%,50%\"]\n");
+            rulesBuilder.append("|===\n");
+            rulesBuilder.append("|Add-on |Family |Description\n");
+
+            for (String a : addOns.keySet()) {
+                AddOn addon = addOns.get(a);
+                rulesBuilder.append("|" + addon.getName() + "\n");
+                rulesBuilder.append("|" + addon.getFamily() + "\n");
+                rulesBuilder.append("|" + addon.getDescription() + "\n");
+            }
+            rulesBuilder.append("|===\n");
         }
-        rulesBuilder.append("|===\n");
         return rulesBuilder.toString();
     }
 
-    private LayerMapping getRules(GalleonBuilder provider, String context, UniverseResolver universeResolver,
-            Map<Layer, Map<String, String>> rules) throws Exception {
-        Path provisioningXML = FeaturePacks.getFeaturePacks(null, context, false);
+    private LayerMapping getRules(Space space, GalleonBuilder provider, String context, UniverseResolver universeResolver,
+            Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
+        Path provisioningXML = FeaturePacks.getFeaturePacks(space, null, context, preview);
         Map<String, Layer> all;
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig config = p.loadProvisioningConfig(provisioningXML);
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             all = Utils.getAllLayers(config, universeResolver, p, fpDependencies);
+            // Filter-out the layers that are not in the additional space
+            if (!Space.DEFAULT.equals(space)) {
+                Set<String> toRemove = new HashSet<>();
+                for(Entry<String, Layer> entry : all.entrySet()) {
+                    Layer l = entry.getValue();
+                    boolean toInclude = false;
+                    for(FPID fpid : l.getFeaturePacks()) {
+                        if (config.getFeaturePackDep(fpid.getProducer()) != null) {
+                            toInclude = true;
+                            break;
+                        }
+                    }
+                    if (!toInclude) {
+                        toRemove.add(entry.getKey());
+                    }
+                }
+                for(String k : toRemove) {
+                    all.remove(k);
+                }
+            }
         }
+
         LayerMapping mapping = Utils.buildMapping(all, new HashSet<>());
         for (Layer l : all.values()) {
             if (!l.getProperties().isEmpty()) {

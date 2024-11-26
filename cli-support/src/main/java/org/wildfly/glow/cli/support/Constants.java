@@ -90,6 +90,9 @@ public interface Constants {
     String SHOW_ADD_ONS_COMMAND = "show-add-ons";
     String SHOW_CONFIGURATION_COMMAND = "show-configuration";
     String SHOW_SERVER_VERSIONS_COMMAND = "show-server-versions";
+    String SPACES_OPTION = "--spaces";
+    String SPACES_OPTION_SHORT = "-sp";
+    String SPACES_OPTION_LABEL = "<space1,space2, ...>";
     String STABILITY_LABEL = "<default|community|preview|experimental>";
     String STABILITY_OPTION = "--stability-level";
     String STABILITY_OPTION_SHORT = "-sl";
