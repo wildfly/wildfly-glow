@@ -33,6 +33,7 @@ public abstract class LayerMetadata {
     public static final String ADD_ON_DEPENDS_ON = PREFIX + "add-on-depends-on";
     public static final String ADD_ON_DESCRIPTION = PREFIX + "add-on-description";
     public static final String ADD_ON_FIX = PREFIX + "add-on-fix-";
+    public static final String ANNOTATED_TYPE = PREFIX + "annotated.type";
     public static final String ANNOTATIONS = PREFIX + "annotations";
     public static final String ANNOTATION_FIELD_VALUE = PREFIX + "annotation.field.value";
     public static final String BRING_DATASOURCE = PREFIX + "bring-datasource";
@@ -59,6 +60,7 @@ public abstract class LayerMetadata {
         FULLY_NAMED_RULES.add(ADD_ON_DEPENDS_ON);
         FULLY_NAMED_RULES.add(ADD_ON_DESCRIPTION);
 
+        FULLY_NAMED_RULES.add(ANNOTATED_TYPE);
         FULLY_NAMED_RULES.add(ANNOTATIONS);
         FULLY_NAMED_RULES.add(BRING_DATASOURCE);
         FULLY_NAMED_RULES.add(CLASS);

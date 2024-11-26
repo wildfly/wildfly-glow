@@ -418,6 +418,14 @@ public final class Utils {
                     }
                     continue;
                 }
+                if (LayerMetadata.ANNOTATED_TYPE.equals(k)) {
+                    String val = l.getProperties().get(k);
+                    AnnotatedType type = parseAnnotatedType(val, l);
+                    Map<String, List<AnnotatedType>> annotations = mapping.getAnnotatedTypes().computeIfAbsent(type.getAnnotation(), value -> new HashMap<>());
+                    List<AnnotatedType> lst = annotations.computeIfAbsent(type.getType(), value -> new ArrayList<>());
+                    lst.add(type);
+                    continue;
+                }
                 if (k.startsWith(LayerMetadata.ANNOTATION_FIELD_VALUE)) {
                     String val = l.getProperties().get(k);
                     int i = val.indexOf(",");
@@ -608,6 +616,68 @@ public final class Utils {
             }
         }
         return mapping;
+    }
+
+    static final AnnotatedType parseAnnotatedType(String val, Layer layer) {
+        int i = val.indexOf(",");
+        String type = val.substring(0, i);
+        String fullAnnotation = val.substring(i + 1);
+        String annotationClass = fullAnnotation;
+        int fieldsIndex = fullAnnotation.indexOf("[");
+        Map<String, String> parsedFields = Collections.emptyMap();
+        if (fieldsIndex != -1) {
+            annotationClass = fullAnnotation.substring(0, fieldsIndex);
+            String fields = fullAnnotation.substring(fieldsIndex);
+            parsedFields = parseAnnotationFields(fields);
+        }
+        return new AnnotatedType(type, annotationClass, parsedFields, layer);
+    }
+
+    private static final Map<String, String> parseAnnotationFields(String fields) {
+        boolean expectField = true;
+        boolean expectValue = false;
+        boolean escape = false;
+        StringBuilder fieldBuilder = new StringBuilder();
+        StringBuilder valueBuilder = new StringBuilder();
+        Map<String, String> map = new HashMap<>();
+        for(int i = 0; i < fields.length(); i ++) {
+            char c  = fields.charAt(i);
+            if (expectField && c == '[') {
+                continue;
+            }
+            if (c == '=' && expectField) {
+              expectField = false;
+              expectValue = true;
+              continue;
+            }
+            if (expectField) {
+                fieldBuilder.append(c);
+                continue;
+            }
+            if (c == '\\' && !escape) {
+                escape = true;
+                continue;
+            }
+            if (!escape && expectValue && (c == ']' || c == ',')) {
+                String value = valueBuilder.toString();
+                if(isPattern(value)) {
+                    value = escapePattern(value);
+                }
+                String field = fieldBuilder.toString();
+                valueBuilder = new StringBuilder();
+                fieldBuilder = new StringBuilder();
+                map.put(field, value);
+                expectValue = false;
+                expectField = true;
+                continue;
+            }
+            if (expectValue) {
+                valueBuilder.append(c);
+                escape = false;
+                continue;
+            }
+        }
+        return map;
     }
 
     private static Set<String> getProfiles(Set<String> profiles, String k, Layer l) {

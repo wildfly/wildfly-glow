@@ -1,0 +1,11 @@
+<!--
+  ~ Copyright The WildFly Authors
+  ~ SPDX-License-Identifier: Apache-2.0
+  -->
+
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:2.0" name="annotated-type">
+    <props>
+        <prop name="org.wildfly.rule.annotated.type" value="java.lang.Object,org.wildfly.glow.test.rules.classes.annotation.field.value.FieldValue[prop=coco]"/>
+
+    </props>
+</layer-spec>

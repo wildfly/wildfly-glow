@@ -222,6 +222,39 @@ public class DeploymentScanner implements AutoCloseable {
                         // DataSourceDefinition are only added based on layers discovered in the above nested loop.
                         handleDataSourceDefinitionAnnotations(ai, ctx, foundLayer);
                     }
+                    if (ai.target().kind() == AnnotationTarget.Kind.FIELD) {
+                        Map<String, List<AnnotatedType>> annotatedTypes = ctx.mapping.getAnnotatedTypes().get(ai.name().toString());
+                        if (annotatedTypes != null) {
+                            String type = ai.target().asField().type().toString();
+                            List<AnnotatedType> annotations = annotatedTypes.get(type);
+                            if (annotations != null) {
+                                for (AnnotatedType at : annotations) {
+                                    if (at.getFields().isEmpty()) {
+                                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATED_TYPE, at.getLayer(), "@" + ai.name().toString() + "\n" + at.getType());
+                                        ctx.layers.add(at.getLayer());
+                                    } else {
+                                        for (Entry<String, String> entry : at.getFields().entrySet()) {
+                                            String val = getAnnotationValue(ai, entry.getKey());
+                                            if (val != null) {
+                                                if (Utils.isPattern(entry.getValue())) {
+                                                    Pattern p = Pattern.compile(entry.getValue());
+                                                    if (p.matcher(val).matches()) {
+                                                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATED_TYPE, at.getLayer(), "@" + ai.name().toString() + "_" + entry.getKey() + "=" + entry.getValue());
+                                                        ctx.layers.add(at.getLayer());
+                                                    }
+                                                } else {
+                                                    if (val.equals(entry.getValue())) {
+                                                        LayerMapping.addRule(LayerMapping.RULE.ANNOTATED_TYPE, at.getLayer(), "@" + ai.name().toString() + entry.getKey() + "=" + entry.getValue() + "\n" + at.getType());
+                                                        ctx.layers.add(at.getLayer());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
