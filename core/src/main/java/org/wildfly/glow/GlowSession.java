@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -219,7 +220,12 @@ public class GlowSession {
                 artifact.setExtension("zip");
                 resolver.resolve(artifact);
                 FeaturePackLocation loc = dep.getLocation().replaceBuild(artifact.getVersion());
-                outputConfigBuilder.addFeaturePackDep(loc);
+                GalleonFeaturePackConfig c = GalleonFeaturePackConfig.builder(loc).
+                        setInheritConfigs(dep.getInheritConfigs() == null ? Boolean.FALSE : dep.getInheritConfigs()).
+                        setInheritPackages(dep.getInheritPackages() == null ? Boolean.FALSE : dep.getInheritPackages()).
+                        excludeAllPackages(dep.getExcludedPackages() == null ? Collections.emptySet() : dep.getExcludedPackages()).
+                        includeAllPackages(dep.getIncludedPackages() == null ? Collections.emptySet() : dep.getIncludedPackages()).build();
+                outputConfigBuilder.addFeaturePackDep(c);
                 fpVersions.put(fpid.getProducer(), loc.getFPID());
                 originalVersions.put(fpid.getProducer(), fpid);
             }
