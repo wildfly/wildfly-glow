@@ -21,7 +21,7 @@
         <version.info.picocli>4.7.5</version.info.picocli>
         <version.org.ow2.asm>9.7.1</version.org.ow2.asm>
         <version.biz.aQute.bnd>6.4.0</version.biz.aQute.bnd>
-        <version.org.wildfly.plugins.wildfly-plugin-tools>1.1.0.Final</version.org.wildfly.plugins.wildfly-plugin-tools>
+        <version.org.wildfly.plugins.wildfly-plugin-tools>1.2.0.Final</version.org.wildfly.plugins.wildfly-plugin-tools>
         <version.org.wildfly.common.wildfly-common>1.7.0.Final</version.org.wildfly.common.wildfly-common>
         <version.com.puppycrawl.tools.checkstyle>8.18</version.com.puppycrawl.tools.checkstyle>
         <version.com.fasterxml.jackson.core>2.17.2</version.com.fasterxml.jackson.core>
@@ -56,7 +56,7 @@
         <galleon.fork.embedded>true</galleon.fork.embedded>
 
         <!-- Test dependency versions -->
-        <version.org.wildfly.galleon-plugins>7.3.0.Final</version.org.wildfly.galleon-plugins>
+        <version.org.wildfly.galleon-plugins>7.3.1.Final</version.org.wildfly.galleon-plugins>
         <version.jakarta.annotation.jakarta-annotation-api>2.1.1</version.jakarta.annotation.jakarta-annotation-api>
         <version.jakarta.ejb.jakarta-ejb-api>4.0.1</version.jakarta.ejb.jakarta-ejb-api>
         <version.jakarta.enterprise.cdi-api>4.0.1</version.jakarta.enterprise.cdi-api>
