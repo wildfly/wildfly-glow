@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.1.1.Final,</span>
-<span id="revdate">2024-11-12T14:05:24Z</span>
+<span id="revnumber">version 1.2.0.Final,</span>
+<span id="revdate">2024-12-16T20:54:14Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -453,9 +453,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel2">
 <li><a href="#_automatic_identification_of_wildfly_galleon_layers">1.1. Automatic identification of WildFly Galleon Layers</a></li>
 <li><a href="#_centralized_knowledge_of_wildfly_galleon_feature_packs">1.2. Centralized knowledge of WildFly Galleon Feature-packs.</a></li>
-<li><a href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon Layers</a></li>
-<li><a href="#_wildfly_glow_tooling">1.4. WildFly Glow tooling</a></li>
-<li><a href="#_support_for_wildfly_stability">1.5. Support for WildFly Stability</a></li>
+<li><a href="#_incubating_feature_packs">1.3. Incubating feature-packs.</a></li>
+<li><a href="#_going_beyond_discovered_galleon_layers">1.4. Going beyond discovered Galleon Layers</a></li>
+<li><a href="#_wildfly_glow_tooling">1.5. WildFly Glow tooling</a></li>
+<li><a href="#_support_for_wildfly_stability">1.6. Support for WildFly Stability</a></li>
 </ul>
 </li>
 <li><a href="#glow_cli">2. WildFly Glow Command Line</a></li>
@@ -471,7 +472,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_support_for_wildfly_preview">3.8. Support for WildFly Preview</a></li>
 <li><a href="#_specifying_additional_galleon_layers">3.9. Specifying additional Galleon Layers</a></li>
 <li><a href="#_excluding_archives">3.10. Excluding archives</a></li>
-<li><a href="#_printing_matching_rules">3.11. Printing matching rules</a></li>
+<li><a href="#_enabling_spaces">3.11. Enabling spaces</a></li>
+<li><a href="#_printing_matching_rules">3.12. Printing matching rules</a></li>
 </ul>
 </li>
 <li><a href="#_wildfly_glow_arquillian_maven_plugin">4. WildFly Glow Arquillian Maven plugin</a>
@@ -546,12 +548,24 @@ that are bound to the usage of a given Galleon Layer. An example of rule can be 
 </div>
 </div>
 <div class="sect2">
-<h3 id="_going_beyond_discovered_galleon_layers"><a class="anchor" href="#_going_beyond_discovered_galleon_layers"></a><a class="link" href="#_going_beyond_discovered_galleon_layers">1.3. Going beyond discovered Galleon Layers</a></h3>
+<h3 id="_incubating_feature_packs"><a class="anchor" href="#_incubating_feature_packs"></a><a class="link" href="#_incubating_feature_packs">1.3. Incubating feature-packs.</a></h3>
+<div class="paragraph">
+<p>Feature-packs that are developed outside of the WildFly feature process can be registered in the "incubating" space.
+This space can be explicitly enabled when discovering provisioning configuration.
+WildFly Glow has, per WildFly version, the knowledge of 'incubating' compatible Galleon Feature-packs (this information is stored in
+<a href="https://github.com/wildfly/wildfly-galleon-feature-packs/tree/main/spaces/incubating">this</a> directory).</p>
+</div>
+<div class="paragraph">
+<p>In order for these extras feature-packs to be recognized by WildFly Glow, they must have their defined Layers annotated with rules.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_going_beyond_discovered_galleon_layers"><a class="anchor" href="#_going_beyond_discovered_galleon_layers"></a><a class="link" href="#_going_beyond_discovered_galleon_layers">1.4. Going beyond discovered Galleon Layers</a></h3>
 <div class="paragraph">
 <p>WildFly Glow does more than identifying Galleon Feature-packs and Layers.</p>
 </div>
 <div class="sect3">
-<h4 id="_provisioning"><a class="anchor" href="#_provisioning"></a><a class="link" href="#_provisioning">1.3.1. Provisioning</a></h4>
+<h4 id="_provisioning"><a class="anchor" href="#_provisioning"></a><a class="link" href="#_provisioning">1.4.1. Provisioning</a></h4>
 <div class="paragraph">
 <p>WildFly Glow CLI allows you to provision a WildFly server, a WildFly Bootable JAR, produce a Docker image and deploy your application to OpenShift.</p>
 </div>
@@ -625,7 +639,7 @@ The JGroups <code>dns.DNS_PING</code> protocol is enabled for the members of the
 </div>
 </div>
 <div class="sect3">
-<h4 id="_openshift_dry_run_mode"><a class="anchor" href="#_openshift_dry_run_mode"></a><a class="link" href="#_openshift_dry_run_mode">1.3.2. OpenShift dry-run mode</a></h4>
+<h4 id="_openshift_dry_run_mode"><a class="anchor" href="#_openshift_dry_run_mode"></a><a class="link" href="#_openshift_dry_run_mode">1.4.2. OpenShift dry-run mode</a></h4>
 <div class="paragraph">
 <p>When using the <code>--dry-run</code> option, WildFly glow will not interact with the cluster but will generate all the needed resources that are required to build
 and deploy your application in the cluster of your choice. You can then assemble the images and deploy to your cluster in a flexible way.
@@ -701,7 +715,7 @@ with the actual application image repository.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_wildfly_additional_features_discovery"><a class="anchor" href="#_wildfly_additional_features_discovery"></a><a class="link" href="#_wildfly_additional_features_discovery">1.3.3. WildFly additional features discovery</a></h4>
+<h4 id="_wildfly_additional_features_discovery"><a class="anchor" href="#_wildfly_additional_features_discovery"></a><a class="link" href="#_wildfly_additional_features_discovery">1.4.3. WildFly additional features discovery</a></h4>
 <div class="paragraph">
 <p>Some WildFly server features can&#8217;t be discovered by scanning application deployment. A good example is the usage of SSL to secure the http
 access. Another one is the need for WildFly tooling (e,g,: WildFly CLI, elytron tooling, &#8230;&#8203;).
@@ -710,7 +724,7 @@ for your application.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_connection_to_databases"><a class="anchor" href="#_connection_to_databases"></a><a class="link" href="#_connection_to_databases">1.3.4. Connection to databases</a></h4>
+<h4 id="_connection_to_databases"><a class="anchor" href="#_connection_to_databases"></a><a class="link" href="#_connection_to_databases">1.4.4. Connection to databases</a></h4>
 <div class="paragraph">
 <p>WildFly Glow detects that your application requires a datasource and will suggest you with database <code>add-ons</code> to be included in order
 to connect to the DB of your choice (postgresql, mysql, &#8230;&#8203;).</p>
@@ -718,7 +732,7 @@ to connect to the DB of your choice (postgresql, mysql, &#8230;&#8203;).</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_wildfly_glow_tooling"><a class="anchor" href="#_wildfly_glow_tooling"></a><a class="link" href="#_wildfly_glow_tooling">1.4. WildFly Glow tooling</a></h3>
+<h3 id="_wildfly_glow_tooling"><a class="anchor" href="#_wildfly_glow_tooling"></a><a class="link" href="#_wildfly_glow_tooling">1.5. WildFly Glow tooling</a></h3>
 <div class="paragraph">
 <p>WildFly Glow tooling is composed of 3 parts:</p>
 </div>
@@ -740,7 +754,7 @@ Feature-packs and Layers.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_support_for_wildfly_stability"><a class="anchor" href="#_support_for_wildfly_stability"></a><a class="link" href="#_support_for_wildfly_stability">1.5. Support for WildFly Stability</a></h3>
+<h3 id="_support_for_wildfly_stability"><a class="anchor" href="#_support_for_wildfly_stability"></a><a class="link" href="#_support_for_wildfly_stability">1.6. Support for WildFly Stability</a></h3>
 <div class="paragraph">
 <p>WildFly Glow CLI has a support
 for <a href="http://docs.wildfly.org/32/Admin_Guide.html#Feature_stability_levels">WildFly Stability</a>.</p>
@@ -1075,7 +1089,23 @@ Java reflection, usage of JNDI API), you can evolve the <code>discover-provision
 </div>
 </div>
 <div class="sect2">
-<h3 id="_printing_matching_rules"><a class="anchor" href="#_printing_matching_rules"></a><a class="link" href="#_printing_matching_rules">3.11. Printing matching rules</a></h3>
+<h3 id="_enabling_spaces"><a class="anchor" href="#_enabling_spaces"></a><a class="link" href="#_enabling_spaces">3.11. Enabling spaces</a></h3>
+<div class="paragraph">
+<p>In case you want to have access to feature-packs registered in some additional spaces (e.g.: in the 'incubating' space),
+you can provide the list of spaces to enable. To do so evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;spaces&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;space&gt;</span>incubating<span style="color:#070;font-weight:bold">&lt;/space&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/spaces&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_printing_matching_rules"><a class="anchor" href="#_printing_matching_rules"></a><a class="link" href="#_printing_matching_rules">3.12. Printing matching rules</a></h3>
 <div class="paragraph">
 <p>You can print the rules that selected the Galleon Layers. To do so set the <code>&lt;verbose&gt;</code> argument.</p>
 </div>
@@ -1116,7 +1146,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.1.1.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.2.0.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1461,7 +1491,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.1.1.Final:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.2.0.Final:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1621,7 +1651,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.1.1.Final:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.2.0.Final:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2227,8 +2257,8 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.1.1.Final<br>
-Last updated 2024-11-12 15:05:44 +0100
+Version 1.2.0.Final<br>
+Last updated 2024-12-16 21:54:35 +0100
 </div>
 </div>
 </body>
