@@ -13,8 +13,11 @@
     <packaging>pom</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
+        <maven.compiler.source>${maven.compiler.release}</maven.compiler.source>
+        <maven.compiler.target>${maven.compiler.release}</maven.compiler.target>
+        <!-- Used to override the release bytecode for compiling tests. This allows testing on newer bytecode. -->
+        <test.maven.compiler.release>${maven.compiler.release}</test.maven.compiler.release>
         <wildfly.glow.galleon.feature-packs.url>https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/release/</wildfly.glow.galleon.feature-packs.url>
 
         <!-- versions -->
@@ -135,6 +138,17 @@
                                 <includeTestSourceDirectory>true</includeTestSourceDirectory>
                                 <useFile></useFile>
                                 <excludes>**/*$logger.java,**/*$bundle.java,**/HelpMojo.java</excludes>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>default-testCompile</id>
+                            <configuration>
+                                <release>${test.maven.compiler.release}</release>
                             </configuration>
                         </execution>
                     </executions>
