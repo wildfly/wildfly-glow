@@ -1,14 +1,20 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: WildFly Glow - CI
+name: WildFly Glow - Nightly CI
 
 on:
   push:
     branches:
-      - '**'
+      - 'main'
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - '**'
+    paths:
+      - '.github/workflows/nightly-ci.yml'
+
+  schedule:
+    - cron: '0 3 * * *' # Every day at 03:00 UTC
 
 # Only run the latest job
 concurrency:
@@ -17,51 +23,51 @@ concurrency:
 
 
 jobs:
-  build:
-    name: ${{ matrix.os }}-jdk${{ matrix.java }}
+  nightly-build:
+    name: ${{ matrix.os }}-jdk${{ matrix.java.version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: ['21', '17', '11']
+        java: [{version: '17', release: '17'} , {version: '21', release: '21'}, {version: '23', release: '23'}, {version: '24-ea', release: '24'}]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
             path: wildfly-glow
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
             repository: wildfly/wildfly-maven-plugin
             path: wildfly-maven-plugin
-      - name: Set up JDK ${{ matrix.java }}
+      - name: Set up JDK ${{ matrix.java.version }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          java-version: ${{ matrix.java.version }}
           cache: 'maven'
           distribution: 'temurin'
-      - name: Build and Test on ${{ matrix.java }}
-        run: mvn clean install
-        shell: bash
+      - name: Build and Test on ${{ matrix.java.version }} with tests compiled to ${{ matrix.java.version }}
+        run: mvn clean install '-Dtest.maven.compiler.release=${{ matrix.java.release }}'
         working-directory: wildfly-glow
       - name: Run cli tests using bash
-        if: ${{ matrix.java != '11' }}
         run: bash tests/run-cli-tests.sh
         shell: bash
         working-directory: wildfly-glow
       - name: Retrieve WildFly Glow version
+        shell: bash
         run: |
           echo "WILDFLY_GLOW_VERSION=$(mvn -B help:evaluate -Dexpression=project.version -DforceStdout -q)" >> $GITHUB_ENV
-        shell: bash
         working-directory: wildfly-glow
-      - name: Build and Test WildFly Maven Plugin on ${{ matrix.java }}
+      - name: Build and Test WildFly Maven Plugin on ${{ matrix.java.version }}
+        # Currently WildFly 35 is the only version that works with Java 24. Changes should be made to the wildfly-maven-plugin
+        # to allow this to work by default. For now, we will override the WildFly version.
         run: mvn clean install -Dversion.org.wildfly.glow=${{ env.WILDFLY_GLOW_VERSION }}
         shell: bash
         working-directory: wildfly-maven-plugin
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: surefire-reports-${{ matrix.os }}-${{ matrix.java }}
+          name: surefire-reports-${{ matrix.os }}-${{ matrix.java.version }}
           path: | 
            !**/target/**
            **/surefire-reports/*.txt
