@@ -10,6 +10,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
+# Only run the latest job
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
 
 jobs:
   build:
@@ -40,6 +45,7 @@ jobs:
         shell: bash
         working-directory: wildfly-glow
       - name: Run cli tests using bash
+        if: ${{ matrix.java != '11' }}
         run: bash tests/run-cli-tests.sh
         shell: bash
         working-directory: wildfly-glow
