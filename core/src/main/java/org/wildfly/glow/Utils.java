@@ -418,7 +418,7 @@ public final class Utils {
                     }
                     continue;
                 }
-                if (LayerMetadata.ANNOTATED_TYPE.equals(k)) {
+                if (k.startsWith(LayerMetadata.ANNOTATED_TYPE)) {
                     String val = l.getProperties().get(k);
                     AnnotatedType type = parseAnnotatedType(val, l);
                     Map<String, List<AnnotatedType>> annotations = mapping.getAnnotatedTypes().computeIfAbsent(type.getAnnotation(), value -> new HashMap<>());
