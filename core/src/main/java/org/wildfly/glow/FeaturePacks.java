@@ -45,11 +45,17 @@ public class FeaturePacks {
 
     public static final String URL_PROPERTY = "wildfly-glow-galleon-feature-packs-url";
 
-    public static Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
+    private final URI rootURI;
+
+    public FeaturePacks(URI rootURI) {
+        this.rootURI = rootURI;
+    }
+
+    public Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
         return getFeaturePacks(Space.DEFAULT, version, context, techPreview);
     }
 
-    public static Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception {
+    public Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception {
         try {
             String rootURL = getFeaturePacksURL(space);
             Yaml yaml = new Yaml();
@@ -81,15 +87,12 @@ public class FeaturePacks {
         }
     }
 
-    public static String getFeaturePacksURL() throws Exception {
+    private String getFeaturePacksURL() throws Exception {
         return getFeaturePacksURL(Space.DEFAULT);
     }
 
-    public static String getFeaturePacksURL(Space space) throws Exception {
-        String rootURL = Utils.getConfigEntry(URL_PROPERTY);
-        if (rootURL == null) {
-            throw new Exception("No " + URL_PROPERTY + " entry found");
-        }
+    private String getFeaturePacksURL(Space space) throws Exception {
+        String rootURL = rootURI.toString();
         if (!rootURL.endsWith("/")) {
             rootURL = rootURL + "/";
         }
@@ -99,18 +102,11 @@ public class FeaturePacks {
         return rootURL;
     }
 
-    public static Set<String> getAllVersions() throws Exception {
-        String rootURL = getFeaturePacksURL();
-        Set<String> set = new TreeSet<>();
-        Yaml yaml = new Yaml();
-        Map<String, String> map = yaml.load(new URI(rootURL + VERSIONS).toURL().openStream());
-        for(String v : Arrays.asList(map.get("versions").split(","))) {
-            set.add(v.trim());
-        }
-        return set;
+    public Set<String> getAllVersions() throws Exception {
+        return getAllVersions(Space.DEFAULT.getName());
     }
 
-    public static Set<String> getAllVersions(String spaceName) throws Exception {
+    public Set<String> getAllVersions(String spaceName) throws Exception {
         Space space = getSpace(spaceName);
         String rootURL = getFeaturePacksURL(space);
         Set<String> set = new TreeSet<>();
@@ -122,7 +118,7 @@ public class FeaturePacks {
         return set;
     }
 
-    public static List<Space> getAllSpaces() throws Exception {
+    public List<Space> getAllSpaces() throws Exception {
         String rootURL = getFeaturePacksURL();
         List<Space> lst = new ArrayList<>();
         Yaml yaml = new Yaml();
@@ -134,7 +130,10 @@ public class FeaturePacks {
         return lst;
     }
 
-    public static Space getSpace(String spaceName) throws Exception {
+    public Space getSpace(String spaceName) throws Exception {
+        if (Space.DEFAULT.getName().equals(spaceName)) {
+            return Space.DEFAULT;
+        }
         String rootURL = getFeaturePacksURL();
         List<Space> lst = new ArrayList<>();
         Yaml yaml = new Yaml();
@@ -153,7 +152,7 @@ public class FeaturePacks {
         throw new Exception("Space " + spaceName + " doesn't exist. Known spaces are: " + builder.toString());
     }
 
-    public static String getLatestVersion() throws Exception {
+    public String getLatestVersion() throws Exception {
         String rootURL = getFeaturePacksURL();
         Yaml yaml = new Yaml();
         Map<String, String> map = yaml.load(new URI(rootURL + VERSIONS).toURL().openStream());

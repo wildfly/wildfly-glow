@@ -45,17 +45,17 @@ public class ProvisioningUtils {
     }
 
     public static void traverseProvisioning(Space space, ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels, MavenRepoManager resolver) throws Exception {
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels, MavenRepoManager resolver, MetadataProvider metadataProvider) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);
-        String vers = wildflyServerVersion != null ? wildflyServerVersion : FeaturePacks.getLatestVersion();
+        String vers = wildflyServerVersion != null ? wildflyServerVersion : metadataProvider.getLatestVersion();
         Provisioning provisioning = null;
         try {
             GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, GlowMessageWriter.DEFAULT);
             if (config == null) {
                 if (provisioningXML == null) {
-                    provisioningXML = FeaturePacks.getFeaturePacks(space, vers, executionContext, wildflyPreview);
+                    provisioningXML = metadataProvider.getFeaturePacks(space, vers, executionContext, wildflyPreview);
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);

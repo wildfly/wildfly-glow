@@ -15,7 +15,7 @@ import org.wildfly.glow.test.core.TestPackager;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Ignore;
+import org.junit.After;
 
 /**
  * Tests that timer service etc. are considered strongly typed
@@ -26,10 +26,14 @@ import org.junit.Ignore;
         user="sa",
         password="sa"
 )
-// Will un-ignore this test for WildFly 35 Final
-@Ignore
+
 public class DataSourceDefinitionTestCase {
     private final TestPackager testPackager = new TestPackager();
+
+    @After
+    public void reset() {
+        testPackager.reset();
+    }
 
     @Test
     public void h2DriverUsage() throws Exception {

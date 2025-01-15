@@ -39,6 +39,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final boolean isCli;
     private final List<Channel> channels;
     private final Set<String> spaces;
+    private final MetadataProvider metadataProvider;
 
     protected Arguments(
             String executionContext,
@@ -59,7 +60,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             String defaultConfigStability,
             boolean isCli,
             List<Channel> channels,
-            Set<String> spaces) {
+            Set<String> spaces,
+            MetadataProvider metadataProvider) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -87,6 +89,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.isCli = isCli;
         this.channels = channels;
         this.spaces = spaces == null ? Collections.emptySet() : spaces;
+        this.metadataProvider = metadataProvider;
     }
 
     /**
@@ -229,6 +232,14 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public Set<String> getSpaces() {
         return spaces;
+    }
+
+    /**
+     * @return the metadata provider
+     */
+    @Override
+    public MetadataProvider getMetadataProvider() {
+        return metadataProvider;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

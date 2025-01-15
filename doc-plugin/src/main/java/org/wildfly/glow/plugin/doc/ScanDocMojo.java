@@ -18,6 +18,7 @@
 package org.wildfly.glow.plugin.doc;
 
 import java.io.FileInputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
@@ -53,13 +54,16 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.channel.Channel;
 import org.wildfly.glow.AddOn;
-import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.LayerMetadata;
+import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.Space;
 import org.wildfly.glow.Utils;
+import org.wildfly.glow.WildFlyMavenMetadataProvider;
+import org.wildfly.glow.WildFlyMetadataProvider;
 
 /**
  *
@@ -165,14 +169,9 @@ public class ScanDocMojo extends AbstractMojo {
                 rulesBuilder.append("|===\n");
             }
             if (generateKnownFeaturePacks) {
-                if (repoPath != null) {
-                    Path p = Paths.get(repoPath);
-                    String repoUrl = "file://" + p.toAbsolutePath();
-                    System.out.println("Using repo url " + repoUrl);
-                    System.setProperty(FeaturePacks.URL_PROPERTY, repoUrl);
-                }
+                Path tmpDirectory = null;
                 try {
-                    //Typically under target
+                    MetadataProvider metadataProvider;
                     MavenRepoManager artifactResolver;
                     if (channels != null && !channels.isEmpty()) {
                         getLog().debug("WildFly channel enabled.");
@@ -184,56 +183,65 @@ public class ScanDocMojo extends AbstractMojo {
                     } else {
                         artifactResolver = new MavenArtifactRepositoryManager(repoSystem, repoSession, repositories);
                     }
+                    if (repoPath != null) {
+                        Path p = Paths.get(repoPath);
+                        String repoUrl = "file://" + p.toAbsolutePath();
+                        System.out.println("Using repo url " + repoUrl);
+                        metadataProvider = new WildFlyMetadataProvider(new URI(repoUrl));
+                    } else {
+                        tmpDirectory = Files.createTempDirectory("wildfly-glow-metadata");
+                        metadataProvider = new WildFlyMavenMetadataProvider(artifactResolver, tmpDirectory);
+                    }
                     UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(artifactResolver).build();
                     GalleonBuilder provider = new GalleonBuilder();
                     provider.addArtifactResolver(artifactResolver);
                     Map<Layer, Map<String, String>> rules = new TreeMap<>();
 
-                    getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, rules, false);
+                    getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, rules, false, metadataProvider);
                     Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-                    getRules(Space.DEFAULT, provider,"cloud", universeResolver, cloudRules, false);
-                    rulesBuilder.append("## Support for " + serverType + " " + FeaturePacks.getLatestVersion() + "\n\n");
-                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"bare-metal", rules, false));
-                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"cloud", cloudRules, false));
+                    getRules(Space.DEFAULT, provider,"cloud", universeResolver, cloudRules, false, metadataProvider);
+                    rulesBuilder.append("## Support for " + serverType + " " + metadataProvider.getLatestVersion() + "\n\n");
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"bare-metal", rules, false, metadataProvider));
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"cloud", cloudRules, false, metadataProvider));
                     if (preview) {
                         Map<Layer, Map<String, String>> previewRules = new TreeMap<>();
-                        getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, previewRules, true);
+                        getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, previewRules, true, metadataProvider);
                         Map<Layer, Map<String, String>> previewCloudRules = new TreeMap<>();
-                        getRules(Space.DEFAULT, provider,"cloud", universeResolver, previewCloudRules, true);
-                        rulesBuilder.append("## Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
-                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "bare-metal", previewRules, true));
-                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "cloud", previewCloudRules, true));
+                        getRules(Space.DEFAULT, provider,"cloud", universeResolver, previewCloudRules, true, metadataProvider);
+                        rulesBuilder.append("## Support for WildFly Preview " + metadataProvider.getLatestVersion() + "\n\n");
+                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "bare-metal", previewRules, true, metadataProvider));
+                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "cloud", previewCloudRules, true, metadataProvider));
                     }
                     if (spaces) {
-                        for (Space space : FeaturePacks.getAllSpaces()) {
-                            if (FeaturePacks.getAllVersions(space.getName()).contains(FeaturePacks.getLatestVersion())) {
+                        for (Space space : metadataProvider.getAllSpaces()) {
+                            if (metadataProvider.getAllVersions(space.getName()).contains(metadataProvider.getLatestVersion())) {
                                 Map<Layer, Map<String, String>> spaceRules = new TreeMap<>();
-                                getRules(space, provider, "bare-metal", universeResolver, spaceRules, false);
+                                getRules(space, provider, "bare-metal", universeResolver, spaceRules, false, metadataProvider);
                                 Map<Layer, Map<String, String>> spaceCloudRules = new TreeMap<>();
-                                getRules(space, provider, "cloud", universeResolver, spaceCloudRules, false);
+                                getRules(space, provider, "cloud", universeResolver, spaceCloudRules, false, metadataProvider);
                                 if (!spaceRules.isEmpty() || !spaceCloudRules.isEmpty()) {
                                     rulesBuilder.append("##  Additional '" + space.getName() + "' space\n\n");
                                     rulesBuilder.append(space.getDescription() + "\n\n");
-                                    rulesBuilder.append("### Support for " + serverType + " " + FeaturePacks.getLatestVersion() + "\n\n");
+                                    rulesBuilder.append("### Support for " + serverType + " " + metadataProvider.getLatestVersion() + "\n\n");
                                 }
                                 if (!spaceRules.isEmpty()) {
-                                    rulesBuilder.append(buildTable(space, provider, "bare-metal", spaceRules, false));
+                                    rulesBuilder.append(buildTable(space, provider, "bare-metal", spaceRules, false, metadataProvider));
                                 }
                                 if (!spaceCloudRules.isEmpty()) {
-                                    rulesBuilder.append(buildTable(space, provider, "cloud", spaceCloudRules, false));
+                                    rulesBuilder.append(buildTable(space, provider, "cloud", spaceCloudRules, false, metadataProvider));
                                 }
                                 if (preview) {
                                     Map<Layer, Map<String, String>> spacePreviewRules = new TreeMap<>();
-                                    getRules(space, provider, "bare-metal", universeResolver, spacePreviewRules, true);
+                                    getRules(space, provider, "bare-metal", universeResolver, spacePreviewRules, true, metadataProvider);
                                     Map<Layer, Map<String, String>> spacePreviewCloudRules = new TreeMap<>();
-                                    getRules(space, provider, "cloud", universeResolver, spacePreviewCloudRules, true);
+                                    getRules(space, provider, "cloud", universeResolver, spacePreviewCloudRules, true, metadataProvider);
                                     if (!spacePreviewRules.isEmpty() || !spacePreviewCloudRules.isEmpty()) {
-                                        rulesBuilder.append("### Support for WildFly Preview " + FeaturePacks.getLatestVersion() + "\n\n");
+                                        rulesBuilder.append("### Support for WildFly Preview " + metadataProvider.getLatestVersion() + "\n\n");
                                         if (!spacePreviewRules.isEmpty()) {
-                                            rulesBuilder.append(buildTable(space, provider, "bare-metal", spacePreviewRules, true));
+                                            rulesBuilder.append(buildTable(space, provider, "bare-metal", spacePreviewRules, true, metadataProvider));
                                         }
                                         if (!spacePreviewCloudRules.isEmpty()) {
-                                            rulesBuilder.append(buildTable(space, provider, "cloud", spacePreviewCloudRules, true));
+                                            rulesBuilder.append(buildTable(space, provider, "cloud", spacePreviewCloudRules, true, metadataProvider));
                                         }
                                     }
                                 }
@@ -241,7 +249,9 @@ public class ScanDocMojo extends AbstractMojo {
                         }
                     }
                 } finally {
-                    System.clearProperty(FeaturePacks.URL_PROPERTY);
+                    if(tmpDirectory != null) {
+                        IoUtils.recursiveDelete(tmpDirectory);
+                    }
                 }
             }
             Path dir = Paths.get(targetDir);
@@ -252,12 +262,12 @@ public class ScanDocMojo extends AbstractMojo {
         }
     }
 
-    private String buildTable(Space space, GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
+    private String buildTable(Space space, GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview, MetadataProvider metadataProvider) throws Exception {
 
         StringBuilder rulesBuilder = new StringBuilder();
         rulesBuilder.append("\n### " + context + "\n");
         rulesBuilder.append("\n#### Supported Galleon feature-packs \n");
-        Path provisioningXML = FeaturePacks.getFeaturePacks(space, null, context, preview);
+        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, preview);
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig pConfig = p.loadProvisioningConfig(provisioningXML);
             for (GalleonFeaturePackConfig c : pConfig.getFeaturePackDeps()) {
@@ -310,8 +320,8 @@ public class ScanDocMojo extends AbstractMojo {
     }
 
     private LayerMapping getRules(Space space, GalleonBuilder provider, String context, UniverseResolver universeResolver,
-            Map<Layer, Map<String, String>> rules, boolean preview) throws Exception {
-        Path provisioningXML = FeaturePacks.getFeaturePacks(space, null, context, preview);
+            Map<Layer, Map<String, String>> rules, boolean preview, MetadataProvider metadataProvider) throws Exception {
+        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, preview);
         Map<String, Layer> all;
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig config = p.loadProvisioningConfig(provisioningXML);

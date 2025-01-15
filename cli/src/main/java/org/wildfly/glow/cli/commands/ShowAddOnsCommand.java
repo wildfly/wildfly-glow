@@ -30,16 +30,18 @@ import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
-import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
+import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.ProvisioningUtils;
 import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.Space;
+import org.wildfly.glow.WildFlyMavenMetadataProvider;
 import org.wildfly.glow.cli.support.CLIConfigurationResolver;
 import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
@@ -73,38 +75,55 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving add-ons...");
-        String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
-        if (cloud.orElse(false)) {
-            context = Arguments.CLOUD_EXECUTION_CONTEXT;
+        ScanArguments.Builder builder = Arguments.scanBuilder();
+        MavenRepoManager repoManager;
+        List<Channel> channels = Collections.emptyList();
+        if (channelsFile.isPresent()) {
+            String content = Files.readString(channelsFile.get());
+            channels = ChannelMapper.fromString(content);
+            builder.setChannels(channels);
+            repoManager = MavenResolver.newMavenResolver(channels);
+        } else {
+            repoManager = MavenResolver.newMavenResolver();
         }
-        if (wildflyPreview.orElse(false)) {
-            if (channelsFile.isPresent()) {
-                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+        Path tmpMetadataDirectory = Files.createTempDirectory("glow-metadata");
+        try {
+            MetadataProvider metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+            String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
+            if (cloud.orElse(false)) {
+                context = Arguments.CLOUD_EXECUTION_CONTEXT;
             }
-        }
-        if (wildflyServerVersion.isPresent()) {
-            if (channelsFile.isPresent()) {
-                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+            if (wildflyPreview.orElse(false)) {
+                if (channelsFile.isPresent()) {
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                }
             }
-        }
-        showAddOns(Space.DEFAULT, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                wildflyPreview.orElse(false), channelsFile.orElse(null));
-        String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
-        for(String spaceName : spaces) {
-            Set<String> versions = FeaturePacks.getAllVersions(spaceName);
-            if (versions.contains(vers)) {
-                Space space = FeaturePacks.getSpace(spaceName);
-                showAddOns(space, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                        wildflyPreview.orElse(false), channelsFile.orElse(null));
+            if (wildflyServerVersion.isPresent()) {
+                if (channelsFile.isPresent()) {
+                    throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                }
             }
-        }
-        print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
+            showAddOns(Space.DEFAULT, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
+                    wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+            String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
+            for (String spaceName : spaces) {
+                Set<String> versions = metadataProvider.getAllVersions(spaceName);
+                if (versions.contains(vers)) {
+                    Space space = metadataProvider.getSpace(spaceName);
+                    showAddOns(space, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
+                            wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                }
+            }
+            print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
 
-        return 0;
+            return 0;
+        } finally {
+            IoUtils.recursiveDelete(tmpMetadataDirectory);
+        }
     }
 
     public void showAddOns(Space space, String context, Path provisioningXml, boolean isLatest,
-            String serverVersion, boolean isPreview, Path channelsFile) throws Exception {
+            String serverVersion, boolean isPreview, List<Channel> channels, MavenRepoManager repoManager, MetadataProvider metadataProvider) throws Exception {
         CLIConfigurationResolver resolver = new CLIConfigurationResolver();
         ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
             @Override
@@ -161,18 +180,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
             }
 
         };
-        ScanArguments.Builder builder = Arguments.scanBuilder();
-        MavenRepoManager repoManager;
-        List<Channel> channels = Collections.emptyList();
-        if (channelsFile != null) {
-            String content = Files.readString(channelsFile);
-            channels = ChannelMapper.fromString(content);
-            builder.setChannels(channels);
-            repoManager = MavenResolver.newMavenResolver(channels);
-        } else {
-            repoManager = MavenResolver.newMavenResolver();
-        }
         ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml, isLatest, serverVersion,
-                isPreview, channels, repoManager);
+                isPreview, channels, repoManager, metadataProvider);
     }
 }

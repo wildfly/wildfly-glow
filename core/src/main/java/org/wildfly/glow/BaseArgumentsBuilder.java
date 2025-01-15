@@ -46,6 +46,7 @@ public class BaseArgumentsBuilder {
     protected boolean isCli;
     protected List<Channel> channels;
     protected Set<String> spaces;
+    protected MetadataProvider metadataProvider;
 
     protected BaseArgumentsBuilder() {
 
@@ -75,6 +76,7 @@ public class BaseArgumentsBuilder {
                 defaultConfigStability,
                 isCli,
                 channels,
-                spaces);
+                spaces,
+                metadataProvider);
     }
 }
