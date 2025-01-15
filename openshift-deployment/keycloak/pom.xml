@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.wildfly.glow</groupId>
         <artifactId>wildfly-glow-openshift-deployment</artifactId>
-        <version>1.2.1.Final-SNAPSHOT</version>
+        <version>1.3.0.Final</version>
     </parent>
 
     <artifactId>wildfly-glow-openshift-deployment-keycloak</artifactId>
