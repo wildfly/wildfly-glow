@@ -65,6 +65,7 @@ import org.jboss.galleon.universe.UniverseResolver;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
+import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import static org.wildfly.glow.error.ErrorLevel.ERROR;
 import org.wildfly.plugin.tools.bootablejar.BootableJarSupport;
 
@@ -84,6 +85,9 @@ public class GlowSession {
     private final Arguments arguments;
     private final GlowMessageWriter writer;
     private final List<Channel> channels = new ArrayList<>();
+    private final MetadataProvider metadataProvider;
+    private final Path tmpMetadataDirectory;
+
     private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer) throws Exception {
         this.arguments = arguments;
         this.writer = writer;
@@ -94,6 +98,20 @@ public class GlowSession {
             }
         }
         this.resolver = repoManager;
+        if (arguments.getMetadataProvider() == null) {
+            String prop = System.getProperty(URL_PROPERTY);
+            if (prop == null) {
+                    tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
+                this.metadataProvider = new WildFlyMavenMetadataProvider(resolver, tmpMetadataDirectory);
+            } else {
+                tmpMetadataDirectory = null;
+                this.metadataProvider = new WildFlyMetadataProvider(new URI(prop));
+            }
+        } else {
+            tmpMetadataDirectory = null;
+            this.metadataProvider = arguments.getMetadataProvider();
+        }
+
     }
 
     public static void goOffline(MavenRepoManager resolver, GoOfflineArguments arguments, GlowMessageWriter writer) throws Exception {
@@ -118,7 +136,7 @@ public class GlowSession {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
-                    provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
@@ -133,6 +151,9 @@ public class GlowSession {
                 provisioning.close();
             }
             IoUtils.recursiveDelete(fakeHome);
+            if (tmpMetadataDirectory != null) {
+                IoUtils.recursiveDelete(tmpMetadataDirectory);
+            }
         }
         Files.deleteIfExists(OFFLINE_ZIP);
         ZipUtils.zip(OFFLINE_CONTENT, OFFLINE_ZIP);
@@ -151,11 +172,11 @@ public class GlowSession {
         if (!arguments.getSpaces().isEmpty()) {
             GalleonProvisioningConfig.Builder mergedConfigBuilder = GalleonProvisioningConfig.builder(defaultConfig);
             for (String spaceName : arguments.getSpaces()) {
-                Space space = FeaturePacks.getSpace(spaceName);
-                Set<String> versions = FeaturePacks.getAllVersions(spaceName);
-                String vers = arguments.getVersion() == null ? FeaturePacks.getLatestVersion() : arguments.getVersion();
+                Space space = metadataProvider.getSpace(spaceName);
+                Set<String> versions = metadataProvider.getAllVersions(spaceName);
+                String vers = arguments.getVersion() == null ? metadataProvider.getLatestVersion() : arguments.getVersion();
                 if (versions.contains(vers)) {
-                    Path spaceProvisioningXML = FeaturePacks.getFeaturePacks(space,
+                    Path spaceProvisioningXML = metadataProvider.getFeaturePacks(space,
                             arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                     try (Provisioning spaceProvisioning = provider.newProvisioningBuilder(spaceProvisioningXML).build()) {
                         GalleonProvisioningConfig spaceConfig = spaceProvisioning.loadProvisioningConfig(spaceProvisioningXML);
@@ -190,7 +211,7 @@ public class GlowSession {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
-                    provisioningXML = FeaturePacks.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
@@ -662,10 +683,16 @@ public class GlowSession {
                     excludedPackages,
                     excludedFeatures,
                     fpVersions,
-                    channels
+                    channels,
+                    tmpMetadataDirectory
             );
 
             return scanResults;
+        } catch (Exception ex) {
+            if (tmpMetadataDirectory != null) {
+                IoUtils.recursiveDelete(tmpMetadataDirectory);
+            }
+            throw ex;
         } finally {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);
             IoUtils.recursiveDelete(fakeHome);
@@ -807,7 +834,7 @@ public class GlowSession {
                 } else {
                     bootableJarName = "hollow";
                 }
-                String vers = arguments.getVersion() == null ? FeaturePacks.getLatestVersion() : arguments.getVersion();
+                String vers = arguments.getVersion() == null ? metadataProvider.getLatestVersion() : arguments.getVersion();
                 Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" + vers + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
                 ret = targetJarFile;
                 Files.deleteIfExists(targetJarFile);

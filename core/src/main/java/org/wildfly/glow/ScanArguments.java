@@ -81,6 +81,8 @@ public interface ScanArguments {
     boolean isCli();
     List<Channel> getChannels();
     Set<String> getSpaces();
+    MetadataProvider getMetadataProvider();
+
     default Builder createScanArgumentsBuilder() {
         return new Builder();
     }
@@ -181,6 +183,10 @@ public interface ScanArguments {
         }
         public Builder setSpaces(Set<String> spaces) {
             this.spaces = spaces;
+            return this;
+        }
+        public Builder setMetadataProider(MetadataProvider metadataProvider) {
+            this.metadataProvider = metadataProvider;
             return this;
         }
     }

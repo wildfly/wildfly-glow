@@ -295,9 +295,10 @@ public class ExplodedArchiveTestCase {
                 setBinaries(Collections.singletonList(archivePath))
                 .setExcludeArchivesFromScan("*.jar", "web.war")
                 .build();
-        ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT);
-        String layers = scanResults.getCompactInformation();
-        Assert.assertEquals("[resource-adapters, sar]==>ee-core-profile-server,resource-adapters,sar", layers);
+        try (ScanResults scanResults = GlowSession.scan(MavenResolver.newMavenResolver(), arguments, GlowMessageWriter.DEFAULT)) {
+            String layers = scanResults.getCompactInformation();
+            Assert.assertEquals("[resource-adapters, sar]==>ee-core-profile-server,resource-adapters,sar", layers);
+        }
     }
 
 

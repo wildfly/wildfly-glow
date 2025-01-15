@@ -29,6 +29,7 @@ import org.wildfly.glow.test.core.TestPackager;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.After;
 
 /**
  * Tests that timer service etc. are considered strongly typed
@@ -56,5 +57,8 @@ public class EJBResourceTestCase {
         Assert.assertTrue(layers.contains("ejb"));
 
     }
-
+    @After
+    public void reset() {
+        testPackager.reset();
+    }
 }

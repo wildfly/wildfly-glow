@@ -18,8 +18,6 @@
         <maven.compiler.target>${maven.compiler.release}</maven.compiler.target>
         <!-- Used to override the release bytecode for compiling tests. This allows testing on newer bytecode. -->
         <test.maven.compiler.release>${maven.compiler.release}</test.maven.compiler.release>
-        <wildfly.glow.galleon.feature-packs.url>https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/release/</wildfly.glow.galleon.feature-packs.url>
-
         <!-- versions -->
         <version.info.picocli>4.7.5</version.info.picocli>
         <version.org.ow2.asm>9.7.1</version.org.ow2.asm>
@@ -367,6 +365,11 @@
             <dependency>
                 <groupId>org.apache.maven.resolver</groupId>
                 <artifactId>maven-resolver-api</artifactId>
+                <version>${version.org.apache.maven.resolver}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.resolver</groupId>
+                <artifactId>maven-resolver-util</artifactId>
                 <version>${version.org.apache.maven.resolver}</version>
             </dependency>
             <dependency>

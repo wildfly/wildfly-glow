@@ -16,12 +16,17 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
-import org.wildfly.glow.FeaturePacks;
+import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.Space;
+import org.wildfly.glow.WildFlyMavenMetadataProvider;
+import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -36,12 +41,18 @@ public class ShowServerVersionsCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         print("WildFly server versions in the " + Space.DEFAULT.getName() + " space:");
-        print(FeaturePacks.getAllVersions());
-        for(String space : spaces) {
-            print("WildFly server versions in the " + space + " space:");
-            print(FeaturePacks.getAllVersions(space));
+        Path tmpMetadataDirectory = Files.createTempDirectory("glow-metadata");
+        try {
+            MetadataProvider metadataProvider = new WildFlyMavenMetadataProvider(MavenResolver.newMavenResolver(), tmpMetadataDirectory);
+            print(metadataProvider.getAllVersions());
+            for (String space : spaces) {
+                print("WildFly server versions in the " + space + " space:");
+                print(metadataProvider.getAllVersions(space));
+            }
+            print("@|bold WildFly server version can be set using the|@ @|fg(yellow) %s=<server version>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.SERVER_VERSION_OPTION, Constants.SCAN_COMMAND);
+            return 0;
+        } finally {
+            IoUtils.recursiveDelete(tmpMetadataDirectory);
         }
-        print("@|bold WildFly server version can be set using the|@ @|fg(yellow) %s=<server version>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.SERVER_VERSION_OPTION, Constants.SCAN_COMMAND);
-        return 0;
     }
 }

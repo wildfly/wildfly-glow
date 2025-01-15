@@ -26,6 +26,7 @@ import org.jboss.galleon.api.Provisioning;
 import org.jboss.galleon.api.config.GalleonProvisioningConfig;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.channel.Channel;
 
 public class ScanResults implements AutoCloseable {
@@ -46,6 +47,8 @@ public class ScanResults implements AutoCloseable {
     private final Map<Layer, Set<String>> excludedFeatures;
     private final Map<ProducerSpec, FPID> fpVersions;
     private final List<Channel> channels;
+    private final Path tmpMetadataDirectory;
+
     ScanResults(GlowSession glowSession,
             Set<Layer> discoveredLayers,
             Set<Layer> excludedLayers,
@@ -61,7 +64,8 @@ public class ScanResults implements AutoCloseable {
             Set<String> excludedPackages,
             Map<Layer, Set<String>> excludedFeatures,
             Map<ProducerSpec, FPID> fpVersions,
-            List<Channel> channels) {
+            List<Channel> channels,
+            Path tmpMetadataDirectory) {
         this.glowSession = glowSession;
         this.discoveredLayers = discoveredLayers;
         this.excludedLayers = excludedLayers;
@@ -78,6 +82,7 @@ public class ScanResults implements AutoCloseable {
         this.excludedFeatures = excludedFeatures;
         this.fpVersions = fpVersions;
         this.channels = channels;
+        this.tmpMetadataDirectory = tmpMetadataDirectory;
     }
 
     public Set<Layer> getDiscoveredLayers() {
@@ -161,6 +166,9 @@ public class ScanResults implements AutoCloseable {
     @Override
     public void close() {
         provisioning.close();
+        if (tmpMetadataDirectory != null) {
+            IoUtils.recursiveDelete(tmpMetadataDirectory);
+        }
     }
 
     public Set<String> getExcludedPackages() {

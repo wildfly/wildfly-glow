@@ -31,6 +31,7 @@ import org.wildfly.glow.test.core.TestPackager;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.After;
 
 /**
  * Tests that timer service etc. are considered strongly typed
@@ -63,6 +64,10 @@ public class EJBLiteResourceTestCase {
         Set<String> layers = scanResults.getDiscoveredLayers().stream().map(l -> l.getName()).collect(Collectors.toSet());
         Assert.assertFalse(layers.contains("ejb"));
 
+    }
+    @After
+    public void reset() {
+        testPackager.reset();
     }
 
 }

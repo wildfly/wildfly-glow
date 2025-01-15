@@ -36,15 +36,17 @@ import org.jboss.galleon.universe.FeaturePackLocation;
 import org.jboss.galleon.universe.FeaturePackLocation.FPID;
 import org.jboss.galleon.universe.FeaturePackLocation.ProducerSpec;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
+import org.jboss.galleon.util.IoUtils;
 import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.maven.MavenResolver;
 import org.wildfly.glow.Arguments;
-import org.wildfly.glow.FeaturePacks;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
+import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.Space;
+import org.wildfly.glow.WildFlyMavenMetadataProvider;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 
 import picocli.CommandLine;
@@ -79,47 +81,6 @@ public class ShowConfigurationCommand extends AbstractCommand {
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving known provisioning configuration...");
         StringBuilder ocBuilder = new StringBuilder();
-        ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
-        for (Deployer d : ServiceLoader.load(Deployer.class)) {
-            ocBuilder.append("* @|bold " + d.getName() + "|@. Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
-        }
-        print(ocBuilder.toString());
-        StringBuilder spacesBuilder = new StringBuilder();
-        spacesBuilder.append("\nSpaces from which more feature-packs can be used when scanning deployments (use the " + Constants.SPACES_OPTION + " option to enable the space(s):\n");
-        for(Space space : FeaturePacks.getAllSpaces()) {
-            spacesBuilder.append("* @|bold " + space.getName() + "|@. " + space.getDescription() + "\n");
-        }
-        print(spacesBuilder.toString());
-
-        String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
-        if (cloud.orElse(false)) {
-            context = Arguments.CLOUD_EXECUTION_CONTEXT;
-        }
-        if (wildflyPreview.orElse(false)) {
-            if (channelsFile.isPresent()) {
-                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
-            }
-        }
-        if (wildflyServerVersion.isPresent()) {
-            if (channelsFile.isPresent()) {
-                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
-            }
-        }
-        String finalContext = context;
-        boolean isLatest = wildflyServerVersion.isEmpty();
-        String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : FeaturePacks.getLatestVersion();
-        ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
-            @Override
-            public void consume(Space space, GalleonProvisioningConfig provisioning, Map<String, Layer> all,
-                    LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
-                if (Space.DEFAULT.equals(space)) {
-                    defaultSpaceFpDependencies = fpDependencies;
-                }
-                String configStr = dumpConfiguration(space, fpDependencies, finalContext, vers, all,
-                        mapping, provisioning, isLatest, wildflyPreview.orElse(false), provisioningXml.orElse(null));
-                print(configStr);
-            }
-        };
         ScanArguments.Builder builder = Arguments.scanBuilder();
         MavenRepoManager repoManager;
         List<Channel> channels = Collections.emptyList();
@@ -131,13 +92,60 @@ public class ShowConfigurationCommand extends AbstractCommand {
         } else {
             repoManager = MavenResolver.newMavenResolver();
         }
-        ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
-        for(String spaceName : spaces) {
-            Set<String> versions = FeaturePacks.getAllVersions(spaceName);
-            if (versions.contains(vers)) {
-                Space space = FeaturePacks.getSpace(spaceName);
-                ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager);
+        Path tmpMetadataDirectory = Files.createTempDirectory("glow-metadata");
+        try {
+            MetadataProvider metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+            ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
+            for (Deployer d : ServiceLoader.load(Deployer.class)) {
+                ocBuilder.append("* @|bold " + d.getName() + "|@. Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
             }
+            print(ocBuilder.toString());
+            StringBuilder spacesBuilder = new StringBuilder();
+            spacesBuilder.append("\nSpaces from which more feature-packs can be used when scanning deployments (use the " + Constants.SPACES_OPTION + " option to enable the space(s):\n");
+            for (Space space : metadataProvider.getAllSpaces()) {
+                spacesBuilder.append("* @|bold " + space.getName() + "|@. " + space.getDescription() + "\n");
+            }
+            print(spacesBuilder.toString());
+
+            String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
+            if (cloud.orElse(false)) {
+                context = Arguments.CLOUD_EXECUTION_CONTEXT;
+            }
+            if (wildflyPreview.orElse(false)) {
+                if (channelsFile.isPresent()) {
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                }
+            }
+            if (wildflyServerVersion.isPresent()) {
+                if (channelsFile.isPresent()) {
+                    throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                }
+            }
+            String finalContext = context;
+            boolean isLatest = wildflyServerVersion.isEmpty();
+            String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
+            ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
+                @Override
+                public void consume(Space space, GalleonProvisioningConfig provisioning, Map<String, Layer> all,
+                        LayerMapping mapping, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies) throws Exception {
+                    if (Space.DEFAULT.equals(space)) {
+                        defaultSpaceFpDependencies = fpDependencies;
+                    }
+                    String configStr = dumpConfiguration(space, fpDependencies, finalContext, vers, all,
+                            mapping, provisioning, isLatest, wildflyPreview.orElse(false), provisioningXml.orElse(null));
+                    print(configStr);
+                }
+            };
+            ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+            for (String spaceName : spaces) {
+                Set<String> versions = metadataProvider.getAllVersions(spaceName);
+                if (versions.contains(vers)) {
+                    Space space = metadataProvider.getSpace(spaceName);
+                    ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                }
+            }
+        } finally {
+            IoUtils.recursiveDelete(tmpMetadataDirectory);
         }
         return 0;
     }
