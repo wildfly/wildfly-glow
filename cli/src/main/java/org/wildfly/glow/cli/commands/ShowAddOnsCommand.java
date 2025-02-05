@@ -16,6 +16,7 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.net.URI;
 import java.nio.file.Files;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
@@ -35,6 +36,7 @@ import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
+import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.MetadataProvider;
@@ -42,6 +44,7 @@ import org.wildfly.glow.ProvisioningUtils;
 import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.Space;
 import org.wildfly.glow.WildFlyMavenMetadataProvider;
+import org.wildfly.glow.WildFlyMetadataProvider;
 import org.wildfly.glow.cli.support.CLIConfigurationResolver;
 import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
@@ -86,9 +89,17 @@ public class ShowAddOnsCommand extends AbstractCommand {
         } else {
             repoManager = MavenResolver.newMavenResolver();
         }
-        Path tmpMetadataDirectory = Files.createTempDirectory("glow-metadata");
+        Path tmpMetadataDirectory = null;
+        MetadataProvider metadataProvider;
         try {
-            MetadataProvider metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+            String prop = System.getProperty(URL_PROPERTY);
+            if (prop == null) {
+                tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
+                metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+            } else {
+                tmpMetadataDirectory = null;
+                metadataProvider = new WildFlyMetadataProvider(new URI(prop));
+            }
             String context = Arguments.BARE_METAL_EXECUTION_CONTEXT;
             if (cloud.orElse(false)) {
                 context = Arguments.CLOUD_EXECUTION_CONTEXT;
@@ -118,7 +129,9 @@ public class ShowAddOnsCommand extends AbstractCommand {
 
             return 0;
         } finally {
-            IoUtils.recursiveDelete(tmpMetadataDirectory);
+            if (tmpMetadataDirectory != null) {
+                IoUtils.recursiveDelete(tmpMetadataDirectory);
+            }
         }
     }
 

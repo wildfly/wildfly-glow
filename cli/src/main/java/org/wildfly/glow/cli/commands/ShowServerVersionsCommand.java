@@ -16,16 +16,19 @@
  */
 package org.wildfly.glow.cli.commands;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.jboss.galleon.util.IoUtils;
+import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.Space;
 import org.wildfly.glow.WildFlyMavenMetadataProvider;
+import org.wildfly.glow.WildFlyMetadataProvider;
 import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
 
@@ -41,9 +44,17 @@ public class ShowServerVersionsCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         print("WildFly server versions in the " + Space.DEFAULT.getName() + " space:");
-        Path tmpMetadataDirectory = Files.createTempDirectory("glow-metadata");
+        Path tmpMetadataDirectory = null;
+        MetadataProvider metadataProvider;
         try {
-            MetadataProvider metadataProvider = new WildFlyMavenMetadataProvider(MavenResolver.newMavenResolver(), tmpMetadataDirectory);
+            String prop = System.getProperty(URL_PROPERTY);
+            if (prop == null) {
+                tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
+                metadataProvider = new WildFlyMavenMetadataProvider(MavenResolver.newMavenResolver(), tmpMetadataDirectory);
+            } else {
+                tmpMetadataDirectory = null;
+                metadataProvider = new WildFlyMetadataProvider(new URI(prop));
+            }
             print(metadataProvider.getAllVersions());
             for (String space : spaces) {
                 print("WildFly server versions in the " + space + " space:");
@@ -52,7 +63,9 @@ public class ShowServerVersionsCommand extends AbstractCommand {
             print("@|bold WildFly server version can be set using the|@ @|fg(yellow) %s=<server version>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.SERVER_VERSION_OPTION, Constants.SCAN_COMMAND);
             return 0;
         } finally {
-            IoUtils.recursiveDelete(tmpMetadataDirectory);
+            if (tmpMetadataDirectory != null) {
+                IoUtils.recursiveDelete(tmpMetadataDirectory);
+            }
         }
     }
 }
