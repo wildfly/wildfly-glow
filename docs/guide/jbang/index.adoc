@@ -1,0 +1,231 @@
+[[jbang]]
+## Running WildFly with JBang
+
+https://www.jbang.dev[JBang] is a tool to create, edit and run self-contained source-only Java programs with unprecedented ease.
+
+By using JBang and Glow, you can run a singe Java file in WildFly.
+
+You can install JBang from its https://www.jbang.dev/download/[Download page].
+
+### Enabling WildFly Glow integration from JBang
+
+To run Glow with JBang, you need to add a dependency to `org.wildfly.glow:wildfly-glow` in the Java source file:
+
+[source,java]
+----
+//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final <1>
+----
+<1> Make sure to use the latest version of the `wildfly-glow` artifact
+
+### Glow arguments
+
+There are cases where you want to add additional Glow add-ons to enable additional features.
+You can specify them directly in your Java source file with a `//GLOW` comment.
+
+For example, to enable health & metrics on your application, you just need to add:
+
+[source,java]
+----
+//GLOW --add-ons=health,metrics
+----
+
+This comment will provision WildFly with metrics and health enabled
+so that the application healthiness can be checked at http://localhost:9990/health
+and its metrics are available at http://localhost:9990/metrics
+
+By default, Glow will use the latest available version of WildFly. You can specify a given version with the `--server-version` argument:
+
+[source,java]
+----
+//GLOW --server-version=35.0.1.Final
+----
+
+The arguments to the `//GLOW` comment are directly passed to the Glow `scan` command that scan the application and create the WildFly Bootable Jar.
+
+### Examples
+
+#### Simple Web application
+
+The simplest Web application that can be run with JBang and WildFly is:
+
+[source,java]
+----
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//JAVA 17+
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom <1>
+//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final <2>
+//DEPS jakarta.ws.rs:jakarta.ws.rs-api
+//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class myapp extends Application {
+
+    @Path("/hello")
+    @ApplicationScoped
+    public static class Hello {
+
+        @GET
+        public String sayHello() {
+            return "Hello, WildFly!";
+        }
+
+    }
+}
+----
+<1> This POM is used to find the version of other dependencies such as CDI
+<2> This dependency is required to trigger the WildFly glow integration and run the application in WildFly
+
+Save this code snippet in a `myapp.java` and then you can run it with:
+
+[source,bash]
+----
+jbang run myapp.java
+----
+
+This will compile the Java file, fetch its dependencies (specified from the `//DEPS` comments), provision a WildFly Bootable Jar wit Glow and execute it.
+
+With that command you will run a WildFly server with the Web application deployed and available at `http://localhost:8080/myapp/hello`.
+
+#### MicroProfile Example
+
+If you want to use MicroProfile Config in your application, all you need to do is add a dependency to `org.eclipse.microprofile.config:microprofile-config-api`, import the packages to compile your code and use MicroProfile Config API as usual:
+
+[source,java]
+----
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//JAVA 17+
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom
+//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final
+//DEPS jakarta.ws.rs:jakarta.ws.rs-api
+//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//DEPS org.eclipse.microprofile.config:microprofile-config-api <1>
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+import org.eclipse.microprofile.config.inject.ConfigProperty;<2>
+
+@ApplicationPath("/")
+public class myapp extends Application {
+
+    @Path("/hello")
+    @ApplicationScoped
+    public static class Hello {
+
+        @Inject
+        @ConfigProperty(name = "nick.name", defaultValue = "WildFly")
+        private String name;
+
+        @GET
+        public String sayHello() {
+            return String.format("Hello, %s!", name);
+        }
+
+    }
+}
+----
+<1> This new dependency is required to use MicroProfile Config
+
+You can then use an environment variable `NICK_NAME` to inject the `name` in your application:
+
+[source,bash]
+----
+NICK_NAME=Bob jbang run myapp.java
+----
+
+If you go to http://localhost:8080/myapp/hello, it will now display `Hello, Bob!`.
+
+### AI Chat Example
+
+WildFly provides AI integration with its https://github.com/wildfly-extras/wildfly-ai-feature-pack[AI feature pack].
+This allows to write a simple chat bot that can be run with JBang
+
+#### Prerequisites
+
+For the purpose of this application, we can use https://ollama.com[Ollama] to pull the AI model used by the application by running the following commands:
+
+[source,bash]
+----
+podman run -d --rm --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+podman exec -it ollama ollama pull llama3.2:1b
+----
+
+We now have a `llama3.2:1b` available on our local machine that can be used by the application.
+
+#### Java example
+
+Let's write a `myaiapp.java` file to create a simple Chat:
+
+[source,java]
+----
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//JAVA 17+
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom
+//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final
+//DEPS jakarta.ws.rs:jakarta.ws.rs-api
+//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//DEPS dev.langchain4j:langchain4j:1.0.0-alpha1 <1>
+//GLOW --spaces=incubating --server-version=35.0.1.Final <2>
+
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.data.message.*;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.*;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.*;
+
+@ApplicationPath("/")
+public class myaiapp extends Application {
+
+    @Path("/chat")
+    @RequestScoped
+    public static class Chat {
+
+        @Inject
+        @Named(value = "ollama") <3>
+        ChatLanguageModel chatModel;
+
+        @GET
+        @Produces(MediaType.TEXT_HTML)
+        public String chatWithAssistant(@QueryParam("word") String word) {
+            try {
+                return chatModel.chat(ChatRequest.builder().messages(
+                        SystemMessage
+                                .from("""
+                                           You are a teacher that explain to kids the origin of some words.
+                                               Your response must be polite, use the same language as the question, and be relevant to the question.
+                                               Your answer must be embedded in HTML.
+                                        """),
+                        UserMessage.from(String.format("What is the etymology of %s?", word))).build())
+                        .aiMessage().text();
+            } catch (Exception e) {
+                return "My failure reason is:\n\n" + e.getMessage();
+            }
+        }
+    }
+}
+----
+<1> Add this dependency to use https://docs.langchain4j.dev[LangChain4j] in your application
+<2> WildFly AI feature pack is `incubating` so you need to pass the `--spaces=incubating` to provision it.
+<3> The chat model is based on `ollama`
+
+Once you have created this file, we can run it with JBang with the command:
+
+[source,bash]
+----
+OLLAMA_CHAT_MODEL_NAME=llama3.2:1b jbang run --verbose myaiapp.java
+----
+
+We use the `OLLAMA_CHAT_MODEL_NAME` env var to specify with model is used by the application (this model was pulled by Ollama in the prerequisites section)
+
+Once the application is up and running, you can access the `http://localhost:8080/myaiapp/chat?word=Orange` to learn more about the etymology of the "Orange" word.
