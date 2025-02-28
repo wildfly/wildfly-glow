@@ -20,7 +20,7 @@ To run Glow with JBang, you need to add a dependency to `org.wildfly.glow:wildfl
 ### Glow arguments
 
 There are cases where you want to add additional Glow add-ons to enable additional features.
-You can specify them directly in your Java source file with a `//GLOW` comment.
+You can specify them directly in your Java source file with `//GLOW` comments.
 
 For example, to enable health & metrics on your application, you just need to add:
 
@@ -40,7 +40,7 @@ By default, Glow will use the latest available version of WildFly. You can speci
 //GLOW --server-version=35.0.1.Final
 ----
 
-The arguments to the `//GLOW` comment are directly passed to the Glow `scan` command that scan the application and create the WildFly Bootable Jar.
+The arguments to the `//GLOW` comments are directly passed to the Glow `scan` command that scan the application and create the WildFly Bootable Jar.
 
 ### Examples
 
@@ -88,7 +88,7 @@ Save this code snippet in a `myapp.java` and then you can run it with:
 jbang run myapp.java
 ----
 
-This will compile the Java file, fetch its dependencies (specified from the `//DEPS` comments), provision a WildFly Bootable Jar wit Glow and execute it.
+This will compile the Java file, fetch its dependencies (specified from the `//DEPS` comments), provision a WildFly Bootable Jar with Glow and execute it.
 
 With that command you will run a WildFly server with the Web application deployed and available at `http://localhost:8080/myapp/hello`.
 
