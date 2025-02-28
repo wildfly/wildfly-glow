@@ -161,7 +161,7 @@ public class JBangIntegration {
         Optional<String> glowArgs = comments.stream()
                 .filter(s -> s.startsWith("//GLOW "))
                 .map(s -> s.substring(6).strip())
-                .findFirst();
+                .collect(Collectors.reducing((s1, s2) -> s1 + " " + s2));
 
         Path war = toWar(appClasses);
 
