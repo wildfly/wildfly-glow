@@ -38,12 +38,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.wildfly.glow.GlowSession;
 
 public class JBangIntegration {
+
+    private static final Pattern MAVEN_JAR_PATTERN = Pattern.compile(
+            "([a-zA-Z0-9_.-]+):([a-zA-Z0-9_.-]+):jar:([a-zA-Z0-9_.-]+)");
 
     public static void extractJar(Path jar, Path destDir) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jar, null)) {
@@ -71,10 +77,12 @@ public class JBangIntegration {
         }
     }
 
-    public static Path toWar(Path appClasses) throws IOException {
+    public static Path toWar(Path appClasses, Set<Path> libs) throws IOException {
+        System.out.println("Adding libs to WAR: " + libs);
         Path parent = appClasses.getParent();
         Path webInf = parent.resolve("WEB-INF");
         Path webClassesDir = webInf.resolve("classes");
+        Path webLibDir = webInf.resolve("lib");
 
         Files.createDirectories(webClassesDir);
 
@@ -93,6 +101,14 @@ public class JBangIntegration {
                 return FileVisitResult.CONTINUE;
             }
         });
+
+        if (libs.size() > 0) {
+            Files.createDirectories(webLibDir);
+        }
+        for (Path lib : libs) {
+            Path targetPath = webLibDir.resolve(lib.getFileName());
+            Files.copy(lib, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
 
         String warName = parent.getFileName().toString().split("\\.")[0] + ".war";
         Path warFile = parent.resolve(warName);
@@ -116,6 +132,7 @@ public class JBangIntegration {
                     return FileVisitResult.CONTINUE;
                 }
             });
+
         }
 
         return warFile;
@@ -172,6 +189,42 @@ public class JBangIntegration {
         }
     }
 
+    // Filter the dependencies to add the versioned dependencies as libs in the WAR
+    // web-inf/lib directory.
+    //
+    // The other dependencies without versions are ignored as they are meant to be
+    // provided by WildFly
+    // The originalDeps keys are of the form:
+    //      {groupId}:{artifactId}:jar:{version}
+    // while in the comments they are specified with either of the forms:
+    //      //DEPS {groupId}:{artifactId}:{version}
+    //      //DEPS {groupId}:{artifactId}
+    public static Set<Path> findLibrariestoInclude(List<Map.Entry<String, Path>> originalDeps, List<String> comments) {
+        return originalDeps.stream()
+                .filter(entry -> {
+                    Matcher matcher = MAVEN_JAR_PATTERN.matcher(entry.getKey());
+
+                    if (!matcher.matches()) {
+                        return false;
+                    }
+
+                    String groupId = matcher.group(1);
+                    String artifactId = matcher.group(2);
+                    String version = matcher.group(3);
+
+                    // Ignore org.wildfly.glow:wildfly-glow artifact
+                    if ("org.wildfly.glow".equals(groupId) && "wildfly-glow".equals(artifactId)) {
+                        return false;
+                    }
+
+                    // Keep versioned dependencies specified in comments
+                    String dep = String.format("//DEPS %s:%s:%s", groupId, artifactId, version);
+                    return comments.contains(dep);
+                })
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toSet());
+    }
+
     public static Map<String, Object> postBuild(Path appClasses, Path pomFile,
             List<Map.Entry<String, String>> repositories,
             List<Map.Entry<String, Path>> originalDeps,
@@ -182,7 +235,9 @@ public class JBangIntegration {
                 .map(s -> s.substring(6).strip())
                 .collect(Collectors.reducing((s1, s2) -> s1 + " " + s2));
 
-        Path war = toWar(appClasses);
+        Set<Path> libs = findLibrariestoInclude(originalDeps, comments);
+
+        Path war = toWar(appClasses, libs);
 
         try {
             Path glowJar = new File(GlowSession.class.getProtectionDomain().getCodeSource().getLocation().toURI())
