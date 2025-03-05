@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.3.1.Final,</span>
-<span id="revdate">2025-02-05T15:24:32Z</span>
+<span id="revnumber">version 1.3.2.Final,</span>
+<span id="revdate">2025-03-05T12:06:44Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -495,6 +495,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#glow_server">5. Support for latest WildFly</a></li>
+<li><a href="#jbang">6. Running WildFly with JBang</a>
+<ul class="sectlevel2">
+<li><a href="#_enabling_wildfly_glow_integration_from_jbang">6.1. Enabling WildFly Glow integration from JBang</a></li>
+<li><a href="#_glow_arguments">6.2. Glow arguments</a></li>
+<li><a href="#_examples">6.3. Examples</a></li>
+<li><a href="#_ai_chat_example">6.4. AI Chat Example</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -1146,7 +1154,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.3.1.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.3.2.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1491,7 +1499,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.1.Final:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.2.Final:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1651,7 +1659,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.1.Final:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.2.Final:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2254,11 +2262,313 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="jbang"><a class="anchor" href="#jbang"></a><a class="link" href="#jbang">6. Running WildFly with JBang</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://www.jbang.dev">JBang</a> is a tool to create, edit and run self-contained source-only Java programs with unprecedented ease.</p>
+</div>
+<div class="paragraph">
+<p>By using JBang and Glow, you can run a singe Java file in WildFly.</p>
+</div>
+<div class="paragraph">
+<p>You can install JBang from its <a href="https://www.jbang.dev/download/">Download page</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_enabling_wildfly_glow_integration_from_jbang"><a class="anchor" href="#_enabling_wildfly_glow_integration_from_jbang"></a><a class="link" href="#_enabling_wildfly_glow_integration_from_jbang">6.1. Enabling WildFly Glow integration from JBang</a></h3>
+<div class="paragraph">
+<p>To run Glow with JBang, you need to add a dependency to <code>org.wildfly.glow:wildfly-glow</code> in the Java source file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final </span><i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Make sure to use the latest version of the <code>wildfly-glow</code> artifact</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_glow_arguments"><a class="anchor" href="#_glow_arguments"></a><a class="link" href="#_glow_arguments">6.2. Glow arguments</a></h3>
+<div class="paragraph">
+<p>There are cases where you want to add additional Glow add-ons to enable additional features.
+You can specify them directly in your Java source file with <code>//GLOW</code> comments.</p>
+</div>
+<div class="paragraph">
+<p>For example, to enable health &amp; metrics on your application, you just need to add:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//GLOW --add-ons=health,metrics</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This comment will provision WildFly with metrics and health enabled
+so that the application healthiness can be checked at <a href="http://localhost:9990/health" class="bare">http://localhost:9990/health</a>
+and its metrics are available at <a href="http://localhost:9990/metrics" class="bare">http://localhost:9990/metrics</a></p>
+</div>
+<div class="paragraph">
+<p>By default, Glow will use the latest available version of WildFly. You can specify a given version with the <code>--server-version</code> argument:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//GLOW --server-version=35.0.1.Final</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The arguments to the <code>//GLOW</code> comments are directly passed to the Glow <code>scan</code> command that scan the application and create the WildFly Bootable Jar.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_examples"><a class="anchor" href="#_examples"></a><a class="link" href="#_examples">6.3. Examples</a></h3>
+<div class="sect3">
+<h4 id="_simple_web_application"><a class="anchor" href="#_simple_web_application"></a><a class="link" href="#_simple_web_application">6.3.1. Simple Web application</a></h4>
+<div class="paragraph">
+<p>The simplest Web application that can be run with JBang and WildFly is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
+<span style="color:#777">//JAVA 17+</span>
+<span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom </span><i class="conum" data-value="1"></i><b>(1)</b>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
+<span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
+<span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
+
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.enterprise.context.ApplicationScoped</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.GET</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.Path</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.ApplicationPath</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.core.Application</span>;
+
+<span style="color:#007">@ApplicationPath</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/</span><span style="color:#710">&quot;</span></span>)
+<span style="color:#088;font-weight:bold">public</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">myapp</span> <span style="color:#088;font-weight:bold">extends</span> Application {
+
+    <span style="color:#007">@Path</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/hello</span><span style="color:#710">&quot;</span></span>)
+    <span style="color:#007">@ApplicationScoped</span>
+    <span style="color:#088;font-weight:bold">public</span> <span style="color:#088;font-weight:bold">static</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">Hello</span> {
+
+        <span style="color:#007">@GET</span>
+        <span style="color:#088;font-weight:bold">public</span> <span style="color:#0a8;font-weight:bold">String</span> sayHello() {
+            <span style="color:#080;font-weight:bold">return</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, WildFly!</span><span style="color:#710">&quot;</span></span>;
+        }
+
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This POM is used to find the version of other dependencies such as CDI</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This dependency is required to trigger the WildFly glow integration and run the application in WildFly</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Save this code snippet in a <code>myapp.java</code> and then you can run it with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">jbang run myapp.java</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will compile the Java file, fetch its dependencies (specified from the <code>//DEPS</code> comments), provision a WildFly Bootable Jar with Glow and execute it.</p>
+</div>
+<div class="paragraph">
+<p>With that command you will run a WildFly server with the Web application deployed and available at <code><a href="http://localhost:8080/myapp/hello" class="bare">http://localhost:8080/myapp/hello</a></code>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_microprofile_example"><a class="anchor" href="#_microprofile_example"></a><a class="link" href="#_microprofile_example">6.3.2. MicroProfile Example</a></h4>
+<div class="paragraph">
+<p>If you want to use MicroProfile Config in your application, all you need to do is add a dependency to <code>org.eclipse.microprofile.config:microprofile-config-api</code>, import the packages to compile your code and use MicroProfile Config API as usual:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
+<span style="color:#777">//JAVA 17+</span>
+<span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final</span>
+<span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
+<span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
+<span style="color:#777">//DEPS org.eclipse.microprofile.config:microprofile-config-api </span><i class="conum" data-value="1"></i><b>(1)</b>
+
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.enterprise.context.ApplicationScoped</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.inject.Inject</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.GET</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.Path</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.ApplicationPath</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.core.Application</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">org.eclipse.microprofile.config.inject.ConfigProperty</span>;<i class="conum" data-value="2"></i><b>(2)</b>
+
+<span style="color:#007">@ApplicationPath</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/</span><span style="color:#710">&quot;</span></span>)
+<span style="color:#088;font-weight:bold">public</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">myapp</span> <span style="color:#088;font-weight:bold">extends</span> Application {
+
+    <span style="color:#007">@Path</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/hello</span><span style="color:#710">&quot;</span></span>)
+    <span style="color:#007">@ApplicationScoped</span>
+    <span style="color:#088;font-weight:bold">public</span> <span style="color:#088;font-weight:bold">static</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">Hello</span> {
+
+        <span style="color:#007">@Inject</span>
+        <span style="color:#007">@ConfigProperty</span>(name = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">nick.name</span><span style="color:#710">&quot;</span></span>, defaultValue = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">WildFly</span><span style="color:#710">&quot;</span></span>)
+        <span style="color:#088;font-weight:bold">private</span> <span style="color:#0a8;font-weight:bold">String</span> name;
+
+        <span style="color:#007">@GET</span>
+        <span style="color:#088;font-weight:bold">public</span> <span style="color:#0a8;font-weight:bold">String</span> sayHello() {
+            <span style="color:#080;font-weight:bold">return</span> <span style="color:#0a8;font-weight:bold">String</span>.format(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Hello, %s!</span><span style="color:#710">&quot;</span></span>, name);
+        }
+
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This new dependency is required to use MicroProfile Config</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can then use an environment variable <code>NICK_NAME</code> to inject the <code>name</code> in your application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">NICK_NAME=Bob jbang run myapp.java</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you go to <a href="http://localhost:8080/myapp/hello" class="bare">http://localhost:8080/myapp/hello</a>, it will now display <code>Hello, Bob!</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ai_chat_example"><a class="anchor" href="#_ai_chat_example"></a><a class="link" href="#_ai_chat_example">6.4. AI Chat Example</a></h3>
+<div class="paragraph">
+<p>WildFly provides AI integration with its <a href="https://github.com/wildfly-extras/wildfly-ai-feature-pack">AI feature pack</a>.
+This allows to write a simple chat bot that can be run with JBang</p>
+</div>
+<div class="sect3">
+<h4 id="_prerequisites"><a class="anchor" href="#_prerequisites"></a><a class="link" href="#_prerequisites">6.4.1. Prerequisites</a></h4>
+<div class="paragraph">
+<p>For the purpose of this application, we can use <a href="https://ollama.com">Ollama</a> to pull the AI model used by the application by running the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">podman run -d --rm --name ollama -p 11434:11434 -v ollama:/root/.ollama ollama/ollama
+podman exec -it ollama ollama pull llama3.2:1b</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We now have a <code>llama3.2:1b</code> available on our local machine that can be used by the application.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_java_example"><a class="anchor" href="#_java_example"></a><a class="link" href="#_java_example">6.4.2. Java example</a></h4>
+<div class="paragraph">
+<p>Let&#8217;s write a <code>myaiapp.java</code> file to create a simple Chat:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
+<span style="color:#777">//JAVA 17+</span>
+<span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final</span>
+<span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
+<span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
+<span style="color:#777">//DEPS dev.langchain4j:langchain4j:1.0.0-alpha1 </span><i class="conum" data-value="1"></i><b>(1)</b>
+<span style="color:#777">//GLOW --spaces=incubating --server-version=35.0.1.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
+
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">dev.langchain4j.model.chat.request.ChatRequest</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">dev.langchain4j.data.message</span>.*;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">dev.langchain4j.model.chat.ChatLanguageModel</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.enterprise.context.RequestScoped</span>;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.inject</span>.*;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs</span>.*;
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.core</span>.*;
+
+<span style="color:#007">@ApplicationPath</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/</span><span style="color:#710">&quot;</span></span>)
+<span style="color:#088;font-weight:bold">public</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">myaiapp</span> <span style="color:#088;font-weight:bold">extends</span> Application {
+
+    <span style="color:#007">@Path</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/chat</span><span style="color:#710">&quot;</span></span>)
+    <span style="color:#007">@RequestScoped</span>
+    <span style="color:#088;font-weight:bold">public</span> <span style="color:#088;font-weight:bold">static</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">Chat</span> {
+
+        <span style="color:#007">@Inject</span>
+        <span style="color:#007">@Named</span>(value = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">ollama</span><span style="color:#710">&quot;</span></span>) <i class="conum" data-value="3"></i><b>(3)</b>
+        ChatLanguageModel chatModel;
+
+        <span style="color:#007">@GET</span>
+        <span style="color:#007">@Produces</span>(MediaType.TEXT_HTML)
+        <span style="color:#088;font-weight:bold">public</span> <span style="color:#0a8;font-weight:bold">String</span> chatWithAssistant(<span style="color:#007">@QueryParam</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">word</span><span style="color:#710">&quot;</span></span>) <span style="color:#0a8;font-weight:bold">String</span> word) {
+            <span style="color:#080;font-weight:bold">try</span> {
+                <span style="color:#080;font-weight:bold">return</span> chatModel.chat(ChatRequest.builder().messages(
+                        SystemMessage
+                                .from(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#710">&quot;</span></span><span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">
+                                           You are a teacher that explain to kids the origin of some words.
+                                               Your response must be polite, use the same language as the question, and be relevant to the question.
+                                               Your answer must be embedded in HTML.
+                                        </span><span style="color:#710">&quot;</span></span><span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#710">&quot;</span></span>),
+                        UserMessage.from(<span style="color:#0a8;font-weight:bold">String</span>.format(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">What is the etymology of %s?</span><span style="color:#710">&quot;</span></span>, word))).build())
+                        .aiMessage().text();
+            } <span style="color:#080;font-weight:bold">catch</span> (<span style="color:#C00;font-weight:bold">Exception</span> e) {
+                <span style="color:#080;font-weight:bold">return</span> <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">My failure reason is:</span><span style="color:#b0b">\n</span><span style="color:#b0b">\n</span><span style="color:#710">&quot;</span></span> + e.getMessage();
+            }
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Add this dependency to use <a href="https://docs.langchain4j.dev">LangChain4j</a> in your application</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>WildFly AI feature pack is <code>incubating</code> so you need to pass the <code>--spaces=incubating</code> to provision it.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The chat model is based on <code>ollama</code></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Once you have created this file, we can run it with JBang with the command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">OLLAMA_CHAT_MODEL_NAME=llama3.2:1b jbang run --verbose myaiapp.java</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We use the <code>OLLAMA_CHAT_MODEL_NAME</code> env var to specify with model is used by the application (this model was pulled by Ollama in the prerequisites section)</p>
+</div>
+<div class="paragraph">
+<p>Once the application is up and running, you can access the <code><a href="http://localhost:8080/myaiapp/chat?word=Orange" class="bare">http://localhost:8080/myaiapp/chat?word=Orange</a></code> to learn more about the etymology of the "Orange" word.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.3.1.Final<br>
-Last updated 2025-02-05 16:24:53 +0100
+Version 1.3.2.Final<br>
+Last updated 2025-03-05 13:07:04 +0100
 </div>
 </div>
 </body>
