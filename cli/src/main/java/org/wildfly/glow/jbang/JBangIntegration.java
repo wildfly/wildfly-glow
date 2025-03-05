@@ -51,7 +51,7 @@ public class JBangIntegration {
     private static final Pattern MAVEN_JAR_PATTERN = Pattern.compile(
             "([a-zA-Z0-9_.-]+):([a-zA-Z0-9_.-]+):jar:([a-zA-Z0-9_.-]+)");
 
-    public static void extractJar(Path jar, Path destDir) throws IOException {
+    private static void extractJar(Path jar, Path destDir) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jar, null)) {
             Path root = fs.getPath("/");
 
@@ -77,7 +77,7 @@ public class JBangIntegration {
         }
     }
 
-    public static Path toWar(Path appClasses, Set<Path> libs) throws IOException {
+    private static Path toWar(Path appClasses, Set<Path> libs) throws IOException {
         System.out.println("Adding libs to WAR: " + libs);
         Path parent = appClasses.getParent();
         Path webInf = parent.resolve("WEB-INF");
@@ -138,7 +138,7 @@ public class JBangIntegration {
         return warFile;
     }
 
-    public static Path runGlowScan(Path glowJar, Path war, Optional<String> glowArgs) throws Exception {
+    private static Path runGlowScan(Path glowJar, Path war, Optional<String> glowArgs) throws Exception {
         System.out.println("Scanning " + war + " with " + glowJar);
 
         Path temp = Files.createTempDirectory("glow");
@@ -199,7 +199,7 @@ public class JBangIntegration {
     // while in the comments they are specified with either of the forms:
     //      //DEPS {groupId}:{artifactId}:{version}
     //      //DEPS {groupId}:{artifactId}
-    public static Set<Path> findLibrariestoInclude(List<Map.Entry<String, Path>> originalDeps, List<String> comments) {
+    private static Set<Path> findLibrariestoInclude(List<Map.Entry<String, Path>> originalDeps, List<String> comments) {
         return originalDeps.stream()
                 .filter(entry -> {
                     Matcher matcher = MAVEN_JAR_PATTERN.matcher(entry.getKey());
