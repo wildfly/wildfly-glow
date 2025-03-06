@@ -7,6 +7,8 @@ TEST_TIMEOUT=20
 test_dir=tests/target/jbang/
 
 glow_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+# find the latest version of WildFLy that is supported by WildFly Glow
+wildfly_latest_version=$(curl -s 'https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/refs/heads/release/versions.yaml'  | yq .latest)
 
 function setupTestSuite {
   echo Clear JBang cache
@@ -107,10 +109,11 @@ function testApp {
   cat <<- EOF > $java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
-//DEPS org.wildfly.bom:wildfly-expansion:35.0.1.Final@pom
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//GLOW --server-version=${wildfly_latest_version}
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
@@ -147,10 +150,11 @@ function testAppWithHealth {
   cat <<- EOF > $java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
-//DEPS org.wildfly.bom:wildfly-expansion:35.0.1.Final@pom
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//GLOW --server-version=${wildfly_latest_version}
 //GLOW --add-ons=health
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -188,10 +192,11 @@ function testAppWithMetrics {
   cat <<- EOF > $java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
-//DEPS org.wildfly.bom:wildfly-expansion:35.0.1.Final@pom
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//GLOW --server-version=${wildfly_latest_version}
 //GLOW --add-ons=metrics
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -228,11 +233,12 @@ function testMicroProfileConfigApp {
   cat <<- EOF > $java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
-//DEPS org.wildfly.bom:wildfly-expansion:35.0.1.Final@pom
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS org.eclipse.microprofile.config:microprofile-config-api
+//GLOW --server-version=${wildfly_latest_version}
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -276,11 +282,12 @@ function testAppWithLib {
   cat <<- EOF > $java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
-//DEPS org.wildfly.bom:wildfly-expansion:35.0.1.Final@pom
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS com.google.code.gson:gson:2.12.1
+//GLOW --server-version=${wildfly_latest_version}
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
