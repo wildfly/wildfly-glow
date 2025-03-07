@@ -29,8 +29,7 @@ function check_endpoint() {
   length=${#response}
   body="${response:0:length-3}"
 
-  if [ "${http_code}" == "200" ]
-  then
+  if [ "${http_code}" == "200" ]; then
     echo "${body}"
     return 0
   else
@@ -43,10 +42,8 @@ function check_endpoint_response() {
   local url=$1
   local expected_body=$2
 
-  if body=$(check_endpoint "${url}")
-  then
-    if [ "${body}" == "${expected_body}" ]
-    then
+  if body=$(check_endpoint "${url}"); then
+    if [ "${body}" == "${expected_body}" ]; then
       return 0
     else
       echo "Got: ${body} but expected: ${expected_body}" >&2
@@ -66,8 +63,7 @@ function jbangBuild {
   echo "Building with source"
   cat "${java_source_file}"
 
-  if ! jbangExec --verbose build "${java_source_file}"
-  then
+  if ! jbangExec --verbose build "${java_source_file}"; then
     echo "Error building the application with JBang, check log"
     test_failure=1
     return 1
@@ -85,13 +81,11 @@ function jbangRun {
   failed=0
   elapsed=0
   sleep 5
-  while ! eval "${verifier}"
-  do
+  while ! eval "${verifier}"; do
     sleep 1
     ((elapsed++))
 
-    if $elapsed -ge "$TIMEOUT"
-    then
+    if $elapsed -ge "$TIMEOUT"; then
       echo "Timeout reached: Process did not start responding on port 8080 within ${TEST_TIMEOUT} seconds."
       test_failure=1
       failed=1
@@ -112,7 +106,7 @@ function testApp {
   java_source_file=$test_dir/app.java
   cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
-//JAVA 17+
+//JAVA ${jdk_version}
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
@@ -153,7 +147,7 @@ function testAppWithHealth {
   java_source_file=$test_dir/appWithHealth.java
   cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
-//JAVA 17+
+//JAVA ${jdk_version}
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
@@ -195,7 +189,7 @@ function testAppWithMetrics {
   java_source_file=$test_dir/appWithMetrics.java
   cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
-//JAVA 17+
+//JAVA ${jdk_version}
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
@@ -236,7 +230,7 @@ function testMicroProfileConfigApp {
   java_source_file=$test_dir/microProfileConfigApp.java
   cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
-//JAVA 17+
+//JAVA ${jdk_version}
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
@@ -285,7 +279,7 @@ function testAppWithLib {
   java_source_file=$test_dir/appWithLib.java
   cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
-//JAVA 17+
+//JAVA ${jdk_version}
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
 //DEPS org.wildfly.glow:wildfly-glow:${glow_version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
@@ -324,24 +318,25 @@ EOF
   rm $java_source_file
 }
 
-function main {
-  setupTestSuite
+jdk_version=$1
+if [ -z "${jdk_version}" ]; then
+  jdk_version="17"
+fi
+echo "Running tests with JDK ${jdk_version}"
 
-  testApp
-  testAppWithLib
-  testAppWithHealth
-  testAppWithMetrics
-  testMicroProfileConfigApp
+setupTestSuite
 
-  tearDownTestSuite
+testApp
+testAppWithLib
+testAppWithHealth
+testAppWithMetrics
+testMicroProfileConfigApp
 
-  if "${test_failure}" -eq 1
-  then
-    echo "There were test failures! See the above output for details."
-    exit 1
-  else
-    echo "All ${test_count} tests passed!"
-  fi
-}
+tearDownTestSuite
 
-main
+if "${test_failure}" -eq 1; then
+  echo "There were test failures! See the above output for details."
+  exit 1
+else
+  echo "All ${test_count} tests passed!"
+fi
