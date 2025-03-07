@@ -8,7 +8,7 @@ test_dir=tests/target/jbang/
 
 glow_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 # find the latest version of WildFLy that is supported by WildFly Glow
-wildfly_latest_version=$(curl -s 'https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/refs/heads/release/versions.yaml'  | yq .latest)
+wildfly_latest_version=$(curl -s 'https://raw.githubusercontent.com/wildfly/wildfly-galleon-feature-packs/refs/heads/release/versions.yaml' | yq .latest)
 
 function setupTestSuite {
   echo Clear JBang cache
@@ -21,38 +21,40 @@ function tearDownTestSuite {
 }
 
 function check_endpoint() {
-    local url=$1
+  local url=$1
 
-    response=$(curl -s -w "%{http_code}" "${url}")
-    echo "Request responded with : ${response}" >&2
-    http_code="${response: -3}"
-    length=${#response}
-    body="${response:0:length-3}"
+  response=$(curl -s -w "%{http_code}" "${url}")
+  echo "Request responded with : ${response}" >&2
+  http_code="${response: -3}"
+  length=${#response}
+  body="${response:0:length-3}"
 
-    if [[ "${http_code}" == "200" ]]; then
-        echo "${body}"
-        return 0
-    else
-        echo "Request failed with status: ${http_code}" >&2
-        return 1
-    fi
+  if [ "${http_code}" == "200" ]
+  then
+    echo "${body}"
+    return 0
+  else
+    echo "Request failed with status: ${http_code}" >&2
+    return 1
+  fi
 }
 
 function check_endpoint_response() {
-    local url=$1
-    local expected_body=$2
+  local url=$1
+  local expected_body=$2
 
-    body=$(check_endpoint "${url}")
-    if [[ $? -eq 0 ]]; then
-      if [[ "${body}" == "${expected_body}" ]]; then
-        return 0
-      else
-        echo "Got: ${body} but expected: ${expected_body}" >&2
-        return 1
-      fi
+  if body=$(check_endpoint "${url}")
+  then
+    if [ "${body}" == "${expected_body}" ]
+    then
+      return 0
     else
+      echo "Got: ${body} but expected: ${expected_body}" >&2
       return 1
     fi
+  else
+    return 1
+  fi
 }
 
 function jbangExec {
@@ -64,8 +66,8 @@ function jbangBuild {
   echo "Building with source"
   cat "${java_source_file}"
 
-  jbangExec --verbose build "${java_source_file}"
-  if [ $? -ne 0 ]; then
+  if ! jbangExec --verbose build "${java_source_file}"
+  then
     echo "Error building the application with JBang, check log"
     test_failure=1
     return 1
@@ -83,15 +85,17 @@ function jbangRun {
   failed=0
   elapsed=0
   sleep 5
-  while ! eval "${verifier}"; do
+  while ! eval "${verifier}"
+  do
     sleep 1
     ((elapsed++))
 
-    if [[ $elapsed -ge $TIMEOUT ]]; then
-        echo "Timeout reached: Process did not start responding on port 8080 within ${TEST_TIMEOUT} seconds."
-        test_failure=1
-        failed=1
-        break
+    if $elapsed -ge "$TIMEOUT"
+    then
+      echo "Timeout reached: Process did not start responding on port 8080 within ${TEST_TIMEOUT} seconds."
+      test_failure=1
+      failed=1
+      break
     fi
   done
   wildfly_pid=$(lsof -ti :8080)
@@ -104,9 +108,9 @@ function jbangRun {
 # without any 3rd-party dependencies
 # (all deps are provided by WildFly)
 function testApp {
-  test_count=$((test_count+1))
+  test_count=$((test_count + 1))
   java_source_file=$test_dir/app.java
-  cat <<- EOF > $java_source_file
+  cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
@@ -145,9 +149,9 @@ EOF
 # Test a simple Jakarta RS application
 # with health enabled using //GLOW --add-ons=health
 function testAppWithHealth {
-  test_count=$((test_count+1))
+  test_count=$((test_count + 1))
   java_source_file=$test_dir/appWithHealth.java
-  cat <<- EOF > $java_source_file
+  cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
@@ -187,9 +191,9 @@ EOF
 # Test a simple Jakarta RS application
 # with metrics enabled using //GLOW --add-ons=metrics
 function testAppWithMetrics {
-  test_count=$((test_count+1))
+  test_count=$((test_count + 1))
   java_source_file=$test_dir/appWithMetrics.java
-  cat <<- EOF > $java_source_file
+  cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
@@ -228,9 +232,9 @@ EOF
 
 # Test a simple MicroProfile Config application
 function testMicroProfileConfigApp {
-  test_count=$((test_count+1))
+  test_count=$((test_count + 1))
   java_source_file=$test_dir/microProfileConfigApp.java
-  cat <<- EOF > $java_source_file
+  cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
@@ -277,9 +281,9 @@ EOF
 # is not provided by WildFly
 # Any deps that is versioned is included in the WAR deployment
 function testAppWithLib {
-  test_count=$((test_count+1))
+  test_count=$((test_count + 1))
   java_source_file=$test_dir/appWithLib.java
-  cat <<- EOF > $java_source_file
+  cat <<-EOF >$java_source_file
 ///usr/bin/env jbang "\$0" "\$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
@@ -314,29 +318,30 @@ public class appWithLib extends Application {
     }
 }
 EOF
-jbangBuild $java_source_file
-jbangRun $java_source_file "check_endpoint_response http://localhost:8080/appWithLib/hello '[\"a\",\"b\",\"c\"]'"
+  jbangBuild $java_source_file
+  jbangRun $java_source_file "check_endpoint_response http://localhost:8080/appWithLib/hello '[\"a\",\"b\",\"c\"]'"
 
-rm $java_source_file
+  rm $java_source_file
 }
 
 function main {
-setupTestSuite
+  setupTestSuite
 
-testApp
-testAppWithLib
-testAppWithHealth
-testAppWithMetrics
-testMicroProfileConfigApp
+  testApp
+  testAppWithLib
+  testAppWithHealth
+  testAppWithMetrics
+  testMicroProfileConfigApp
 
-tearDownTestSuite
+  tearDownTestSuite
 
-if [ "${test_failure}" -eq 1 ]; then
-  echo "There were test failures! See the above output for details."
-  exit 1
-else
-  echo "All ${test_count} tests passed!"
-fi
+  if "${test_failure}" -eq 1
+  then
+    echo "There were test failures! See the above output for details."
+    exit 1
+  else
+    echo "All ${test_count} tests passed!"
+  fi
 }
 
 main
