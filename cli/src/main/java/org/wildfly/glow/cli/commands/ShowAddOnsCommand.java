@@ -146,7 +146,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
                     defaultSpaceFpDependencies = fpDependencies;
                 }
                 StringBuilder builder = new StringBuilder();
-                builder.append("\nAdd-ons found in the @|bold ").append(space.getName()).append("|@ space:\n");
+                builder.append("\nAdd-ons found in the ").append(space.getName()).append(" space:\n");
                 if (provisioning == null) {
                     builder.append("- No Add-ons.");
                 } else {
@@ -177,11 +177,11 @@ public class ShowAddOnsCommand extends AbstractCommand {
                             if (!member.getName().endsWith(":default") && !ignore) {
                                 foundAddOns = true;
                                 String deployer = resolver.getPossibleDeployer(member.getLayers());
-                                addOnFamilyBuilder.append(" - ").append(member.getName()).append((deployer == null ? "" : " @|bold (supported by " + deployer + " deployer)|@")).append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
+                                addOnFamilyBuilder.append(" - @|bold ").append(member.getName()).append("|@").append(deployer == null ? "" : " (supported by " + deployer + " deployer)").append(member.getDescription() == null ? "" : ": " + member.getDescription()).append("%n");
                             }
                         }
                         if (addOnFamilyBuilder.length() != 0) {
-                          builder.append("* @|bold ").append(entry.getKey()).append("|@ add-ons:%n");
+                          builder.append("* ").append(entry.getKey()).append(" add-ons:%n");
                           builder.append(addOnFamilyBuilder.toString());
                         }
                     }
