@@ -49,6 +49,11 @@ jobs:
         run: bash tests/run-cli-tests.sh
         shell: bash
         working-directory: wildfly-glow
+      - name: Run JBang tests with JDK ${{ matrix.java}}
+        if: ${{ matrix.java != '11' && matrix.os != 'windows-latest'}} 
+        run: bash tests/run-jbang-tests.sh ${{ matrix.java}}
+        shell: bash
+        working-directory: wildfly-glow
       - name: Retrieve WildFly Glow version
         run: |
           echo "WILDFLY_GLOW_VERSION=$(mvn -B help:evaluate -Dexpression=project.version -DforceStdout -q)" >> $GITHUB_ENV
