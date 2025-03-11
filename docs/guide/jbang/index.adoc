@@ -12,10 +12,10 @@ You can install JBang from its https://www.jbang.dev/download/[Download page].
 To run Glow with JBang, you need to add a dependency to `org.wildfly.glow:wildfly-glow` in the Java source file:
 
 [source,java]
+[subs="verbatim,attributes"]
 ----
-//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final <1>
+//DEPS org.wildfly.glow:wildfly-glow:{wildfly-glow-version}
 ----
-<1> Make sure to use the latest version of the `wildfly-glow` artifact
 
 ### Glow arguments
 
@@ -49,11 +49,12 @@ The arguments to the `//GLOW` comments are directly passed to the Glow `scan` co
 The simplest Web application that can be run with JBang and WildFly is:
 
 [source,java]
+[subs="verbatim,attributes"]
 ----
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom <1>
-//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final <2>
+//DEPS org.wildfly.glow:wildfly-glow:{wildfly-glow-version} <2>
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 
@@ -78,8 +79,8 @@ public class myapp extends Application {
     }
 }
 ----
-<1> This POM is used to find the version of other dependencies such as CDI
-<2> This dependency is required to trigger the WildFly glow integration and run the application in WildFly
+<1> This POM is used to find the version of other dependencies provided by WildFly such as CDI
+<2> This dependency is required to trigger the WildFly Glow integration and run the application in WildFly
 
 Save this code snippet in a `myapp.java` and then you can run it with:
 
@@ -97,11 +98,12 @@ With that command you will run a WildFly server with the Web application deploye
 If you want to use MicroProfile Config in your application, all you need to do is add a dependency to `org.eclipse.microprofile.config:microprofile-config-api`, import the packages to compile your code and use MicroProfile Config API as usual:
 
 [source,java]
+[subs="verbatim,attributes"]
 ----
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom
-//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final
+//DEPS org.wildfly.glow:wildfly-glow:{wildfly-glow-version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS org.eclipse.microprofile.config:microprofile-config-api <1>
@@ -112,7 +114,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
-import org.eclipse.microprofile.config.inject.ConfigProperty;<2>
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationPath("/")
 public class myapp extends Application {
@@ -122,7 +124,7 @@ public class myapp extends Application {
     public static class Hello {
 
         @Inject
-        @ConfigProperty(name = "nick.name", defaultValue = "WildFly")
+        @ConfigProperty(name = "nick.name", defaultValue = "WildFly") <2>
         private String name;
 
         @GET
@@ -134,6 +136,7 @@ public class myapp extends Application {
 }
 ----
 <1> This new dependency is required to use MicroProfile Config
+<2> This annotation inject a config property in the application with a `nick.name` system property or a `NICK_NAME` environment variable
 
 You can then use an environment variable `NICK_NAME` to inject the `name` in your application:
 
@@ -166,11 +169,12 @@ We now have a `llama3.2:1b` available on our local machine that can be used by t
 Let's write a `myaiapp.java` file to create a simple Chat:
 
 [source,java]
+[subs="verbatim,attributes"]
 ----
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //JAVA 17+
 //DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom
-//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final
+//DEPS org.wildfly.glow:wildfly-glow:{wildfly-glow-version}
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS dev.langchain4j:langchain4j:1.0.0-alpha1 <1>

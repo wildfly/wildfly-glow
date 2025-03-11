@@ -102,6 +102,7 @@
                                 <toclevels>2</toclevels>
                                 <project-branch>${docs.project.branch}</project-branch>
                                 <wildfly-major>${docs.wildfly.major}</wildfly-major>
+                                <wildfly-glow-version>${project.version}</wildfly-glow-version>
                             </attributes>
                         </configuration>
                     </execution>
