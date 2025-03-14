@@ -140,6 +140,58 @@ EOF
   rm $java_source_file
 }
 
+
+# Test a simple Jakarta RS application
+# without any 3rd-party dependencies
+# with a jboss-web.xml
+# (all deps are provided by WildFly)
+function testAppWithWebInf {
+  test_count=$((test_count + 1))
+  java_source_file=$test_dir/appWithWebInf.java
+  jboss_web_file=$test_dir/jboss-web.xml
+  cat <<-EOF >$java_source_file
+///usr/bin/env jbang "\$0" "\$@" ; exit $?
+//JAVA ${jdk_version}
+//DEPS org.wildfly.bom:wildfly-expansion:${wildfly_latest_version}@pom
+//DEPS org.wildfly.glow:wildfly-glow:${glow_version}
+//DEPS jakarta.ws.rs:jakarta.ws.rs-api
+//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
+//FILES WEB-INF/jboss-web.xml=jboss-web.xml
+//GLOW --server-version=${wildfly_latest_version}
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class appWithWebInf extends Application {
+
+    @Path("/hello")
+    @ApplicationScoped
+    public static class Hello {
+
+        @GET
+        public String sayHello() {
+            return "Hello, WildFly!";
+        }
+
+    }
+}
+EOF
+cat <<-EOF >$jboss_web_file
+<?xml version="1.0"?>
+<jboss-web>
+   <context-root>/bank</context-root>
+</jboss-web>
+EOF
+  jbangBuild $java_source_file
+  jbangRun $java_source_file "check_endpoint_response 'http://localhost:8080/bank/hello' 'Hello, WildFly!'"
+
+  rm $java_source_file
+}
+
 # Test a simple Jakarta RS application
 # with health enabled using //GLOW --add-ons=health
 function testAppWithHealth {
@@ -327,6 +379,7 @@ echo "Running tests with JDK ${jdk_version}"
 setupTestSuite
 
 testApp
+testAppWithWebInf
 testAppWithLib
 testAppWithHealth
 testAppWithMetrics
