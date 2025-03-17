@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.3.2.Final,</span>
-<span id="revdate">2025-03-05T12:06:44Z</span>
+<span id="revnumber">version 1.3.3.Final,</span>
+<span id="revdate">2025-03-17T12:11:48Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1154,7 +1154,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.3.2.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.3.3.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1499,7 +1499,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.2.Final:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.3.Final:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1659,7 +1659,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.2.Final:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.3.3.Final:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2281,16 +2281,8 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final </span><i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.3.Final</span></code></pre>
 </div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Make sure to use the latest version of the <code>wildfly-glow</code> artifact</td>
-</tr>
-</table>
 </div>
 </div>
 <div class="sect2">
@@ -2336,7 +2328,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom </span><i class="conum" data-value="1"></i><b>(1)</b>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.3.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 
@@ -2366,11 +2358,11 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>This POM is used to find the version of other dependencies such as CDI</td>
+<td>This POM is used to find the version of other dependencies provided by WildFly such as CDI</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>This dependency is required to trigger the WildFly glow integration and run the application in WildFly</td>
+<td>This dependency is required to trigger the WildFly Glow integration and run the application in WildFly</td>
 </tr>
 </table>
 </div>
@@ -2399,7 +2391,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.3.Final</span>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 <span style="color:#777">//DEPS org.eclipse.microprofile.config:microprofile-config-api </span><i class="conum" data-value="1"></i><b>(1)</b>
@@ -2410,7 +2402,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.Path</span>;
 <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.ApplicationPath</span>;
 <span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">jakarta.ws.rs.core.Application</span>;
-<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">org.eclipse.microprofile.config.inject.ConfigProperty</span>;<i class="conum" data-value="2"></i><b>(2)</b>
+<span style="color:#080;font-weight:bold">import</span> <span style="color:#B44;font-weight:bold">org.eclipse.microprofile.config.inject.ConfigProperty</span>;
 
 <span style="color:#007">@ApplicationPath</span>(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">/</span><span style="color:#710">&quot;</span></span>)
 <span style="color:#088;font-weight:bold">public</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">myapp</span> <span style="color:#088;font-weight:bold">extends</span> Application {
@@ -2420,7 +2412,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
     <span style="color:#088;font-weight:bold">public</span> <span style="color:#088;font-weight:bold">static</span> <span style="color:#339;font-weight:bold">class</span> <span style="color:#B06;font-weight:bold">Hello</span> {
 
         <span style="color:#007">@Inject</span>
-        <span style="color:#007">@ConfigProperty</span>(name = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">nick.name</span><span style="color:#710">&quot;</span></span>, defaultValue = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">WildFly</span><span style="color:#710">&quot;</span></span>)
+        <span style="color:#007">@ConfigProperty</span>(name = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">nick.name</span><span style="color:#710">&quot;</span></span>, defaultValue = <span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">WildFly</span><span style="color:#710">&quot;</span></span>) <i class="conum" data-value="2"></i><b>(2)</b>
         <span style="color:#088;font-weight:bold">private</span> <span style="color:#0a8;font-weight:bold">String</span> name;
 
         <span style="color:#007">@GET</span>
@@ -2437,6 +2429,10 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
 <td>This new dependency is required to use MicroProfile Config</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This annotation inject a config property in the application with a <code>nick.name</code> system property or a <code>NICK_NAME</code> environment variable</td>
 </tr>
 </table>
 </div>
@@ -2484,7 +2480,7 @@ podman exec -it ollama ollama pull llama3.2:1b</code></pre>
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.2.Final</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.3.3.Final</span>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 <span style="color:#777">//DEPS dev.langchain4j:langchain4j:1.0.0-alpha1 </span><i class="conum" data-value="1"></i><b>(1)</b>
@@ -2567,8 +2563,8 @@ podman exec -it ollama ollama pull llama3.2:1b</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.3.2.Final<br>
-Last updated 2025-03-05 13:07:04 +0100
+Version 1.3.3.Final<br>
+Last updated 2025-03-17 13:12:06 +0100
 </div>
 </div>
 </body>
