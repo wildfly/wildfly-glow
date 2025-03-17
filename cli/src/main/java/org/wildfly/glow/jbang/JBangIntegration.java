@@ -50,6 +50,7 @@ public class JBangIntegration {
 
     private static final Pattern MAVEN_JAR_PATTERN = Pattern.compile(
             "([a-zA-Z0-9_.-]+):([a-zA-Z0-9_.-]+):jar:([a-zA-Z0-9_.-]+)");
+    private static final String WEB_INF = "WEB-INF";
 
     private static void extractJar(Path jar, Path destDir) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jar, null)) {
@@ -80,7 +81,7 @@ public class JBangIntegration {
     private static Path toWar(Path appClasses, Set<Path> libs) throws IOException {
         System.out.println("Adding libs to WAR: " + libs);
         Path parent = appClasses.getParent();
-        Path webInf = parent.resolve("WEB-INF");
+        Path webInf = parent.resolve(WEB_INF);
         Path webClassesDir = webInf.resolve("classes");
         Path webLibDir = webInf.resolve("lib");
 
@@ -89,7 +90,13 @@ public class JBangIntegration {
         Files.walkFileTree(appClasses, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Path targetPath = webClassesDir.resolve(appClasses.relativize(file));
+                Path filePath = appClasses.relativize(file);
+                Path targetPath;
+                if (filePath.startsWith(WEB_INF) && filePath.getNameCount() > 1) {
+                    targetPath = webInf.resolve(filePath.subpath(1, filePath.getNameCount()));
+                } else {
+                    targetPath = webClassesDir.resolve(filePath);
+                }
                 Files.createDirectories(targetPath.getParent());
                 Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
                 return FileVisitResult.CONTINUE;
