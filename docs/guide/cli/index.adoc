@@ -8,3 +8,14 @@
 * To install the automatic CLI commands completion call: `source <(./wildfly-glow completion)`
 * To scan a first deployment call: `./wildfly-glow scan ./examples/kitchensink.war`
 
+### Maven configuration
+
+* For Maven resolution, the CLI reads your Maven `settings.xml` in default locations.
+* If your settings are in a custom location, you can use the `org.wildfly.glow.maven.settings.xml.url=<url to your settings.xml file>` system property to set it. 
+* Glow enforces a set of Maven remote repositories: `central`, `jboss`, `redhat GA` and `spring`. You can disable it by using the 
+`org.wildfly.glow.maven.ignore.default.repos=true` system property.
+* If no local maven cache is found in the `settings.xml` file (or if no `settings.xml` file is found), 
+the `<user home>/.m2/repository` directory is used. You can specify a custom location using the 
+`maven.repo.local=<absolute path to the local cache directory>` system property.
+
+

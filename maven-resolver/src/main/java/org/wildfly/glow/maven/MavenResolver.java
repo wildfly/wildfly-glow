@@ -35,7 +35,10 @@ import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.Proxy;
+import org.eclipse.aether.repository.ProxySelector;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.wildfly.channel.Channel;
 
@@ -50,17 +53,41 @@ public final class MavenResolver {
     public static final String GA_REPO_URL = "https://maven.repository.redhat.com/ga/";
     public static final String SPRING_REPO_URL = "https://repo.spring.io/milestone";
 
-    public static MavenRepoManager newMavenResolver() {
+    public static final String DEFAULT_REPOSITORY_TYPE = "default";
+
+    public static MavenRepoManager newMavenResolver() throws Exception  {
         RepositorySystem repoSystem = newRepositorySystem();
+        Path settingsPath = MavenSettings.getMavenSettingsFile();
+        RepositorySystemSession session;
+        List<RemoteRepository> repos;
+        if (settingsPath == null) {
+            session = newMavenSession(repoSystem);
+            repos = getRemoteRepositories();
+        } else {
+            MavenSettings settings = new MavenSettings(repoSystem, settingsPath);
+            session = settings.getSession();
+            repos = settings.getRepositories();
+        }
         MavenRepoManager resolver
-                = new MavenArtifactRepositoryManager(repoSystem, newMavenSession(repoSystem), getRemoteRepositories());
+                = new MavenArtifactRepositoryManager(repoSystem, session, repos);
         return resolver;
     }
 
     public static MavenRepoManager newMavenResolver(List<Channel> channels) throws Exception {
         RepositorySystem repoSystem = newRepositorySystem();
+        Path settingsPath = MavenSettings.getMavenSettingsFile();
+        RepositorySystemSession session;
+        List<RemoteRepository> repos;
+        if (settingsPath == null) {
+            session = newMavenSession(repoSystem);
+            repos = getRemoteRepositories();
+        } else {
+            MavenSettings settings = new MavenSettings(repoSystem, settingsPath);
+            session = settings.getSession();
+            repos = settings.getRepositories();
+        }
         MavenRepoManager resolver
-                = new ChannelMavenArtifactRepositoryManager(channels, repoSystem, newMavenSession(repoSystem), getRemoteRepositories());
+                = new ChannelMavenArtifactRepositoryManager(channels, repoSystem, session, repos);
         return resolver;
     }
     public static MavenRepoManager newRHMavenResolver(List<Channel> channels) throws Exception {
@@ -74,6 +101,16 @@ public final class MavenResolver {
         MavenArtifactRepositoryManager resolver
                 = new MavenArtifactRepositoryManager(repoSystem, newMavenSession(repoSystem), getRHRemoteRepositories());
         return resolver;
+    }
+
+    static List<RemoteRepository> getMissingDefaultRepositories(Set<String> configuredRepos, MavenProxySelector selector, Proxy proxy) {
+        List<RemoteRepository> lst = new ArrayList<>();
+        for (RemoteRepository rep : getRemoteRepositories()) {
+            if(!configuredRepos.contains(rep.getUrl())) {
+                lst.add(rep);
+            }
+        }
+        return lst;
     }
 
     public static List<RemoteRepository> getRemoteRepositories() {
@@ -114,6 +151,29 @@ public final class MavenResolver {
         Path localCache = localPath == null ? Paths.get(System.getProperty("user.home"), ".m2", "repository") : Paths.get(localPath);
         LocalRepository localRepo = new LocalRepository(localCache.toFile());
         session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
+        return session;
+    }
+
+    public static RepositorySystemSession newMavenSession(final RepositorySystem repoSystem,
+            Path path, ProxySelector proxySelector, boolean offline) {
+        final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        session.setOffline(offline);
+        String localPath = System.getProperty("maven.repo.local");
+        Path localCache;
+        if (localPath == null) {
+            if (path == null) {
+                localCache = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+            } else {
+                localCache = path;
+            }
+        } else {
+            localCache = Paths.get(localPath);
+        }
+        final LocalRepository localRepo = new LocalRepository(localCache.toFile());
+        session.setLocalRepositoryManager(repoSystem.newLocalRepositoryManager(session, localRepo));
+        if (proxySelector != null) {
+            session.setProxySelector(proxySelector);
+        }
         return session;
     }
 
