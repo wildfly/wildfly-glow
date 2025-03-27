@@ -16,7 +16,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.Profile;
 import org.apache.maven.settings.Proxy;
@@ -197,37 +199,57 @@ public class MavenSettings {
         return repositories;
     }
 
-    private RemoteRepository buildRepository(String id, String type, String url,
-            Settings settings, RepositoryPolicy rp, RepositoryPolicy sp, List<RemoteRepository> mirrored) throws MalformedURLException {
+    private static org.eclipse.aether.repository.RepositoryPolicy fromMavenRepositoryPolicy(RepositoryPolicy repositoryPolicy) {
+        return new org.eclipse.aether.repository.RepositoryPolicy(
+                repositoryPolicy.isEnabled(),
+                repositoryPolicy.getUpdatePolicy(),
+                repositoryPolicy.getChecksumPolicy()
+        );
+    }
+
+    private static Consumer<RepositoryPolicy> forPolicy(Consumer<org.eclipse.aether.repository.RepositoryPolicy> mappedPolicyConsumer) {
+        return repositoryPolicy ->
+                Optional.ofNullable(repositoryPolicy)
+                        .map(MavenSettings::fromMavenRepositoryPolicy)
+                        .ifPresent(mappedPolicyConsumer);
+    }
+
+    private static Optional<Authentication> authenticationForServer(Server server) {
+        if (server.getUsername() != null) {
+            AuthenticationBuilder authBuilder = new AuthenticationBuilder();
+            authBuilder.addPassword(server.getPassword());
+            authBuilder.addUsername(server.getUsername());
+            return Optional.of(authBuilder.build());
+        } else if (server.getPrivateKey() != null) {
+            AuthenticationBuilder authBuilder = new AuthenticationBuilder();
+            authBuilder.addPrivateKey(server.getPrivateKey(), server.getPassphrase());
+            return Optional.of(authBuilder.build());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private RemoteRepository buildRepository(
+            String id,
+            String type,
+            String url,
+            Settings settings,
+            RepositoryPolicy releasePolicy,
+            RepositoryPolicy snapshotPolicy,
+            List<RemoteRepository> mirrored) throws MalformedURLException {
         RemoteRepository.Builder builder = new RemoteRepository.Builder(id,
                 type == null ? MavenResolver.DEFAULT_REPOSITORY_TYPE : type,
                 url);
-        if (rp != null) {
-            org.eclipse.aether.repository.RepositoryPolicy releases
-                    = new org.eclipse.aether.repository.RepositoryPolicy(rp.isEnabled(),
-                            rp.getUpdatePolicy(), rp.getChecksumPolicy());
-            builder.setReleasePolicy(releases);
-        }
-        if (sp != null) {
-            org.eclipse.aether.repository.RepositoryPolicy snapshots
-                    = new org.eclipse.aether.repository.RepositoryPolicy(sp.isEnabled(),
-                            sp.getUpdatePolicy(), sp.getChecksumPolicy());
-            builder.setReleasePolicy(snapshots);
-        }
-        for (Server server : settings.getServers()) {
+
+        forPolicy(builder::setReleasePolicy).accept(releasePolicy);
+        forPolicy(builder::setSnapshotPolicy).accept(snapshotPolicy);
+
+        for (var server : settings.getServers()) {
             if (server.getId().equals(id)) {
-                if (server.getUsername() != null) {
-                    AuthenticationBuilder authBuilder = new AuthenticationBuilder();
-                    authBuilder.addPassword(server.getPassword());
-                    authBuilder.addUsername(server.getUsername());
-                    builder.setAuthentication(authBuilder.build());
-                } else if (server.getPrivateKey() != null) {
-                    AuthenticationBuilder authBuilder = new AuthenticationBuilder();
-                    authBuilder.addPrivateKey(server.getPrivateKey(), server.getPassphrase());
-                    builder.setAuthentication(authBuilder.build());
-                }
+                authenticationForServer(server).ifPresent(builder::setAuthentication);
             }
         }
+
         if (mirrored != null) {
             builder.setMirroredRepositories(mirrored);
         }
