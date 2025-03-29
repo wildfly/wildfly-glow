@@ -17,6 +17,8 @@
  */
 package org.wildfly.glow.maven;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -36,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
@@ -103,9 +106,9 @@ public final class MavenResolver {
         return resolver;
     }
 
-    static List<RemoteRepository> getMissingDefaultRepositories(Set<String> configuredRepos, MavenProxySelector selector, Proxy proxy) {
+    static List<RemoteRepository> getMissingDefaultRepositories(Set<String> configuredRepos, MavenProxySelector selector, Proxy proxy) throws MalformedURLException {
         List<RemoteRepository> lst = new ArrayList<>();
-        for (RemoteRepository rep : getRemoteRepositories()) {
+        for (RemoteRepository rep : getRemoteRepositories(selector, proxy)) {
             if(!configuredRepos.contains(rep.getUrl())) {
                 lst.add(rep);
             }
@@ -113,24 +116,18 @@ public final class MavenResolver {
         return lst;
     }
 
-    public static List<RemoteRepository> getRemoteRepositories() {
+    public static List<RemoteRepository> getRemoteRepositories() throws MalformedURLException {
+        return getRemoteRepositories(null, null);
+    }
+
+    public static List<RemoteRepository> getRemoteRepositories(MavenProxySelector proxySelector, Proxy proxy) throws MalformedURLException {
         List<RemoteRepository> repos = new ArrayList<>();
-        RemoteRepository.Builder central = new RemoteRepository.Builder("central", "default", CENTRAL_REPO_URL);
-        central.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
-                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
-        repos.add(central.build());
-        RemoteRepository.Builder ga = new RemoteRepository.Builder("redhat-ga", "default", GA_REPO_URL);
-        ga.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
-                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
-        repos.add(ga.build());
-        RemoteRepository.Builder nexus = new RemoteRepository.Builder("jboss-nexus", "default", JBOSS_REPO_URL);
-        nexus.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
-                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
-        repos.add(nexus.build());
-        RemoteRepository.Builder spring = new RemoteRepository.Builder("spring-repo", "default", SPRING_REPO_URL);
-        spring.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
-                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
-        repos.add(spring.build());
+
+        repos.add(createRepository(proxySelector, proxy,"central", CENTRAL_REPO_URL));
+        repos.add(createRepository(proxySelector, proxy,"redhat-ga", GA_REPO_URL));
+        repos.add(createRepository(proxySelector, proxy,"jboss-nexus", JBOSS_REPO_URL));
+        repos.add(createRepository(proxySelector, proxy,"spring-repo", SPRING_REPO_URL));
+
         return repos;
     }
 
@@ -183,5 +180,25 @@ public final class MavenResolver {
         locator.addService(TransporterFactory.class, FileTransporterFactory.class);
         locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
         return locator.getService(RepositorySystem.class);
+    }
+
+    private static RemoteRepository createRepository(MavenProxySelector proxySelector, Proxy proxy, String repoName, String repoUrl) throws MalformedURLException {
+        boolean useProxy = useProxy(proxySelector, proxy, new URL(repoUrl).getHost());
+
+        RemoteRepository.Builder remoteRepository = new RemoteRepository.Builder(repoName, "default", repoUrl);
+        remoteRepository.setSnapshotPolicy(new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_NEVER,
+                RepositoryPolicy.CHECKSUM_POLICY_IGNORE));
+        if(useProxy) {
+            remoteRepository.setProxy(proxy);
+        }
+        return remoteRepository.build();
+    }
+
+    private static boolean useProxy(MavenProxySelector proxySelector, Proxy proxy, String host) {
+        if(proxySelector != null && proxy != null) {
+            return proxySelector.proxyFor(host);
+        } else {
+            return false;
+        }
     }
 }
