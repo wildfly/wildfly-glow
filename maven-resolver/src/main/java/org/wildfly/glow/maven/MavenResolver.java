@@ -37,7 +37,6 @@ import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.aether.RepositorySystemSession;
@@ -122,7 +121,6 @@ public final class MavenResolver {
     }
 
     public static List<RemoteRepository> getRemoteRepositories(MavenProxySelector proxySelector, Proxy proxy) throws MalformedURLException {
-        Optional<Proxy> maybeProxy = Optional.ofNullable(proxy);
         List<RemoteRepository> repos = new ArrayList<>();
 
         repos.add(createRepository(proxySelector, proxy,"central", CENTRAL_REPO_URL));
