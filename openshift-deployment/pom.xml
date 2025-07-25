@@ -10,6 +10,8 @@
 
     <artifactId>wildfly-glow-openshift-deployment</artifactId>
     <packaging>pom</packaging>
+    <name>WildFly Glow OpenShift Deployment</name>
+    <description>WildFly Glow OpenShift Deployment</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

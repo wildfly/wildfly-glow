@@ -10,6 +10,8 @@
 
     <artifactId>wildfly-glow-openshift-deployment-mariadb</artifactId>
     <packaging>jar</packaging>
+    <name>WildFly Glow OpenShift Deployment MariaDB</name>
+    <description>WildFly Glow OpenShift Deployment MariaDB</description>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

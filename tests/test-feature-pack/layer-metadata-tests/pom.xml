@@ -10,7 +10,8 @@
     <artifactId>wildfly-glow-test-feature-pack-layer-metadata-tests</artifactId>
 
     <packaging>jar</packaging>
-
+    <name>WildFly Glow Test Feature Pack Metadata Tests</name>
+    <description>WildFly Glow Test Feature Pack Metadata Tests</description>
     <properties>
         <license.output.directory>${project.build.directory}/resources/content/docs/licenses</license.output.directory>
         <license.src.directory>${basedir}/src/license</license.src.directory>

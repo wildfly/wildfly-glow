@@ -9,6 +9,8 @@
     </parent>
     <artifactId>wildfly-glow-cli-support</artifactId>
     <packaging>jar</packaging>
+    <name>WildFly Glow CLI Support</name>
+    <description>WildFly Glow CLI Support</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

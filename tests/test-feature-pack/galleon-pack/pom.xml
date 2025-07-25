@@ -11,8 +11,8 @@
 
     <packaging>pom</packaging>
 
-    <name>Glow Test Feature Pack</name>
-
+    <name>WildFly Glow Test Feature Pack</name>
+    <description>WildFly Glow Test Feature Pack</description>
     <properties>
         <license.output.directory>${project.build.directory}/resources/content/docs/licenses</license.output.directory>
         <license.src.directory>${basedir}/src/license</license.src.directory>

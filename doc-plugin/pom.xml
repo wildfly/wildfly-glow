@@ -8,8 +8,9 @@
         <version>1.4.2.Final-SNAPSHOT</version>
     </parent>
     <artifactId>wildfly-glow-doc-plugin</artifactId>
-    <description>A plugin to generate adoc documentation for layer rules</description>
     <packaging>maven-plugin</packaging>
+    <name>WildFly Glow Doc and Metadata Plugin</name>
+    <description>WildFly Glow Doc and Metadata Plugin </description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

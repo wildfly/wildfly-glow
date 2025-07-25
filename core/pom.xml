@@ -10,6 +10,8 @@
     <artifactId>wildfly-glow-core</artifactId>
     
     <packaging>jar</packaging>
+    <name>WildFly Glow Core</name>
+    <description>WildFly Glow Core</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

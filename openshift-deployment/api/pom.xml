@@ -10,6 +10,8 @@
 
     <artifactId>wildfly-glow-openshift-deployment-api</artifactId>
     <packaging>jar</packaging>
+    <name>WildFly Glow OpenShift Deployment API</name>
+    <description>WildFly Glow OpenShift Deployment API</description>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

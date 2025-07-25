@@ -10,6 +10,8 @@
 
     <artifactId>wildfly-glow-maven-resolver</artifactId>
     <packaging>jar</packaging>
+    <name>WildFly Glow Maven Resolver</name>
+    <description>WildFly Glow Maven Resolver</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

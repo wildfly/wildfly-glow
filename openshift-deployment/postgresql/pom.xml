@@ -10,6 +10,8 @@
 
     <artifactId>wildfly-glow-openshift-deployment-postgresql</artifactId>
     <packaging>jar</packaging>
+    <name>WildFly Glow OpenShift Deployment PostgreSQL</name>
+    <description>WildFly Glow OpenShift Deployment PostgreSQL</description>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

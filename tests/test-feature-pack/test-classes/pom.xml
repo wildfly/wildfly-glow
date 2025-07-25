@@ -10,7 +10,8 @@
     <artifactId>wildfly-glow-test-feature-pack-classes</artifactId>
 
     <packaging>jar</packaging>
-
+    <name>WildFly Glow Test Feature Pack Classes</name>
+    <description>WildFly Glow Test Feature Pack Classes</description>
     <properties>
         <license.output.directory>${project.build.directory}/resources/content/docs/licenses</license.output.directory>
         <license.src.directory>${basedir}/src/license</license.src.directory>
