@@ -10,6 +10,8 @@
     <artifactId>wildfly-glow-arquillian-plugin</artifactId>
     
     <packaging>maven-plugin</packaging>
+    <name>WildFly Glow Arquillian Plugin</name>
+    <description>WildFly Glow Arquillian Plugin</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

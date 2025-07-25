@@ -10,6 +10,8 @@
     <artifactId>wildfly-glow-tests-parent</artifactId>
     
     <packaging>pom</packaging>
+    <name>WildFly Glow Tests Parent</name>
+    <description>WildFly Glow Tests Parent</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -24,13 +26,20 @@
     </modules>
     <build>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <configuration>
-            <skip>true</skip>
-          </configuration>
-        </plugin>
+          <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nxrm3-maven-plugin</artifactId>
+              <executions>
+                  <execution>
+                      <id>nexus-deploy</id>
+                      <phase>none</phase>
+                  </execution>
+                  <execution>
+                      <id>nexus-staging.deploy</id>
+                      <phase>none</phase>
+                  </execution>
+              </executions>
+          </plugin>
       </plugins>
     </build>
 </project>

@@ -10,6 +10,8 @@
     <artifactId>wildfly-glow-test-feature-pack-parent</artifactId>
     
     <packaging>pom</packaging>
+    <name>WildFly Glow Tests Feature Pack Parent</name>
+    <description>WildFly Glow Tests Feature Pack Parent</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>

@@ -9,6 +9,8 @@
     </parent>
 
     <artifactId>wildfly-glow-openshift-deployment-amq</artifactId>
+    <name>WildFly Glow OpenShift Deployment AMQ</name>
+    <description>WildFly Glow OpenShift Deployment AMQ</description>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>

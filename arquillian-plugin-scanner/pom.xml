@@ -10,6 +10,8 @@
     <artifactId>wildfly-glow-arquillian-plugin-scanner</artifactId>
     
     <packaging>jar</packaging>
+    <name>WildFly Glow Arquillian Plugin Scanner</name>
+    <description>WildFly Glow Arquillian Plugin Scanner</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
