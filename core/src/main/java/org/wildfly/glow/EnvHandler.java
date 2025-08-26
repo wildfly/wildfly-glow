@@ -49,6 +49,7 @@ public class EnvHandler {
                 ret.add(new Env(name,description, buildTime, required, property));
             }
         } catch (IOException ex) {
+            ex.printStackTrace();
             System.err.println("Error accessing configuration in " + uri);
         }
         return ret;
