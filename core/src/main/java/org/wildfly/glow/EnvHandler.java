@@ -19,8 +19,6 @@ package org.wildfly.glow;
 
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +31,7 @@ import java.util.TreeSet;
  */
 public class EnvHandler {
 
-    public static Set<Env> retrieveEnv(URI uri) throws MalformedURLException, IOException {
+    public static Set<Env> retrieveEnv(URI uri) {
         Set<Env> ret = new TreeSet<>();
         try {
             Yaml yaml = new Yaml();
@@ -48,7 +46,7 @@ public class EnvHandler {
                 Boolean property = (Boolean) env.get("property");
                 ret.add(new Env(name,description, buildTime, required, property));
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             System.err.println("Error accessing configuration in " + uri);
         }
