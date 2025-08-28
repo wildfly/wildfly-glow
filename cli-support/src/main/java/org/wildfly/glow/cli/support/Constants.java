@@ -47,6 +47,8 @@ public interface Constants {
     String COMPLETION_COMMAND = "completion";
     String CONFIG_STABILITY_OPTION = "--config-stability-level";
     String CONFIG_STABILITY_OPTION_SHORT = "-csl";
+    String DISABLE_FORK_EMBEDDED_OPTION = "--disable-fork-embedded";
+    String DISABLE_FORK_EMBEDDED_OPTION_SHORT = "-df";
     String DISABLE_DEPLOYERS = "--disable-deployers";
     String DISABLE_DEPLOYERS_OPTION_LABEL = "<ALL|deployer name>";
     String DOCKER_IMAGE_NAME_OPTION = "--docker-image-name";

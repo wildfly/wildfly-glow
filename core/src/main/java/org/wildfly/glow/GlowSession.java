@@ -593,7 +593,9 @@ public class GlowSession {
             }
             // Identify the active feature-packs.
             GalleonProvisioningConfig activeConfig = buildProvisioningConfig(config,
-                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers, fpDependencies, arguments.getConfigName(), arguments.getConfigStability(), arguments.getPackageStability(), originalVersions);
+                    universeResolver, allBaseLayers, baseLayer, decorators, excludedLayers,
+                    fpDependencies, arguments.getConfigName(), arguments.getConfigStability(),
+                    arguments.getPackageStability(), originalVersions, arguments.isDisableForkEmbedded());
 
             // Handle stability
             String configStability = arguments.getConfigStability() == null ? arguments.getDefaultConfigStability() : arguments.getConfigStability();
@@ -1042,7 +1044,7 @@ public class GlowSession {
             Set<Layer> decorators,
             Set<Layer> excludedLayers,
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
-            String configName, String configStability, String packageStability, Map<ProducerSpec, FPID> channelVersions) throws ProvisioningException {
+            String configName, String configStability, String packageStability, Map<ProducerSpec, FPID> channelVersions, boolean disableForkEmbedded) throws ProvisioningException {
         Map<ProducerSpec, GalleonFeaturePackConfig> map = new HashMap<>();
         Map<ProducerSpec, FPID> universeToGav = new HashMap<>();
         for (GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
@@ -1111,7 +1113,9 @@ public class GlowSession {
 
         Map<String, String> options = new HashMap<>();
         options.put(Constants.OPTIONAL_PACKAGES, Constants.PASSIVE_PLUS);
-        options.put("jboss-fork-embedded", "true");
+        if (!disableForkEmbedded) {
+            options.put("jboss-fork-embedded", "true");
+        }
         if (configStability != null) {
             options.put(Constants.CONFIG_STABILITY_LEVEL, configStability.toString());
         }
