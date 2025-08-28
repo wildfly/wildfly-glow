@@ -40,6 +40,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final List<Channel> channels;
     private final Set<String> spaces;
     private final MetadataProvider metadataProvider;
+    private final boolean disableForkEmbedded;
 
     protected Arguments(
             String executionContext,
@@ -61,7 +62,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             boolean isCli,
             List<Channel> channels,
             Set<String> spaces,
-            MetadataProvider metadataProvider) {
+            MetadataProvider metadataProvider,
+            boolean disableForkEmbedded) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -90,6 +92,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.channels = channels;
         this.spaces = spaces == null ? Collections.emptySet() : spaces;
         this.metadataProvider = metadataProvider;
+        this.disableForkEmbedded = disableForkEmbedded;
     }
 
     /**
@@ -148,6 +151,13 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         return executionContext;
     }
 
+    /**
+     * @return the suggest
+     */
+    @Override
+    public boolean isDisableForkEmbedded() {
+        return disableForkEmbedded;
+    }
     /**
      * @return the suggest
      */

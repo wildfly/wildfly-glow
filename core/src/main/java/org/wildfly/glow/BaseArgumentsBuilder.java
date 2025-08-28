@@ -47,6 +47,7 @@ public class BaseArgumentsBuilder {
     protected List<Channel> channels;
     protected Set<String> spaces;
     protected MetadataProvider metadataProvider;
+    protected boolean disableForkEmbedded;
 
     protected BaseArgumentsBuilder() {
 
@@ -77,6 +78,7 @@ public class BaseArgumentsBuilder {
                 isCli,
                 channels,
                 spaces,
-                metadataProvider);
+                metadataProvider,
+                disableForkEmbedded);
     }
 }

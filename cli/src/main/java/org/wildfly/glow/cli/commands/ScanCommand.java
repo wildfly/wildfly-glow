@@ -167,6 +167,9 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
     Set<String> spaces = new LinkedHashSet<>();
 
+    @CommandLine.Option(names = {Constants.DISABLE_FORK_EMBEDDED_OPTION_SHORT, Constants.DISABLE_FORK_EMBEDDED_OPTION})
+    Optional<Boolean> disableForkEmbedded;
+
     @Override
     public Integer call() throws Exception {
         Utils.setSystemProperties(systemProperties);
@@ -225,6 +228,9 @@ public class ScanCommand extends AbstractCommand {
                 throw new Exception("Env file is only usable when --provision=" + OPENSHIFT + " option is set.");
             }
             extraEnv.putAll(Utils.handleOpenShiftEnvFile(envFile.get()));
+        }
+        if (disableForkEmbedded.isPresent()) {
+            builder.setIsDisableForkEmbedded(disableForkEmbedded.get());
         }
         if (dryRun.isPresent()) {
             if (provision.isPresent()) {

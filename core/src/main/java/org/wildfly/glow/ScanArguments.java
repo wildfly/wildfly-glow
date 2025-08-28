@@ -57,6 +57,8 @@ public interface ScanArguments {
      */
     String getExecutionContext();
 
+    public boolean isDisableForkEmbedded();
+
     /**
      * @return the suggest
      */
@@ -187,6 +189,10 @@ public interface ScanArguments {
         }
         public Builder setMetadataProider(MetadataProvider metadataProvider) {
             this.metadataProvider = metadataProvider;
+            return this;
+        }
+        public Builder setIsDisableForkEmbedded(boolean disableForkEmbedded) {
+            this.disableForkEmbedded = disableForkEmbedded;
             return this;
         }
     }
