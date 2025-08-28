@@ -74,6 +74,9 @@ import org.wildfly.plugin.tools.bootablejar.BootableJarSupport;
  * @author jdenise
  */
 public class GlowSession {
+    // Used when starting an embedded server
+    public static final String MINIMAL_STABILITY_LEVEL = "experimental";
+
     public static final Path OFFLINE_ZIP = Paths.get("glow-offline.zip");
     public static final Path OFFLINE_CONTENT = Paths.get("glow-offline-content");
     public static final Path OFFLINE_DOCS_DIR = OFFLINE_CONTENT.resolve("docs");
@@ -868,7 +871,7 @@ public class GlowSession {
                     public void close() throws Exception {
                     }
 
-                });
+                },  MINIMAL_STABILITY_LEVEL);
             }
         } finally {
             if (tmpDir != null) {
