@@ -443,8 +443,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>WildFly Glow Documentation</h1>
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
-<span id="revnumber">version 1.4.1.Final,</span>
-<span id="revdate">2025-04-03T09:41:45Z</span>
+<span id="revnumber">version 1.5.0.Final,</span>
+<span id="revdate">2025-08-28T16:17:11Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1180,7 +1180,7 @@ layers inclusion rules
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.wildfly.glow<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>glow-arquillian-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.4.1.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.5.0.Final<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span></code></pre>
 </div>
 </div>
@@ -1525,7 +1525,7 @@ The WildFly Maven Plugin is used to provision the server used by tests.</p>
 <h4 id="_wildfly_glow_arquillianhelp"><a class="anchor" href="#_wildfly_glow_arquillianhelp"></a><a class="link" href="#_wildfly_glow_arquillianhelp">4.13.1. wildfly-glow-arquillian:help</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.4.1.Final:help</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.5.0.Final:help</p>
 </div>
 </div>
 <div class="sect3">
@@ -1685,7 +1685,7 @@ The maximum length of a display line, should be positive.</p>
 <h4 id="_wildfly_glow_arquillianscan"><a class="anchor" href="#_wildfly_glow_arquillianscan"></a><a class="link" href="#_wildfly_glow_arquillianscan">4.14.1. wildfly-glow-arquillian:scan</a></h4>
 <div class="paragraph">
 <p><strong>Full name:</strong>
-org.wildfly.glow:wildfly-glow-arquillian-plugin:1.4.1.Final:scan</p>
+org.wildfly.glow:wildfly-glow-arquillian-plugin:1.5.0.Final:scan</p>
 </div>
 </div>
 <div class="sect3">
@@ -2307,7 +2307,7 @@ It contains the known WildFly (and WildFly Preview) Feature-packs, Layers and Ad
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.4.1.Final</span></code></pre>
+<pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.5.0.Final</span></code></pre>
 </div>
 </div>
 </div>
@@ -2354,7 +2354,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom </span><i class="conum" data-value="1"></i><b>(1)</b>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.4.1.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.5.0.Final </span><i class="conum" data-value="2"></i><b>(2)</b>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 
@@ -2417,7 +2417,7 @@ and its metrics are available at <a href="http://localhost:9990/metrics" class="
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.4.1.Final</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.5.0.Final</span>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 <span style="color:#777">//DEPS org.eclipse.microprofile.config:microprofile-config-api </span><i class="conum" data-value="1"></i><b>(1)</b>
@@ -2506,7 +2506,7 @@ podman exec -it ollama ollama pull llama3.2:1b</code></pre>
 <pre class="CodeRay highlight"><code data-lang="java"><span style="color:#777">///usr/bin/env jbang &quot;$0&quot; &quot;$@&quot; ; exit $?</span>
 <span style="color:#777">//JAVA 17+</span>
 <span style="color:#777">//DEPS org.wildfly.bom:wildfly-expansion:${wildfly.version:35.0.1.Final}@pom</span>
-<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.4.1.Final</span>
+<span style="color:#777">//DEPS org.wildfly.glow:wildfly-glow:1.5.0.Final</span>
 <span style="color:#777">//DEPS jakarta.ws.rs:jakarta.ws.rs-api</span>
 <span style="color:#777">//DEPS jakarta.enterprise:jakarta.enterprise.cdi-api</span>
 <span style="color:#777">//DEPS dev.langchain4j:langchain4j:1.0.0-alpha1 </span><i class="conum" data-value="1"></i><b>(1)</b>
@@ -2589,8 +2589,8 @@ podman exec -it ollama ollama pull llama3.2:1b</code></pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 1.4.1.Final<br>
-Last updated 2025-04-03 11:42:18 +0200
+Version 1.5.0.Final<br>
+Last updated 2025-08-28 18:17:28 +0200
 </div>
 </div>
 </body>
