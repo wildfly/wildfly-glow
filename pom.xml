@@ -31,7 +31,7 @@
         <test.maven.compiler.release>${maven.compiler.release}</test.maven.compiler.release>
         <!-- versions -->
         <version.info.picocli>4.7.5</version.info.picocli>
-        <version.org.ow2.asm>9.7.1</version.org.ow2.asm>
+        <version.org.ow2.asm>9.8</version.org.ow2.asm>
         <version.biz.aQute.bnd>6.4.0</version.biz.aQute.bnd>
         <version.org.wildfly.plugins.wildfly-plugin-tools>1.2.3.Final</version.org.wildfly.plugins.wildfly-plugin-tools>
         <version.org.wildfly.common.wildfly-common>1.7.0.Final</version.org.wildfly.common.wildfly-common>
