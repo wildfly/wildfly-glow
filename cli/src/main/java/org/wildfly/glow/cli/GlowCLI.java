@@ -20,14 +20,7 @@ package org.wildfly.glow.cli;
 import org.wildfly.glow.cli.support.ExecutionExceptionHandler;
 import java.util.Arrays;
 import org.wildfly.glow.cli.support.AbstractCommand;
-import org.wildfly.glow.cli.support.CompletionCommand;
-import org.wildfly.glow.cli.support.Constants;
-import org.wildfly.glow.cli.commands.GoOfflineCommand;
-import org.wildfly.glow.cli.commands.ShowConfigurationCommand;
 import org.wildfly.glow.cli.commands.MainCommand;
-import org.wildfly.glow.cli.commands.ScanCommand;
-import org.wildfly.glow.cli.commands.ShowAddOnsCommand;
-import org.wildfly.glow.cli.commands.ShowServerVersionsCommand;
 import picocli.CommandLine;
 
 /**
@@ -40,13 +33,6 @@ public class GlowCLI {
         final AbstractCommand command = new MainCommand();
         try {
             CommandLine commandLine = new CommandLine(command);
-            commandLine.addSubcommand(new ScanCommand());
-            commandLine.addSubcommand(new ShowAddOnsCommand());
-            commandLine.addSubcommand(new ShowServerVersionsCommand());
-            commandLine.addSubcommand(new ShowConfigurationCommand());
-            commandLine.addSubcommand(new GoOfflineCommand());
-            commandLine.addSubcommand(new CompletionCommand(Constants.WILDFLY_GLOW));
-            commandLine.setUsageHelpAutoWidth(true);
             final boolean isVerbose = Arrays.stream(args).anyMatch(s -> s.equals("-vv") || s.equals("--verbose"));
             commandLine.setExecutionExceptionHandler(new ExecutionExceptionHandler(isVerbose, command));
             int exitCode = commandLine.execute(args);
