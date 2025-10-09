@@ -36,13 +36,9 @@ public class CompletionCommand implements Runnable {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    private final String script;
-    public CompletionCommand(String script) {
-        this.script = script;
-    }
     @Override
     public void run() {
-        String script = AutoComplete.bash(this.script, spec.root().commandLine());
+        String script = AutoComplete.bash(Constants.WILDFLY_GLOW, spec.root().commandLine());
         spec.commandLine().getOut().print(script);
         spec.commandLine().getOut().print('\n');
         spec.commandLine().getOut().flush();

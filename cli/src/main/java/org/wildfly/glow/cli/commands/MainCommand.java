@@ -17,6 +17,7 @@
 package org.wildfly.glow.cli.commands;
 
 import org.wildfly.glow.cli.support.AbstractCommand;
+import org.wildfly.glow.cli.support.CompletionCommand;
 import org.wildfly.glow.cli.support.Constants;
 import java.util.ResourceBundle;
 import org.wildfly.glow.Version;
@@ -24,7 +25,16 @@ import org.wildfly.glow.Version;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = Constants.WILDFLY_GLOW, resourceBundle = "UsageMessages",
-        versionProvider = MainCommand.VersionProvider.class)
+        versionProvider = MainCommand.VersionProvider.class,
+        usageHelpAutoWidth = true,
+        subcommands = {
+            ScanCommand.class,
+            ShowAddOnsCommand.class,
+            ShowServerVersionsCommand.class,
+            ShowConfigurationCommand.class,
+            GoOfflineCommand.class,
+            CompletionCommand.class
+        })
 public class MainCommand extends AbstractCommand {
 
     @SuppressWarnings("unused")
