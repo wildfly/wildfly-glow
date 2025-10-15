@@ -9,7 +9,7 @@
     </parent>
     <groupId>org.wildfly.glow</groupId>
     <artifactId>wildfly-glow-parent</artifactId>
-    <version>1.5.2.Final-SNAPSHOT</version>
+    <version>1.5.2.Final</version>
     <packaging>pom</packaging>
     <name>WildFly Glow parent</name>
   
