@@ -353,7 +353,11 @@ public class ScanDocMojo extends AbstractMojo {
         for (Layer l : all.values()) {
             if (!l.getProperties().isEmpty()) {
                 Map<String, String> props = rules.computeIfAbsent(l, (value) -> new TreeMap<>());
-                props.putAll(l.getProperties());
+                for(Entry<String, String> entry: l.getProperties().entrySet()) {
+                    if(entry.getKey().startsWith(LayerMetadata.PREFIX)) {
+                        props.put(entry.getKey(), entry.getValue());
+                    }
+                }
             }
         }
         return mapping;
