@@ -62,6 +62,7 @@ import org.wildfly.glow.LayerMetadata;
 import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.Space;
 import org.wildfly.glow.Utils;
+import org.wildfly.glow.Variant;
 import org.wildfly.glow.WildFlyMavenMetadataProvider;
 import org.wildfly.glow.WildFlyMetadataProvider;
 
@@ -129,8 +130,12 @@ public class ScanDocMojo extends AbstractMojo {
     @Parameter(required = false)
     List<ChannelConfiguration> channels;
 
+    @Deprecated
     @Parameter(required = false, defaultValue = "true")
     boolean preview;
+
+    @Parameter(required = false, defaultValue = "true")
+    boolean variants;
 
     @Parameter(required = false, defaultValue = "WildFly")
     String serverType;
@@ -168,6 +173,10 @@ public class ScanDocMojo extends AbstractMojo {
                 }
                 rulesBuilder.append("|===\n");
             }
+            if(!preview) {
+                getLog().warn("preview option has been deprecated, use the variants option");
+                variants = false;
+            }
             if (generateKnownFeaturePacks) {
                 Path tmpDirectory = null;
                 try {
@@ -197,51 +206,57 @@ public class ScanDocMojo extends AbstractMojo {
                     provider.addArtifactResolver(artifactResolver);
                     Map<Layer, Map<String, String>> rules = new TreeMap<>();
 
-                    getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, rules, false, metadataProvider);
+                    getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, rules, null, metadataProvider);
                     Map<Layer, Map<String, String>> cloudRules = new TreeMap<>();
-                    getRules(Space.DEFAULT, provider,"cloud", universeResolver, cloudRules, false, metadataProvider);
+                    getRules(Space.DEFAULT, provider,"cloud", universeResolver, cloudRules, null, metadataProvider);
                     rulesBuilder.append("## Support for " + serverType + " " + metadataProvider.getLatestVersion() + "\n\n");
-                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"bare-metal", rules, false, metadataProvider));
-                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"cloud", cloudRules, false, metadataProvider));
-                    if (preview) {
-                        Map<Layer, Map<String, String>> previewRules = new TreeMap<>();
-                        getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, previewRules, true, metadataProvider);
-                        Map<Layer, Map<String, String>> previewCloudRules = new TreeMap<>();
-                        getRules(Space.DEFAULT, provider,"cloud", universeResolver, previewCloudRules, true, metadataProvider);
-                        rulesBuilder.append("## Support for WildFly Preview " + metadataProvider.getLatestVersion() + "\n\n");
-                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "bare-metal", previewRules, true, metadataProvider));
-                        rulesBuilder.append(buildTable(Space.DEFAULT, provider, "cloud", previewCloudRules, true, metadataProvider));
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"bare-metal", rules, null, metadataProvider));
+                    rulesBuilder.append(buildTable(Space.DEFAULT, provider,"cloud", cloudRules, null, metadataProvider));
+                    if (variants) {
+                        List<Variant> variants = metadataProvider.getAllVariants(metadataProvider.getLatestVersion());
+                        for (Variant variant : variants) {
+                            Map<Layer, Map<String, String>> variantRules = new TreeMap<>();
+                            getRules(Space.DEFAULT, provider, "bare-metal", universeResolver, variantRules, variant.getName(), metadataProvider);
+                            Map<Layer, Map<String, String>> variantCloudRules = new TreeMap<>();
+                            getRules(Space.DEFAULT, provider, "cloud", universeResolver, variantCloudRules, variant.getName(), metadataProvider);
+                            rulesBuilder.append("## Support for " + variant.getDescription() + " " + metadataProvider.getLatestVersion() + "\n\n");
+                            rulesBuilder.append(buildTable(Space.DEFAULT, provider, "bare-metal", variantRules, variant.getName(), metadataProvider));
+                            rulesBuilder.append(buildTable(Space.DEFAULT, provider, "cloud", variantCloudRules, variant.getName(), metadataProvider));
+                        }
                     }
                     if (spaces) {
                         for (Space space : metadataProvider.getAllSpaces()) {
                             if (metadataProvider.getAllVersions(space.getName()).contains(metadataProvider.getLatestVersion())) {
                                 Map<Layer, Map<String, String>> spaceRules = new TreeMap<>();
-                                getRules(space, provider, "bare-metal", universeResolver, spaceRules, false, metadataProvider);
+                                getRules(space, provider, "bare-metal", universeResolver, spaceRules, null, metadataProvider);
                                 Map<Layer, Map<String, String>> spaceCloudRules = new TreeMap<>();
-                                getRules(space, provider, "cloud", universeResolver, spaceCloudRules, false, metadataProvider);
+                                getRules(space, provider, "cloud", universeResolver, spaceCloudRules, null, metadataProvider);
                                 if (!spaceRules.isEmpty() || !spaceCloudRules.isEmpty()) {
                                     rulesBuilder.append("##  Additional '" + space.getName() + "' space\n\n");
                                     rulesBuilder.append(space.getDescription() + "\n\n");
                                     rulesBuilder.append("### Support for " + serverType + " " + metadataProvider.getLatestVersion() + "\n\n");
                                 }
                                 if (!spaceRules.isEmpty()) {
-                                    rulesBuilder.append(buildTable(space, provider, "bare-metal", spaceRules, false, metadataProvider));
+                                    rulesBuilder.append(buildTable(space, provider, "bare-metal", spaceRules, null, metadataProvider));
                                 }
                                 if (!spaceCloudRules.isEmpty()) {
-                                    rulesBuilder.append(buildTable(space, provider, "cloud", spaceCloudRules, false, metadataProvider));
+                                    rulesBuilder.append(buildTable(space, provider, "cloud", spaceCloudRules, null, metadataProvider));
                                 }
-                                if (preview) {
-                                    Map<Layer, Map<String, String>> spacePreviewRules = new TreeMap<>();
-                                    getRules(space, provider, "bare-metal", universeResolver, spacePreviewRules, true, metadataProvider);
-                                    Map<Layer, Map<String, String>> spacePreviewCloudRules = new TreeMap<>();
-                                    getRules(space, provider, "cloud", universeResolver, spacePreviewCloudRules, true, metadataProvider);
-                                    if (!spacePreviewRules.isEmpty() || !spacePreviewCloudRules.isEmpty()) {
-                                        rulesBuilder.append("### Support for WildFly Preview " + metadataProvider.getLatestVersion() + "\n\n");
-                                        if (!spacePreviewRules.isEmpty()) {
-                                            rulesBuilder.append(buildTable(space, provider, "bare-metal", spacePreviewRules, true, metadataProvider));
-                                        }
-                                        if (!spacePreviewCloudRules.isEmpty()) {
-                                            rulesBuilder.append(buildTable(space, provider, "cloud", spacePreviewCloudRules, true, metadataProvider));
+                                if (variants) {
+                                    List<Variant> variants = metadataProvider.getAllVariants(metadataProvider.getLatestVersion());
+                                    for (Variant variant : variants) {
+                                        Map<Layer, Map<String, String>> spacePreviewRules = new TreeMap<>();
+                                        getRules(space, provider, "bare-metal", universeResolver, spacePreviewRules, variant.getName(), metadataProvider);
+                                        Map<Layer, Map<String, String>> spacePreviewCloudRules = new TreeMap<>();
+                                        getRules(space, provider, "cloud", universeResolver, spacePreviewCloudRules, variant.getName(), metadataProvider);
+                                        if (!spacePreviewRules.isEmpty() || !spacePreviewCloudRules.isEmpty()) {
+                                            rulesBuilder.append("### Support for " + variant.getDescription() + " " + metadataProvider.getLatestVersion() + "\n\n");
+                                            if (!spacePreviewRules.isEmpty()) {
+                                                rulesBuilder.append(buildTable(space, provider, "bare-metal", spacePreviewRules, variant.getName(), metadataProvider));
+                                            }
+                                            if (!spacePreviewCloudRules.isEmpty()) {
+                                                rulesBuilder.append(buildTable(space, provider, "cloud", spacePreviewCloudRules, variant.getName(), metadataProvider));
+                                            }
                                         }
                                     }
                                 }
@@ -262,12 +277,12 @@ public class ScanDocMojo extends AbstractMojo {
         }
     }
 
-    private String buildTable(Space space, GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, boolean preview, MetadataProvider metadataProvider) throws Exception {
+    private String buildTable(Space space, GalleonBuilder provider, String context, Map<Layer, Map<String, String>> rules, String variant, MetadataProvider metadataProvider) throws Exception {
 
         StringBuilder rulesBuilder = new StringBuilder();
         rulesBuilder.append("\n### " + context + "\n");
         rulesBuilder.append("\n#### Supported Galleon feature-packs \n");
-        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, preview);
+        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, variant);
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig pConfig = p.loadProvisioningConfig(provisioningXML);
             for (GalleonFeaturePackConfig c : pConfig.getFeaturePackDeps()) {
@@ -320,8 +335,8 @@ public class ScanDocMojo extends AbstractMojo {
     }
 
     private LayerMapping getRules(Space space, GalleonBuilder provider, String context, UniverseResolver universeResolver,
-            Map<Layer, Map<String, String>> rules, boolean preview, MetadataProvider metadataProvider) throws Exception {
-        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, preview);
+            Map<Layer, Map<String, String>> rules, String variant, MetadataProvider metadataProvider) throws Exception {
+        Path provisioningXML = metadataProvider.getFeaturePacks(space, null, context, variant);
         Map<String, Layer> all;
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig config = p.loadProvisioningConfig(provisioningXML);

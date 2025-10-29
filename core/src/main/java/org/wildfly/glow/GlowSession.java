@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,7 @@ public class GlowSession {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
-                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.getVariant());
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
@@ -180,7 +181,7 @@ public class GlowSession {
                 String vers = arguments.getVersion() == null ? metadataProvider.getLatestVersion() : arguments.getVersion();
                 if (versions.contains(vers)) {
                     Path spaceProvisioningXML = metadataProvider.getFeaturePacks(space,
-                            arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                            arguments.getVersion(), arguments.getExecutionContext(), arguments.getVariant());
                     try (Provisioning spaceProvisioning = provider.newProvisioningBuilder(spaceProvisioningXML).build()) {
                         GalleonProvisioningConfig spaceConfig = spaceProvisioning.loadProvisioningConfig(spaceProvisioningXML);
                         for (GalleonFeaturePackConfig fpSpaceConfig : spaceConfig.getFeaturePackDeps()) {
@@ -214,7 +215,7 @@ public class GlowSession {
             if (config == null) {
                 Path provisioningXML = arguments.getProvisioningXML();
                 if (provisioningXML == null) {
-                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.isTechPreview());
+                    provisioningXML = metadataProvider.getFeaturePacks(arguments.getVersion(), arguments.getExecutionContext(), arguments.getVariant());
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).setInstallationHome(fakeHome).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
@@ -1071,22 +1072,67 @@ public class GlowSession {
             }
         }
         Set<FeaturePackLocation.FPID> activeFeaturePacks = new LinkedHashSet<>();
+        Set<ProducerSpec> activeFeaturePackSpecs = new LinkedHashSet<>();
+        Map<ProducerSpec, FeaturePackLocation.FPID> inputFeaturePackSpecs = new LinkedHashMap<>();
+        Map<FeaturePackLocation.FPID, FeaturePackLocation.FPID> channelsVersionMapping = new HashMap<>();
         // Order follow the one from the input
         for(GalleonFeaturePackConfig cfg : input.getFeaturePackDeps()) {
             FeaturePackLocation.FPID gav = universeToGav.get(cfg.getLocation().getProducer());
+            inputFeaturePackSpecs.put(gav.getProducer(), gav);
             FeaturePackLocation.FPID fpid = tmpFps.get(gav.getProducer());
             if (fpid != null) {
                 // Reset the version if ruled by channel
                 FPID orig = channelVersions.get(cfg.getLocation().getProducer());
                 if ( orig != null && orig.getLocation().isMavenCoordinates()) {
+                    channelsVersionMapping.put(orig, gav);
                     gav = gav.getLocation().replaceBuild(orig.getBuild()).getFPID();
+                } else {
+                    channelsVersionMapping.put(gav, gav);
                 }
                 activeFeaturePacks.add(gav);
+                activeFeaturePackSpecs.add(gav.getProducer());
+            }
+        }
+        // We have the list of active feature-packs, we could miss some feature-packs that are dependencies
+        // of active feature-packs, that are in the set of known feature-packs but have not been selected because don't bring layers
+        // For example cloud provisioning in an ee-10 context, layers discovered are all in the ee-10 feature-pack, we need the
+        // wildfly fp to avoid cloud to bring its build time dependency that could be of an older version (not aligned with the wildfly version being provisioned
+        // We need to include, before such feature-pack their dependencies
+        Iterator<FeaturePackLocation.FPID> iterator = activeFeaturePacks.iterator();
+        Set<FeaturePackLocation.ProducerSpec> allActiveFeaturePacks = new LinkedHashSet<>();
+        while(iterator.hasNext()) {
+            FeaturePackLocation.FPID current = iterator.next();
+            // dependencies are retrieved using original versions.
+            Set<FeaturePackLocation.ProducerSpec> deps = fpDependencies.get(channelsVersionMapping.get(current));
+            for (FeaturePackLocation.ProducerSpec depSpec : deps) {
+                // If the dep is not in the active feature-packs
+                if (!activeFeaturePackSpecs.contains(depSpec)) {
+                    // If the dep is in the input feature-packs
+                    FeaturePackLocation.FPID dep = inputFeaturePackSpecs.get(depSpec);
+                    if (dep != null) {
+                        // Reset the version if ruled by channel
+                        FPID orig = channelVersions.get(depSpec);
+                        if (orig != null && orig.getLocation().isMavenCoordinates()) {
+                            dep = dep.getLocation().replaceBuild(orig.getBuild()).getFPID();
+                        }
+                        allActiveFeaturePacks.add(dep.getProducer());
+                    }
+                }
+            }
+            allActiveFeaturePacks.add(current.getProducer());
+        }
+        // Then re-order the feature-packs to comply with input.
+        // For example grpc feature-pack depends on full and ee. If full has been added due to being a dependency, it must be located before
+        // any other feature-packs (but after its own dependencies).
+        Set<FeaturePackLocation.FPID> finalActiveFeaturePacks = new LinkedHashSet<>();
+        for (Entry<ProducerSpec, FeaturePackLocation.FPID> entry : inputFeaturePackSpecs.entrySet()) {
+            if (allActiveFeaturePacks.contains(entry.getKey())) {
+                finalActiveFeaturePacks.add(entry.getValue());
             }
         }
         GalleonProvisioningConfig.Builder activeConfigBuilder = GalleonProvisioningConfig.builder();
         //List<GalleonFeaturePack> activeFPs = new ArrayList<>();
-        for (FeaturePackLocation.FPID fpid : activeFeaturePacks) {
+        for (FeaturePackLocation.FPID fpid : finalActiveFeaturePacks) {
             GalleonFeaturePackConfig.Builder fpBuilder = GalleonFeaturePackConfig.builder(fpid.getLocation());
             fpBuilder.setInheritConfigs(false);
             fpBuilder.setInheritPackages(false);

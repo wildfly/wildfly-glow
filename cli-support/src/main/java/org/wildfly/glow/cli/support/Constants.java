@@ -110,4 +110,7 @@ public interface Constants {
     String WILDFLY_GLOW = "wildfly-glow";
     String WILDFLY_PREVIEW_OPTION = "--wildfly-preview";
     String WILDFLY_PREVIEW_OPTION_SHORT = "-wp";
+    String WILDFLY_VARIANT_OPTION = "--wildfly-variant";
+    String WILDFLY_VARIANT_OPTION_LABEL = "<wildfly variant>";
+    String WILDFLY_VARIANT_OPTION_SHORT = "-wv";
 }

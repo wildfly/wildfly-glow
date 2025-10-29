@@ -27,11 +27,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     public static final String CLOUD_EXECUTION_CONTEXT = "cloud";
     public static final String BARE_METAL_EXECUTION_CONTEXT = "bare-metal";
     public static final String STANDALONE_XML = "standalone.xml";
-
+    public static final String PREVIEW = "preview";
     private final Boolean compact;
     private final Set<String> manualLayers;
     private final boolean verbose;
-    private final boolean techPreview;
+    private final String variant;
     private final Set<Pattern> excludeArchivesFromScan;
     private final String configStability;
     private final String packageStability;
@@ -54,7 +54,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             String configName,
             Set<String> layersForJndi,
             boolean verbose,
-            boolean techPreview,
+            String variant,
             Set<Pattern> excludeArchivesFromScan,
             String configStability,
             String packageStability,
@@ -75,7 +75,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.configName = configName == null ? STANDALONE_XML : configName;
         this.layersForJndi = layersForJndi;
         this.verbose = verbose;
-        this.techPreview = techPreview;
+        this.variant = variant;
         this.excludeArchivesFromScan = excludeArchivesFromScan;
         this.configStability = configStability;
         this.packageStability = packageStability;
@@ -195,9 +195,15 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         return verbose;
     }
 
+    @Deprecated
     @Override
     public boolean isTechPreview() {
-        return techPreview;
+        return PREVIEW.equals(variant);
+    }
+
+    @Override
+    public String getVariant() {
+        return variant;
     }
 
     @Override

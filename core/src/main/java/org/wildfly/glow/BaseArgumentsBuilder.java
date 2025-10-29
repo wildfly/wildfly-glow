@@ -37,7 +37,7 @@ public class BaseArgumentsBuilder {
     protected String configName;
     protected Set<String> layersForJndi = Collections.emptySet();
     protected boolean verbose;
-    protected boolean techPreview;
+    protected String variant;
 
     protected Set<String> excludeJarsFromScan = Collections.emptySet();
     protected String packageStability;
@@ -70,7 +70,7 @@ public class BaseArgumentsBuilder {
                 configName,
                 layersForJndi,
                 verbose,
-                techPreview,
+                variant,
                 excludeJarsFromScan,
                 configStability,
                 packageStability,

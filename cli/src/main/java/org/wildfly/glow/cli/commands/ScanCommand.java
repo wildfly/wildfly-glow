@@ -53,6 +53,7 @@ import org.wildfly.channel.ChannelMapper;
 
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
 import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
+import static org.wildfly.glow.Arguments.PREVIEW;
 import org.wildfly.glow.ConfigurationResolver;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
@@ -81,6 +82,7 @@ public class ScanCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
+    @Deprecated
     @CommandLine.Option(names = {Constants.WILDFLY_PREVIEW_OPTION_SHORT, Constants.WILDFLY_PREVIEW_OPTION})
     Optional<Boolean> wildflyPreview;
 
@@ -92,6 +94,9 @@ public class ScanCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {Constants.SERVER_VERSION_OPTION_SHORT, Constants.SERVER_VERSION_OPTION}, paramLabel = Constants.SERVER_VERSION_OPTION_LABEL)
     Optional<String> wildflyServerVersion;
+
+    @CommandLine.Option(names = {Constants.WILDFLY_VARIANT_OPTION_SHORT, Constants.WILDFLY_VARIANT_OPTION}, paramLabel = Constants.WILDFLY_VARIANT_OPTION_LABEL)
+    Optional<String> wildflyVariant;
 
     @CommandLine.Option(names = {Constants.DOCKER_IMAGE_NAME_OPTION_SHORT, Constants.DOCKER_IMAGE_NAME_OPTION}, paramLabel = Constants.DOCKER_IMAGE_NAME_OPTION_LABEL)
     Optional<String> dockerImageName;
@@ -202,13 +207,20 @@ public class ScanCommand extends AbstractCommand {
         }
         if (wildflyPreview.orElse(false)) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
-            builder.setTechPreview(true);
+            if (wildflyVariant.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.WILDFLY_VARIANT_OPTION + " is set.");
+            }
+            print("WARNING: " + Constants.WILDFLY_PREVIEW_OPTION + " has been deprecated, use " + Constants.WILDFLY_VARIANT_OPTION + "=preview");
+            builder.setVariant(PREVIEW);
+        }
+        if (wildflyVariant.isPresent()) {
+            builder.setVariant(wildflyVariant.get());
         }
         if (wildflyServerVersion.isPresent()) {
             if (channelsFile.isPresent()) {
-                throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                throw new Exception(Constants.SERVER_VERSION_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
             }
             builder.setVersion(wildflyServerVersion.get());
         } else {
