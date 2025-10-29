@@ -12,5 +12,5 @@ import java.util.Set;
  * @author jdenise
  */
 public interface LayerConfigurationProvider {
-    URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, boolean preview, URI uri);
+    URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, String variant, URI uri);
 }

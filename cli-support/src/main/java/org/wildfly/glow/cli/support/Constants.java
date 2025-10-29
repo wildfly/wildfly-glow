@@ -86,6 +86,9 @@ public interface Constants {
     String PROVISION_OUTPUT_DIR_OPTION_SHORT = "-d";
     String PROVISION_OUTPUT_DIR_LABEL = "<output directory>";
     String SCAN_COMMAND = "scan";
+    String SERVER_VARIANT_OPTION = "--server-variant";
+    String SERVER_VARIANT_OPTION_LABEL = "<server variant>";
+    String SERVER_VARIANT_OPTION_SHORT = "-svr";
     String SERVER_VERSION_OPTION = "--server-version";
     String SERVER_VERSION_OPTION_SHORT = "-sv";
     String SERVER_VERSION_OPTION_LABEL = "<server version>";

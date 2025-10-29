@@ -14,7 +14,7 @@ import java.util.Set;
 public class DefaultLayerConfigurationProvider implements LayerConfigurationProvider {
 
     @Override
-    public URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, boolean preview, URI uri) {
+    public URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, String variant, URI uri) {
         return uri;
     }
 }

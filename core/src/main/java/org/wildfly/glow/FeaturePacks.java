@@ -17,6 +17,9 @@
  */
 package org.wildfly.glow;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -39,9 +42,9 @@ import java.util.TreeSet;
 public class FeaturePacks {
 
     private static final String VERSIONS = "versions.yaml";
+    private static final String VARIANTS = "variants.json";
     private static final String SPACES = "spaces/spaces.yaml";
     private static final String PROVISIONING_FILE_RADICAL = "/provisioning-";
-    private static final String TECH_PREVIEW = "/tech-preview/";
 
     public static final String URL_PROPERTY = "wildfly-glow-galleon-feature-packs-url";
 
@@ -51,11 +54,11 @@ public class FeaturePacks {
         this.rootURI = rootURI;
     }
 
-    public Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
-        return getFeaturePacks(Space.DEFAULT, version, context, techPreview);
+    public Path getFeaturePacks(String version, String context, String variant) throws Exception {
+        return getFeaturePacks(Space.DEFAULT, version, context, variant);
     }
 
-    public Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception {
+    public Path getFeaturePacks(Space space, String version, String context, String variant) throws Exception {
         try {
             String rootURL = getFeaturePacksURL(space);
             Yaml yaml = new Yaml();
@@ -76,7 +79,8 @@ public class FeaturePacks {
                 }
             }
             Path p = Files.createTempFile("glow-provisioning-", context);
-            try (InputStream in = new URL(rootURL + version + (techPreview ? TECH_PREVIEW : "") + PROVISIONING_FILE_RADICAL + context + ".xml").openStream()) {
+            String checkedVariant = getVariantDirectory(version, variant);
+            try (InputStream in = new URL(rootURL + version + (checkedVariant != null ? "/"+checkedVariant+"/" : "") + PROVISIONING_FILE_RADICAL + context + ".xml").openStream()) {
                 Files.copy(in, p,
                         StandardCopyOption.REPLACE_EXISTING);
             }
@@ -128,6 +132,50 @@ public class FeaturePacks {
             lst.add(new Space(space.get("name"), space.get("description")));
         }
         return lst;
+    }
+
+    public List<Variant> getAllVariants(String wildflyVersion) throws Exception {
+        String rootURL = getFeaturePacksURL();
+        List<Variant> lst = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode variantNode = mapper.readTree(new URI(rootURL + "/" + wildflyVersion + "/" + VARIANTS).toURL());
+        ArrayNode nodes = (ArrayNode) variantNode.get("variants");
+        for (JsonNode node : nodes) {
+            String name = node.get("name").asText();
+            if(name.equals("default")) {
+                continue;
+            }
+            JsonNode directory = node.get("directory");
+            lst.add(new Variant(name, node.get("description").asText(), directory == null ? null : directory.asText()));
+        }
+        return lst;
+    }
+
+    public String getVariantDirectory(String wildflyVersion, String variant) throws Exception {
+        if (variant == null) {
+            return null;
+        }
+        String rootURL = getFeaturePacksURL();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode variantNode = mapper.readTree(new URI(rootURL + "/" + wildflyVersion + "/" + VARIANTS).toURL());
+        ArrayNode nodes = (ArrayNode) variantNode.get("variants");
+        String ret = null;
+        for (JsonNode node : nodes) {
+            String name = node.get("name").asText();
+            if (name.equals(variant)) {
+                JsonNode directory = node.get("directory");
+                if (directory != null) {
+                    ret = directory.asText();
+                } else {
+                    ret = name;
+                }
+                break;
+            }
+        }
+        if (ret == null) {
+            throw new Exception("Unknown variant " + variant + ". Variants are " + getAllVariants(wildflyVersion));
+        }
+        return ret;
     }
 
     public Space getSpace(String spaceName) throws Exception {

@@ -70,7 +70,10 @@ public interface ScanArguments {
 
     Boolean isCompact();
 
+    @Deprecated
     boolean isTechPreview();
+
+    String getServerVariant();
 
     boolean isVerbose();
 
@@ -85,6 +88,7 @@ public interface ScanArguments {
     Set<String> getSpaces();
     MetadataProvider getMetadataProvider();
     LayerConfigurationProvider getLayerConfigurationProvider();
+    boolean isEnforceInputFeaturePacks();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -150,8 +154,16 @@ public interface ScanArguments {
             return this;
         }
 
+        @Deprecated
         public Builder setTechPreview(boolean techPreview) {
-            this.techPreview = techPreview;
+            if (techPreview) {
+             this.serverVariant = Arguments.PREVIEW;
+            }
+            return this;
+        }
+
+        public Builder setServerVariant(String serverVariant) {
+            this.serverVariant = serverVariant;
             return this;
         }
 
@@ -198,6 +210,10 @@ public interface ScanArguments {
         }
         public Builder setIsDisableForkEmbedded(boolean disableForkEmbedded) {
             this.disableForkEmbedded = disableForkEmbedded;
+            return this;
+        }
+        public Builder setEnforceInputFeaturePacks(boolean enforceInputFeaturePacks) {
+            this.enforceInputFeaturePacks = enforceInputFeaturePacks;
             return this;
         }
     }
