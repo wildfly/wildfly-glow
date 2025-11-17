@@ -112,6 +112,7 @@ function testApp {
 //DEPS jakarta.ws.rs:jakarta.ws.rs-api
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //GLOW --server-version=${wildfly_latest_version}
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
@@ -158,6 +159,7 @@ function testAppWithWebInf {
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //FILES WEB-INF/jboss-web.xml=jboss-web.xml
 //GLOW --server-version=${wildfly_latest_version}
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
@@ -206,6 +208,7 @@ function testAppWithHealth {
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //GLOW --server-version=${wildfly_latest_version}
 //GLOW --add-ons=health
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
@@ -248,6 +251,7 @@ function testAppWithMetrics {
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //GLOW --server-version=${wildfly_latest_version}
 //GLOW --add-ons=metrics
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
@@ -289,6 +293,7 @@ function testMicroProfileConfigApp {
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS org.eclipse.microprofile.config:microprofile-config-api
 //GLOW --server-version=${wildfly_latest_version}
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -338,6 +343,7 @@ function testAppWithLib {
 //DEPS jakarta.enterprise:jakarta.enterprise.cdi-api
 //DEPS com.google.code.gson:gson:2.12.1
 //GLOW --server-version=${wildfly_latest_version}
+//REPOS mavencentral,jboss=https://repository.jboss.org/nexus/content/groups/public/
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
