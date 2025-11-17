@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: [{version: '17', release: '17'} , {version: '21', release: '21'}, {version: '23', release: '23'}, {version: '24-ea', release: '24'}]
+        java: [{version: '17', release: '17'} , {version: '21', release: '21'}, {version: '25', release: '25'}]
 
     steps:
       - uses: actions/checkout@v4
