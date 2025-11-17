@@ -33,7 +33,7 @@ In order for these extras Feature-packs to be recognized by WildFly Glow, they m
 Feature-packs that are developed outside of the WildFly feature process can be registered in the "incubating" space. 
 This space can be explicitly enabled when discovering provisioning configuration.
 WildFly Glow has, per WildFly version, the knowledge of 'incubating' compatible Galleon Feature-packs (this information is stored in 
-link:https://github.com/wildfly/wildfly-galleon-feature-packs/tree/main/spaces/incubating[this] directory).
+link:https://github.com/wildfly/wildfly-galleon-feature-packs/tree/release/spaces/incubating[this] directory).
 
 In order for these extras feature-packs to be recognized by WildFly Glow, they must have their defined Layers annotated with rules.
 
