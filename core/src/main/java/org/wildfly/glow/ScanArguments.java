@@ -70,7 +70,10 @@ public interface ScanArguments {
 
     Boolean isCompact();
 
+    @Deprecated
     boolean isTechPreview();
+
+    String getVariant();
 
     boolean isVerbose();
 
@@ -149,8 +152,16 @@ public interface ScanArguments {
             return this;
         }
 
+        @Deprecated
         public Builder setTechPreview(boolean techPreview) {
-            this.techPreview = techPreview;
+            if (techPreview) {
+             this.variant = Arguments.PREVIEW;
+            }
+            return this;
+        }
+
+        public Builder setVariant(String variant) {
+            this.variant = variant;
             return this;
         }
 

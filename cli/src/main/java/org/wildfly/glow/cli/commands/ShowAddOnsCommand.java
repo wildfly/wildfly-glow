@@ -22,6 +22,7 @@ import org.wildfly.glow.cli.support.AbstractCommand;
 import org.wildfly.glow.cli.support.Constants;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +37,17 @@ import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
+import static org.wildfly.glow.Arguments.PREVIEW;
 import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.ProvisioningUtils;
-import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.Space;
 import org.wildfly.glow.WildFlyMavenMetadataProvider;
 import org.wildfly.glow.WildFlyMetadataProvider;
 import org.wildfly.glow.cli.support.CLIConfigurationResolver;
+import org.wildfly.glow.cli.support.Utils;
 import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
 
@@ -58,6 +60,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
+    @Deprecated
     @CommandLine.Option(names = {Constants.WILDFLY_PREVIEW_OPTION_SHORT, Constants.WILDFLY_PREVIEW_OPTION})
     Optional<Boolean> wildflyPreview;
 
@@ -73,18 +76,24 @@ public class ShowAddOnsCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
     Set<String> spaces = new LinkedHashSet<>();
 
+    @CommandLine.Option(names = {Constants.WILDFLY_VARIANT_OPTION_SHORT, Constants.WILDFLY_VARIANT_OPTION}, paramLabel = Constants.WILDFLY_VARIANT_OPTION_LABEL)
+    Optional<String> wildflyVariant;
+
+    @CommandLine.Option(names = {Constants.SYSTEM_PROPERTIES_OPTION_SHORT, Constants.SYSTEM_PROPERTIES_OPTION},
+            split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
+    Set<String> systemProperties = new HashSet<>();
+
     private Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> defaultSpaceFpDependencies;
 
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving add-ons...");
-        ScanArguments.Builder builder = Arguments.scanBuilder();
+        Utils.setSystemProperties(systemProperties);
         MavenRepoManager repoManager;
         List<Channel> channels = Collections.emptyList();
         if (channelsFile.isPresent()) {
             String content = Files.readString(channelsFile.get());
             channels = ChannelMapper.fromString(content);
-            builder.setChannels(channels);
             repoManager = MavenResolver.newMavenResolver(channels);
         } else {
             repoManager = MavenResolver.newMavenResolver();
@@ -104,25 +113,34 @@ public class ShowAddOnsCommand extends AbstractCommand {
             if (cloud.orElse(false)) {
                 context = Arguments.CLOUD_EXECUTION_CONTEXT;
             }
+            String variant = null;
             if (wildflyPreview.orElse(false)) {
                 if (channelsFile.isPresent()) {
-                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
                 }
+                if (wildflyVariant.isPresent()) {
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.WILDFLY_VARIANT_OPTION + " is set.");
+                }
+                print("WARNING: " + Constants.WILDFLY_PREVIEW_OPTION + " has been deprecated, use " + Constants.WILDFLY_VARIANT_OPTION + "=preview");
+                variant = PREVIEW;
+            }
+            if (wildflyVariant.isPresent()) {
+                variant = wildflyVariant.get();
             }
             if (wildflyServerVersion.isPresent()) {
                 if (channelsFile.isPresent()) {
-                    throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                    throw new Exception(Constants.SERVER_VERSION_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
                 }
             }
             showAddOns(Space.DEFAULT, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                    wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                    variant, channels, repoManager, metadataProvider);
             String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
             for (String spaceName : spaces) {
                 Set<String> versions = metadataProvider.getAllVersions(spaceName);
                 if (versions.contains(vers)) {
                     Space space = metadataProvider.getSpace(spaceName);
                     showAddOns(space, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                            wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                            variant, channels, repoManager, metadataProvider);
                 }
             }
             print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
@@ -136,7 +154,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
     }
 
     public void showAddOns(Space space, String context, Path provisioningXml, boolean isLatest,
-            String serverVersion, boolean isPreview, List<Channel> channels, MavenRepoManager repoManager, MetadataProvider metadataProvider) throws Exception {
+            String serverVersion, String variant, List<Channel> channels, MavenRepoManager repoManager, MetadataProvider metadataProvider) throws Exception {
         CLIConfigurationResolver resolver = new CLIConfigurationResolver();
         ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
             @Override
@@ -194,6 +212,6 @@ public class ShowAddOnsCommand extends AbstractCommand {
 
         };
         ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml, isLatest, serverVersion,
-                isPreview, channels, repoManager, metadataProvider);
+                variant, channels, repoManager, metadataProvider);
     }
 }

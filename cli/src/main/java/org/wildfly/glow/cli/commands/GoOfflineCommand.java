@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.wildfly.glow.Arguments;
 import static org.wildfly.glow.Arguments.CLOUD_EXECUTION_CONTEXT;
+import static org.wildfly.glow.Arguments.PREVIEW;
 import org.wildfly.glow.GlowMessageWriter;
 import org.wildfly.glow.GlowSession;
 import static org.wildfly.glow.GlowSession.OFFLINE_ZIP;
@@ -41,6 +42,7 @@ public class GoOfflineCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
+    @Deprecated
     @CommandLine.Option(names = {Constants.WILDFLY_PREVIEW_OPTION_SHORT, Constants.WILDFLY_PREVIEW_OPTION})
     Optional<Boolean> wildflyPreview;
 
@@ -53,6 +55,9 @@ public class GoOfflineCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
     Set<String> spaces = new LinkedHashSet<>();
 
+    @CommandLine.Option(names = {Constants.WILDFLY_VARIANT_OPTION_SHORT, Constants.WILDFLY_VARIANT_OPTION}, paramLabel = Constants.WILDFLY_VARIANT_OPTION_LABEL)
+    Optional<String> wildflyVariant;
+
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is assembling offline content...");
@@ -61,7 +66,14 @@ public class GoOfflineCommand extends AbstractCommand {
             builder.setExecutionContext(CLOUD_EXECUTION_CONTEXT);
         }
         if (wildflyPreview.orElse(false)) {
-            builder.setTechPreview(true);
+            if (wildflyVariant.isPresent()) {
+                throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.WILDFLY_VARIANT_OPTION + " is set.");
+            }
+            print("WARNING: " + Constants.WILDFLY_PREVIEW_OPTION + " has been deprecated, use " + Constants.WILDFLY_VARIANT_OPTION + "=preview");
+            builder.setVariant(PREVIEW);
+        }
+        if (wildflyVariant.isPresent()) {
+            builder.setVariant(wildflyVariant.get());
         }
         if (wildflyServerVersion.isPresent()) {
             builder.setVersion(wildflyServerVersion.get());

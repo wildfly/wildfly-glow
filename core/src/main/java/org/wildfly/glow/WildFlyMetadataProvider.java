@@ -42,8 +42,8 @@ public class WildFlyMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception {
-        return getResolver().getFeaturePacks(space, version, context, techPreview);
+    public Path getFeaturePacks(Space space, String version, String context, String kind) throws Exception {
+        return getResolver().getFeaturePacks(space, version, context, kind);
     }
 
     @Override
@@ -64,6 +64,11 @@ public class WildFlyMetadataProvider implements MetadataProvider {
     @Override
     public List<Space> getAllSpaces() throws Exception {
         return getResolver().getAllSpaces();
+    }
+
+    @Override
+    public List<Variant> getAllVariants(String wildflyVersion) throws Exception {
+        return getResolver().getAllVariants(wildflyVersion);
     }
 
 }

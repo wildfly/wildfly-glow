@@ -26,9 +26,9 @@ import java.util.Set;
  */
 public interface MetadataProvider {
 
-    Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception;
-    default Path getFeaturePacks(String version, String context, boolean techPreview) throws Exception {
-        return getFeaturePacks(Space.DEFAULT, version, context, techPreview);
+    Path getFeaturePacks(Space space, String version, String context, String kind) throws Exception;
+    default Path getFeaturePacks(String version, String context, String kind) throws Exception {
+        return getFeaturePacks(Space.DEFAULT, version, context, kind);
     }
     default Set<String> getAllVersions() throws Exception {
         return getAllVersions(Space.DEFAULT.getName());
@@ -37,4 +37,5 @@ public interface MetadataProvider {
     Space getSpace(String spaceName) throws Exception;
     String getLatestVersion() throws Exception;
     List<Space> getAllSpaces() throws Exception;
+    List<Variant> getAllVariants(String wildflyVersion) throws Exception;
 }

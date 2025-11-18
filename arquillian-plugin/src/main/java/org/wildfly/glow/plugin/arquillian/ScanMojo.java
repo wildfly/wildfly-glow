@@ -74,6 +74,7 @@ import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.error.IdentifiedError;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_CLASSPATH;
 import static org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter.TEST_PATHS;
+import static org.wildfly.glow.Arguments.PREVIEW;
 
 /**
  *
@@ -258,8 +259,15 @@ public class ScanMojo extends AbstractMojo {
     /**
      * Use WildFly Preview server, only usable if no {@code feature-packs} have been set.
      */
+    @Deprecated
     @Parameter(alias = "preview-server", property = "org.wildfly.glow.preview-server")
     private boolean previewServer;
+
+    /**
+     * Use a variant of the WildFly server, only usable if no {@code feature-packs} have been set.
+     */
+    @Parameter(alias = "wildfly-variant", property = "org.wildfly.glow.wildfly-variant")
+    private String wildflyVariant;
 
     /**
      * Execution context, can be {@code cloud} or {@code bare-metal}, default value is {@code bare-metal},
@@ -288,6 +296,9 @@ public class ScanMojo extends AbstractMojo {
             }
             if (previewServer) {
                 throw new MojoExecutionException("preview-server can't be set when feature-packs have been set.");
+            }
+            if (wildflyVariant != null) {
+                throw new MojoExecutionException("wildfly-variant can't be set when feature-packs have been set.");
             }
         }
 
@@ -334,6 +345,13 @@ public class ScanMojo extends AbstractMojo {
             if (profile != null) {
                 profiles.add(profile);
             }
+            if (previewServer) {
+                if (wildflyVariant != null) {
+                    throw new MojoExecutionException("wildfly-variant can't be set when preview-server has been set.");
+                }
+                getLog().warn("preview-server option has been deprecated, use the wildfly-variant option");
+                wildflyVariant = PREVIEW;
+            }
             ScanArguments.Builder argumentsBuilder = Arguments.scanBuilder().
                     setExecutionProfiles(profiles).
                     setBinaries(retrieveDeployments(paths, classesRootFolder, outputFolder)).
@@ -343,7 +361,7 @@ public class ScanMojo extends AbstractMojo {
                     setJndiLayers(layersForJndi).
                     setVerbose(verbose || getLog().isDebugEnabled()).
                     setOutput(OutputFormat.PROVISIONING_XML).
-                    setTechPreview(previewServer).
+                    setVariant(wildflyVariant).
                     setExecutionContext(context).setVersion(serverVersion);
 
             if (!featurePacks.isEmpty()) {

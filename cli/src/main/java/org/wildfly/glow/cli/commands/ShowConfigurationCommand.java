@@ -23,6 +23,7 @@ import org.wildfly.glow.cli.support.Constants;
 import org.wildfly.glow.ProvisioningUtils;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,14 +43,16 @@ import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.maven.MavenResolver;
 import org.wildfly.glow.Arguments;
+import static org.wildfly.glow.Arguments.PREVIEW;
 import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.Layer;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.MetadataProvider;
-import org.wildfly.glow.ScanArguments;
 import org.wildfly.glow.Space;
+import org.wildfly.glow.Variant;
 import org.wildfly.glow.WildFlyMavenMetadataProvider;
 import org.wildfly.glow.WildFlyMetadataProvider;
+import org.wildfly.glow.cli.support.Utils;
 import org.wildfly.glow.deployment.openshift.api.Deployer;
 
 import picocli.CommandLine;
@@ -63,6 +66,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.CLOUD_OPTION_SHORT, Constants.CLOUD_OPTION})
     Optional<Boolean> cloud;
 
+    @Deprecated
     @CommandLine.Option(names = {Constants.WILDFLY_PREVIEW_OPTION_SHORT, Constants.WILDFLY_PREVIEW_OPTION})
     Optional<Boolean> wildflyPreview;
 
@@ -78,19 +82,25 @@ public class ShowConfigurationCommand extends AbstractCommand {
     @CommandLine.Option(names = {Constants.SPACES_OPTION_SHORT, Constants.SPACES_OPTION}, split = ",", paramLabel = Constants.SPACES_OPTION_LABEL)
     Set<String> spaces = new LinkedHashSet<>();
 
+    @CommandLine.Option(names = {Constants.WILDFLY_VARIANT_OPTION_SHORT, Constants.WILDFLY_VARIANT_OPTION}, paramLabel = Constants.WILDFLY_VARIANT_OPTION_LABEL)
+    Optional<String> wildflyVariant;
+
+    @CommandLine.Option(names = {Constants.SYSTEM_PROPERTIES_OPTION_SHORT, Constants.SYSTEM_PROPERTIES_OPTION},
+            split = " ", paramLabel = Constants.SYSTEM_PROPERTIES_LABEL)
+    Set<String> systemProperties = new HashSet<>();
+
     private Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> defaultSpaceFpDependencies;
 
     @Override
     public Integer call() throws Exception {
         print("Wildfly Glow is retrieving known provisioning configuration...");
+        Utils.setSystemProperties(systemProperties);
         StringBuilder ocBuilder = new StringBuilder();
-        ScanArguments.Builder builder = Arguments.scanBuilder();
         MavenRepoManager repoManager;
         List<Channel> channels = Collections.emptyList();
         if (channelsFile.isPresent()) {
             String content = Files.readString(channelsFile.get());
             channels = ChannelMapper.fromString(content);
-            builder.setChannels(channels);
             repoManager = MavenResolver.newMavenResolver(channels);
         } else {
             repoManager = MavenResolver.newMavenResolver();
@@ -106,15 +116,25 @@ public class ShowConfigurationCommand extends AbstractCommand {
                 tmpMetadataDirectory = null;
                 metadataProvider = new WildFlyMetadataProvider(new URI(prop));
             }
+            boolean isLatest = wildflyServerVersion.isEmpty();
+            String serverVersion = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
             ocBuilder.append("\nDeployers enabled when provisioning to OpenShift:\n");
             for (Deployer d : ServiceLoader.load(Deployer.class)) {
                 ocBuilder.append("* @|bold " + d.getName() + "|@. Enabled when the layer(s) " + d.getSupportedLayers() + " is/are discovered.\n");
             }
             print(ocBuilder.toString());
+
+            StringBuilder variantsBuilder = new StringBuilder();
+            variantsBuilder.append("\nWildFly variants that can be used instead of WildFly server (use the " + Constants.WILDFLY_VARIANT_OPTION + " option to choose a virant):\n");
+            for (Variant variant : metadataProvider.getAllVariants(serverVersion)) {
+                variantsBuilder.append("* @|bold " + variant.getName() + "|@: " + variant.getDescription() + "\n");
+            }
+            print(variantsBuilder.toString());
+
             StringBuilder spacesBuilder = new StringBuilder();
-            spacesBuilder.append("\nSpaces from which more feature-packs can be used when scanning deployments (use the " + Constants.SPACES_OPTION + " option to enable the space(s):\n");
+            spacesBuilder.append("\nSpaces from which more feature-packs can be used when scanning deployments (use the " + Constants.SPACES_OPTION + " option to enable the space(s)):\n");
             for (Space space : metadataProvider.getAllSpaces()) {
-                spacesBuilder.append("* @|bold " + space.getName() + "|@. " + space.getDescription() + "\n");
+                spacesBuilder.append("* @|bold " + space.getName() + "|@: " + space.getDescription() + "\n");
             }
             print(spacesBuilder.toString());
 
@@ -122,19 +142,27 @@ public class ShowConfigurationCommand extends AbstractCommand {
             if (cloud.orElse(false)) {
                 context = Arguments.CLOUD_EXECUTION_CONTEXT;
             }
+            String variant = null;
             if (wildflyPreview.orElse(false)) {
                 if (channelsFile.isPresent()) {
-                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
                 }
+                if (wildflyVariant.isPresent()) {
+                    throw new Exception(Constants.WILDFLY_PREVIEW_OPTION + " can't be set when " + Constants.WILDFLY_VARIANT_OPTION + " is set.");
+                }
+                print("WARNING: " + Constants.WILDFLY_PREVIEW_OPTION + " has been deprecated, use " + Constants.WILDFLY_VARIANT_OPTION + "=preview");
+                variant = PREVIEW;
+            }
+            if (wildflyVariant.isPresent()) {
+                variant = wildflyVariant.get();
             }
             if (wildflyServerVersion.isPresent()) {
                 if (channelsFile.isPresent()) {
-                    throw new Exception(Constants.SERVER_VERSION_OPTION + "can't be set when " + Constants.CHANNELS_OPTION + " is set.");
+                    throw new Exception(Constants.SERVER_VERSION_OPTION + " can't be set when " + Constants.CHANNELS_OPTION + " is set.");
                 }
             }
             String finalContext = context;
-            boolean isLatest = wildflyServerVersion.isEmpty();
-            String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
+            String finalVariant = variant;
             ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
                 @Override
                 public void consume(Space space, GalleonProvisioningConfig provisioning, Map<String, Layer> all,
@@ -142,17 +170,17 @@ public class ShowConfigurationCommand extends AbstractCommand {
                     if (Space.DEFAULT.equals(space)) {
                         defaultSpaceFpDependencies = fpDependencies;
                     }
-                    String configStr = dumpConfiguration(space, fpDependencies, finalContext, vers, all,
-                            mapping, provisioning, isLatest, wildflyPreview.orElse(false), provisioningXml.orElse(null));
+                    String configStr = dumpConfiguration(space, fpDependencies, finalContext, serverVersion, all,
+                            mapping, provisioning, isLatest, finalVariant, provisioningXml.orElse(null));
                     print(configStr);
                 }
             };
-            ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+            ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), serverVersion, finalVariant, channels, repoManager, metadataProvider);
             for (String spaceName : spaces) {
                 Set<String> versions = metadataProvider.getAllVersions(spaceName);
-                if (versions.contains(vers)) {
+                if (versions.contains(serverVersion)) {
                     Space space = metadataProvider.getSpace(spaceName);
-                    ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                    ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), serverVersion, finalVariant, channels, repoManager, metadataProvider);
                 }
             }
         } finally {
@@ -165,7 +193,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
 
     private String dumpConfiguration(Space space, Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies,
             String context, String serverVersion, Map<String, Layer> allLayers,
-            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, boolean techPreview, Path provisioningXml) throws Exception {
+            LayerMapping mapping, GalleonProvisioningConfig config, boolean isLatest, String variant, Path provisioningXml) throws Exception {
         StringBuilder builder = new StringBuilder();
         if (config == null) {
             builder.append("\nFeature-packs in the @|bold ").append(space.getName()).append("|@ space:\n");
@@ -177,7 +205,7 @@ public class ShowConfigurationCommand extends AbstractCommand {
             if (provisioningXml == null) {
                 builder.append("Execution context: ").append(context).append("\n");
                 builder.append("Server version: ").append(serverVersion).append(isLatest ? " (latest)" : "").append("\n");
-                builder.append("Tech Preview: ").append(techPreview).append("\n");
+                builder.append("WildFly variant: ").append(variant == null ? "default" : variant).append("\n");
             } else {
                 builder.append("Input provisioning.xml file: ").append(provisioningXml).append("\n");
             }
