@@ -17,11 +17,13 @@
  */
 package org.wildfly.glow.error;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import org.wildfly.glow.AddOn;
-
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.wildfly.glow.AddOn;
 
 /**
  *
@@ -35,6 +37,7 @@ public class IdentifiedError {
     private boolean fixed;
     private String fixMessage;
     private final Set<AddOn> possibleAddOns = new TreeSet<>();
+    private final List<String> unverifiedFixes = new ArrayList<>();
 
     public IdentifiedError(String id, String description, ErrorLevel errorLevel) {
         this.id = id;
@@ -57,6 +60,14 @@ public class IdentifiedError {
 
     public Set<AddOn> getPossibleAddons() {
         return possibleAddOns;
+    }
+
+    /**
+     *
+     * @return a list of unverified fixes
+     */
+    public List<String> getUnverifiedFixes() {
+        return unverifiedFixes;
     }
 
     public ErrorLevel getErrorLevel() {

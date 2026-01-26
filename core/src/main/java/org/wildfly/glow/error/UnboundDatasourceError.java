@@ -22,10 +22,11 @@ package org.wildfly.glow.error;
  * @author jdenise
  */
 public class UnboundDatasourceError extends IdentifiedError {
+    public static final String CONFIGURE_DATASOURCE_USING_CLI_SCRIPT = "configure a datasource using CLI script";
     final String unboundDatasource;
     public UnboundDatasourceError(String id, String description, String unboundDatasource) {
-        super(id, description + ": " + unboundDatasource, ErrorLevel.ERROR);
+        super(id, description + ": " + unboundDatasource, ErrorLevel.WARN);
         this.unboundDatasource = unboundDatasource;
+        getUnverifiedFixes().add(CONFIGURE_DATASOURCE_USING_CLI_SCRIPT);
     }
-
 }
