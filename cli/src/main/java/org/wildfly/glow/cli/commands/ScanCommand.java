@@ -31,6 +31,7 @@ import org.wildfly.glow.OutputContent;
 import org.wildfly.glow.OutputFormat;
 import org.wildfly.glow.ScanArguments.Builder;
 import org.wildfly.glow.ScanResults;
+import org.wildfly.glow.error.ErrorLevel;
 import org.wildfly.glow.error.IdentifiedError;
 import org.wildfly.glow.maven.MavenResolver;
 import picocli.CommandLine;
@@ -386,7 +387,11 @@ public class ScanCommand extends AbstractCommand {
         } else {
             print();
             if (failsOnError.orElse(false) && scanResults.getErrorSession().hasErrors()) {
-                throw new Exception("Your are provisioning although errors have been reported. If you want to enforce provisioning, set --fails-on-error=false to ignore errors.");
+                for (IdentifiedError error : scanResults.getErrorSession().getErrors()) {
+                    if (error.getErrorLevel() == ErrorLevel.ERROR) {
+                        throw new Exception("Your are provisioning although errors have been reported. If you want to enforce provisioning, set --fails-on-error=false to ignore errors.");
+                    }
+                }
             }
             ProducerSpec baseProducer = scanResults.getProvisioningConfig().getFeaturePackDeps().iterator().next().getLocation().getProducer();
             String vers = scanResults.getFeaturePackVersions().get(baseProducer).getBuild();

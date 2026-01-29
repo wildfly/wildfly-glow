@@ -22,8 +22,9 @@ package org.wildfly.glow.error;
  * @author jdenise
  */
 public class MissingDefaultDatasourceError extends IdentifiedError {
+    public static final String CONFIGURE_DEFAULT_DATASOURCE_USING_CLI_SCRIPT = "configure a default datasource using CLI script";
     public MissingDefaultDatasourceError(String id, String description) {
-        super(id, description, ErrorLevel.ERROR);
+        super(id, description, ErrorLevel.WARN);
+        getUnverifiedFixes().add(CONFIGURE_DEFAULT_DATASOURCE_USING_CLI_SCRIPT);
     }
-
 }

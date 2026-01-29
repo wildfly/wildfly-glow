@@ -155,8 +155,18 @@ public class ScanResultsPrinter {
             } else {
                 StringBuilder errorBuilder = new StringBuilder();
                 errorBuilder.append("* ").append(error.getDescription()).append("\n");
+                if (!error.getUnverifiedFixes().isEmpty()) {
+                    errorBuilder.append("  The following suggestions should help you fix the reported warnings:\n");
+                    for (String unverifiedFix : error.getUnverifiedFixes()) {
+                        errorBuilder.append("  - ").append(unverifiedFix).append("\n");
+                    }
+                }
                 if (!error.getPossibleAddons().isEmpty()) {
-                    errorBuilder.append("  To correct this error, enable one of the following add-ons:\n");
+                    errorBuilder.append("  Enabling one of the following add-ons may ");
+                    if (!error.getUnverifiedFixes().isEmpty()) {
+                        errorBuilder.append("also ");
+                    }
+                    errorBuilder.append("fix this issue:\n");
                     for (AddOn addOn : error.getPossibleAddons()) {
                         String deployer = configResolver == null ? null : configResolver.getPossibleDeployer(addOn.getLayers());
                         errorBuilder.append("  - ").append(addOn.getName()).append((deployer == null ? "" : " (supported by "+deployer+" deployer)")).append("\n");
