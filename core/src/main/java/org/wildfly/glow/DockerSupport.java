@@ -31,10 +31,11 @@ import static java.lang.String.join;
  */
 public class DockerSupport {
 
-    public static Path buildApplicationImage(String image, Path jbossHome, Arguments arguments, GlowMessageWriter writer) throws IOException {
+    public static Path buildApplicationImage(String image, Path jbossHome, Arguments arguments, GlowMessageWriter writer, boolean bootableJar) throws IOException {
         jbossHome = jbossHome.toAbsolutePath();
         String binary = ExecUtil.resolveImageBinary(writer);
-        Path file = generateDockerfile("quay.io/wildfly/wildfly-runtime:latest", jbossHome.getParent(), jbossHome);
+        Path file = bootableJar ? generateBootableJarDockerfile(getOpenJDKRuntimeImage(), jbossHome.getParent(), jbossHome) :
+                generateDockerfile("quay.io/wildfly/wildfly-runtime:latest", jbossHome.getParent(), jbossHome);
         writer.info(format("Building application image %s using %s.", image, binary));
         String[] dockerArgs = new String[]{"build", "-t", image, "."};
 
@@ -43,6 +44,12 @@ public class DockerSupport {
         ExecUtil.exec(jbossHome.getParent().toFile(), binary, writer,
                 dockerArgs);
         return file;
+    }
+
+    private static String getOpenJDKRuntimeImage() {
+        String runtimeImageName = "registry.access.redhat.com/ubi9/openjdk-";
+        String jdkImageVersion = "21";
+        return runtimeImageName + jdkImageVersion + "-runtime:latest";
     }
 
     public static String getImageName(String target) {
@@ -66,4 +73,25 @@ public class DockerSupport {
                 StandardCharsets.UTF_8);
         return file;
     }
+
+    private static Path generateBootableJarDockerfile(String runtimeImage, Path targetDir, Path bootableJarPath)
+            throws IOException {
+
+        // Docker requires the source file be relative to the context directory. From the documentation:
+        // The <src> path must be inside the context of the build; you cannot COPY ../something /something, because
+        // the first step of a docker build is to send the context directory (and subdirectories) to the docker daemon.
+        if (bootableJarPath.isAbsolute()) {
+            bootableJarPath = targetDir.relativize(bootableJarPath);
+        }
+
+        // Create the Dockerfile content
+        final StringBuilder dockerfileContent = new StringBuilder();
+        dockerfileContent.append("FROM ").append(runtimeImage).append('\n');
+        dockerfileContent.append("COPY --chown=default:root ").append(bootableJarPath).append(" /deployments\n");
+        dockerfileContent.append("CMD $JBOSS_CONTAINER_JAVA_RUN_MODULE/run-java.sh $JAVA_ARGS\n");
+        Files.writeString(targetDir.resolve("Dockerfile"), dockerfileContent, StandardCharsets.UTF_8);
+        Path file = targetDir.resolve("Dockerfile");
+        return file;
+    }
+
 }

@@ -57,6 +57,7 @@ import static org.wildfly.glow.Arguments.COMPACT_PROPERTY;
 import org.wildfly.glow.ConfigurationResolver;
 import static org.wildfly.glow.OutputFormat.BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE;
+import static org.wildfly.glow.OutputFormat.DOCKER_IMAGE_BOOTABLE_JAR;
 import static org.wildfly.glow.OutputFormat.OPENSHIFT;
 import org.wildfly.glow.StabilitySupport;
 import org.wildfly.glow.cli.support.Utils;
@@ -303,10 +304,10 @@ public class ScanCommand extends AbstractCommand {
             repoManager = MavenResolver.newMavenResolver();
         }
         if (provision.isPresent()) {
-            if (BOOTABLE_JAR.equals(provision.get()) && cloud.orElse(false)) {
-                throw new Exception("Can't produce a Bootable JAR for cloud. Use the " + Constants.PROVISION_OPTION + "=SERVER option for cloud.");
-            }
             if (DOCKER_IMAGE.equals(provision.get()) && !cloud.orElse(false)) {
+                cloud = Optional.of(Boolean.TRUE);
+            }
+            if (DOCKER_IMAGE_BOOTABLE_JAR.equals(provision.get()) && !cloud.orElse(false)) {
                 cloud = Optional.of(Boolean.TRUE);
             }
             if (OPENSHIFT.equals(provision.get()) && !cloud.orElse(false)) {
@@ -344,7 +345,7 @@ public class ScanCommand extends AbstractCommand {
             builder.setPackageStability(packageStability.get());
         }
         if (dockerImageName.isPresent()) {
-            if (provision.isPresent() && !DOCKER_IMAGE.equals(provision.get())) {
+            if (provision.isPresent() && (!DOCKER_IMAGE.equals(provision.get()) || !DOCKER_IMAGE_BOOTABLE_JAR.equals(provision.get())) ) {
                 throw new Exception("Can only set a docker image name when provisioning a docker image. Remove the " + Constants.DOCKER_IMAGE_NAME_OPTION + " option");
             }
         }
@@ -413,6 +414,7 @@ public class ScanCommand extends AbstractCommand {
                     print("@|bold Provisioning server...|@", target);
                     break;
                 }
+                case DOCKER_IMAGE_BOOTABLE_JAR:
                 case DOCKER_IMAGE: {
                     print("@|bold Generating docker image...|@");
                     break;
@@ -455,6 +457,7 @@ public class ScanCommand extends AbstractCommand {
                                 envMessage="WARNING: You have to export the suggested env variables prior to start the bootable JAR.";
                                 break;
                             }
+                            case DOCKER_IMAGE_BOOTABLE_JAR:
                             case DOCKER_IMAGE: {
                                 envMessage = "WARNING: For each suggested env variable add `-e <env name>=<env value>` to the `[docker | podman] run` command.";
                                 break;

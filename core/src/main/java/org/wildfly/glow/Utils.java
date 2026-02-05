@@ -140,7 +140,7 @@ public final class Utils {
         return alldeps;
     }
 
-    static void exportOffline(Provisioning provisioning, GalleonProvisioningConfig config, UniverseResolver universeResolver) throws ProvisioningException, IOException {
+    static void exportOffline(Provisioning provisioning, GalleonProvisioningConfig config, UniverseResolver universeResolver, boolean bootableJar) throws ProvisioningException, IOException {
         Path featurePacksDir = OFFLINE_FEATURE_PACKS_DIR;
         Path featurePackDependenciesDir = OFFLINE_FEATURE_PACK_DEPENDENCIES_DIR;
         Path docsDir = OFFLINE_DOCS_DIR;
@@ -170,12 +170,14 @@ public final class Utils {
         Map<String, Layer> layers = getAllLayers(config, universeResolver, provisioning, new HashMap<>());
         for (Layer l : layers.values()) {
             for (String k : l.getProperties().keySet()) {
-                if (LayerMetadata.CONFIGURATION.equals(k)) {
+                if (LayerMetadata.CONFIGURATION.equals(k) || LayerMetadata.CONFIGURATION_SERVER.equals(k)) {
                     String val = l.getProperties().get(k);
                     String[] split = val.split(",");
                     for (int i = 0; i < split.length; i++) {
                         String s = split[i];
-                        l.getConfiguration().add(s);
+                        if(LayerMetadata.CONFIGURATION.equals(k) || (LayerMetadata.CONFIGURATION_SERVER.equals(k) && !bootableJar)) {
+                            l.getConfiguration().add(s);
+                        }
                         try (InputStream in = new URL(s).openStream()) {
                             Files.copy(in, docsDir.resolve(l.getName() + "-glow-configuration-" + i + ".yaml"),
                                     StandardCopyOption.REPLACE_EXISTING);
@@ -405,6 +407,10 @@ public final class Utils {
     }
 
     public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles) {
+        return buildMapping(layers, profiles, false);
+    }
+
+    public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles, boolean bootableJar) {
         LayerMapping mapping = new LayerMapping();
         for (Layer l : layers.values()) {
             for (String k : l.getProperties().keySet()) {
@@ -452,19 +458,23 @@ public final class Utils {
                     }
                     continue;
                 }
-                if (LayerMetadata.CONFIGURATION.equals(k)) {
+                if (LayerMetadata.CONFIGURATION.equals(k) || LayerMetadata.CONFIGURATION_SERVER.equals(k)) {
                     if (Files.exists(OFFLINE_DOCS_DIR)) {
                         List<File> files = Stream.of(OFFLINE_DOCS_DIR.toFile().listFiles())
                                 .filter(file -> !file.isDirectory() && file.getName().startsWith(l.getName() + "-glow-configuration-"))
                                 .sorted()
                                 .collect(Collectors.toList());
                         for (File f : files) {
-                            l.getConfiguration().add(f.toURI().toString());
+                            if (LayerMetadata.CONFIGURATION.equals(k) || (LayerMetadata.CONFIGURATION_SERVER.equals(k) && !bootableJar)) {
+                                l.getConfiguration().add(f.toURI().toString());
+                            }
                         }
                     } else {
                         String val = l.getProperties().get(k);
                         String[] split = val.split(",");
-                        l.getConfiguration().addAll(Arrays.asList(split));
+                        if(LayerMetadata.CONFIGURATION.equals(k) || (LayerMetadata.CONFIGURATION_SERVER.equals(k) && !bootableJar)) {
+                            l.getConfiguration().addAll(Arrays.asList(split));
+                        }
                     }
                     continue;
                 }

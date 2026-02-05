@@ -90,10 +90,11 @@ public class GlowSession {
     private final List<Channel> channels = new ArrayList<>();
     private final MetadataProvider metadataProvider;
     private final Path tmpMetadataDirectory;
-
-    private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer) throws Exception {
+    private final boolean bootableJar;
+    private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer, boolean bootableJar) throws Exception {
         this.arguments = arguments;
         this.writer = writer;
+        this.bootableJar = bootableJar;
         MavenRepoManager repoManager = resolver;
         if (!Files.exists(OFFLINE_ZIP)) {
             if (arguments.getChannels() != null) {
@@ -121,7 +122,7 @@ public class GlowSession {
         if (!(arguments instanceof Arguments)) {
             throw new IllegalArgumentException("Please use the API to create the GoOfflineArguments instance");
         }
-        GlowSession session = new GlowSession(resolver, (Arguments) arguments, writer);
+        GlowSession session = new GlowSession(resolver, (Arguments) arguments, writer, false);
         session.goOffline();
     }
 
@@ -148,7 +149,7 @@ public class GlowSession {
             } else {
                 provisioning = provider.newProvisioningBuilder(config).build();
             }
-            Utils.exportOffline(provisioning, config, universeResolver);
+            Utils.exportOffline(provisioning, config, universeResolver, isBootableJar());
         } finally {
             if (provisioning != null) {
                 provisioning.close();
@@ -164,10 +165,14 @@ public class GlowSession {
     }
 
     public static ScanResults scan(MavenRepoManager resolver, ScanArguments arguments, GlowMessageWriter writer) throws Exception {
+        return scan(resolver, arguments, writer, false);
+    }
+
+    public static ScanResults scan(MavenRepoManager resolver, ScanArguments arguments, GlowMessageWriter writer, boolean bootableJar) throws Exception {
         if (!(arguments instanceof Arguments)) {
             throw new IllegalArgumentException("Please use the API to create the ScanArguments instance");
         }
-        GlowSession session = new GlowSession(resolver, (Arguments) arguments, writer);
+        GlowSession session = new GlowSession(resolver, (Arguments) arguments, writer, bootableJar);
         return session.scan();
     }
 
@@ -193,6 +198,12 @@ public class GlowSession {
         }
         return defaultConfig;
     }
+
+    private boolean isBootableJar() {
+        OutputFormat out = arguments.getOutput();
+        return bootableJar || (out != null && (out.equals(OutputFormat.BOOTABLE_JAR) || out.equals(OutputFormat.DOCKER_IMAGE_BOOTABLE_JAR)));
+    }
+
     public ScanResults scan() throws Exception {
         Set<Layer> layers = new LinkedHashSet<>();
         Set<AddOn> possibleAddOns = new TreeSet<>();
@@ -258,7 +269,7 @@ public class GlowSession {
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all
                     = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
-            LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles());
+            LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles(), isBootableJar());
             if (mapping.getDefaultBaseLayer() == null) {
                 throw new IllegalArgumentException("No base layer found, server version is not supported. "
                         + "You must upgrade to a more recent server version.");
@@ -724,7 +735,19 @@ public class GlowSession {
                 case DOCKER_IMAGE: {
                     // generate docker image
                     dockerImageName = dockerImageName == null ? DockerSupport.getImageName(generatedArtifact.getFileName().toString()) : dockerImageName;
-                    Path origDockerFile = DockerSupport.buildApplicationImage(dockerImageName, generatedArtifact, arguments, writer);
+                    Path origDockerFile = DockerSupport.buildApplicationImage(dockerImageName, generatedArtifact, arguments, writer, false);
+                    IoUtils.recursiveDelete(generatedArtifact);
+                    Files.createDirectories(target);
+                    Path dockerFile = target.resolve("Dockerfile");
+                    Files.copy(origDockerFile, dockerFile);
+                    Files.delete(origDockerFile);
+                    files.put(OutputContent.OutputFile.DOCKER_FILE,dockerFile.toAbsolutePath());
+                    break;
+                }
+                case DOCKER_IMAGE_BOOTABLE_JAR: {
+                    // generate docker image
+                    dockerImageName = dockerImageName == null ? DockerSupport.getImageName(generatedArtifact.getFileName().toString()) : dockerImageName;
+                    Path origDockerFile = DockerSupport.buildApplicationImage(dockerImageName, generatedArtifact, arguments, writer, true);
                     IoUtils.recursiveDelete(generatedArtifact);
                     Files.createDirectories(target);
                     Path dockerFile = target.resolve("Dockerfile");
@@ -810,7 +833,7 @@ public class GlowSession {
             MavenRepoManager resolver, OutputFormat format, boolean isCloud, Path target) throws Exception {
         Path tmpDir = null;
         Path originalTarget = target;
-        if (OutputFormat.BOOTABLE_JAR.equals(format)) {
+        if (OutputFormat.BOOTABLE_JAR.equals(format) || OutputFormat.DOCKER_IMAGE_BOOTABLE_JAR.equals(format)) {
             // We create a tmp directory in which the server is provisioned
             tmpDir = Files.createTempDirectory("wildfly-glow-bootable");
             target = tmpDir;
@@ -829,7 +852,7 @@ public class GlowSession {
                     Files.copy(binary, deploymentTarget);
                 }
             }
-            if (OutputFormat.BOOTABLE_JAR.equals(format)) {
+            if (OutputFormat.BOOTABLE_JAR.equals(format) || OutputFormat.DOCKER_IMAGE_BOOTABLE_JAR.equals(format)) {
                 String bootableJarName = "";
                 if (!binaries.isEmpty()) {
                     for (Path binary : binaries) {

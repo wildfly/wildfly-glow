@@ -26,6 +26,7 @@ public enum OutputFormat {
     SERVER("server", "Provision a WildFly server."),
     BOOTABLE_JAR("bootable-jar", "Provision a WildFly bootable jar."),
     DOCKER_IMAGE("docker-image", "Produce a docker image."),
+    DOCKER_IMAGE_BOOTABLE_JAR("docker-image-bootable-jar", "Produce a docker image for bootable jar."),
     OPENSHIFT("openshift", "Build and deploy on OpenShift.");
     public final String name;
     public final String description;
