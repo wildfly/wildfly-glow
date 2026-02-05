@@ -39,6 +39,7 @@ public abstract class LayerMetadata {
     public static final String BRING_DATASOURCE = PREFIX + "bring-datasource";
     public static final String CLASS = PREFIX + "class";
     public static final String CONFIGURATION = PREFIX + "configuration";
+    public static final String CONFIGURATION_SERVER = CONFIGURATION + ".server";
     public static final String EXPECT_ADD_ON_FAMILY = PREFIX + "expect-add-on-family";
     public static final String EXPECTED_FILE = PREFIX + "expected-file";
     public static final String HIDDEN_IF = PREFIX + "hidden-if";
@@ -64,6 +65,7 @@ public abstract class LayerMetadata {
         FULLY_NAMED_RULES.add(BRING_DATASOURCE);
         FULLY_NAMED_RULES.add(CLASS);
         FULLY_NAMED_RULES.add(CONFIGURATION);
+        FULLY_NAMED_RULES.add(CONFIGURATION_SERVER);
         FULLY_NAMED_RULES.add(EXPECT_ADD_ON_FAMILY);
         FULLY_NAMED_RULES.add(INCLUSION_MODE);
         FULLY_NAMED_RULES.add(KIND);
