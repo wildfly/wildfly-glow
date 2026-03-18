@@ -84,6 +84,7 @@ public interface ScanArguments {
     List<Channel> getChannels();
     Set<String> getSpaces();
     MetadataProvider getMetadataProvider();
+    LayerConfigurationProvider getLayerConfigurationProvider();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -189,6 +190,10 @@ public interface ScanArguments {
         }
         public Builder setMetadataProider(MetadataProvider metadataProvider) {
             this.metadataProvider = metadataProvider;
+            return this;
+        }
+        public Builder setLayerConfigurationProider(LayerConfigurationProvider layerConfigurationProvider) {
+            this.layerConfigurationProvider = layerConfigurationProvider;
             return this;
         }
         public Builder setIsDisableForkEmbedded(boolean disableForkEmbedded) {

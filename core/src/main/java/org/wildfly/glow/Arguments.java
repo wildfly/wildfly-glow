@@ -41,6 +41,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final Set<String> spaces;
     private final MetadataProvider metadataProvider;
     private final boolean disableForkEmbedded;
+    private final LayerConfigurationProvider layerConfigurationProvider;
 
     protected Arguments(
             String executionContext,
@@ -63,7 +64,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             List<Channel> channels,
             Set<String> spaces,
             MetadataProvider metadataProvider,
-            boolean disableForkEmbedded) {
+            boolean disableForkEmbedded,
+            LayerConfigurationProvider layerConfigurationProvider) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -93,6 +95,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.spaces = spaces == null ? Collections.emptySet() : spaces;
         this.metadataProvider = metadataProvider;
         this.disableForkEmbedded = disableForkEmbedded;
+        this.layerConfigurationProvider = layerConfigurationProvider;
     }
 
     /**
@@ -250,6 +253,14 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public MetadataProvider getMetadataProvider() {
         return metadataProvider;
+    }
+
+    /**
+     * @return the layer configuration provider
+     */
+    @Override
+    public LayerConfigurationProvider getLayerConfigurationProvider() {
+        return layerConfigurationProvider;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

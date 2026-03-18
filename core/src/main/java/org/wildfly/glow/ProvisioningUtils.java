@@ -19,6 +19,7 @@ package org.wildfly.glow;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +46,8 @@ public class ProvisioningUtils {
     }
 
     public static void traverseProvisioning(Space space, ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels, MavenRepoManager resolver, MetadataProvider metadataProvider) throws Exception {
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels,
+            MavenRepoManager resolver, MetadataProvider metadataProvider, LayerConfigurationProvider configurationProvider) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
         provider.addArtifactResolver(resolver);
@@ -64,7 +66,9 @@ public class ProvisioningUtils {
             }
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
-            LayerMapping mapping = org.wildfly.glow.Utils.buildMapping(all, Collections.emptySet());
+            Set<String> spaces = new HashSet<>();
+            spaces.add(space.getName());
+            LayerMapping mapping = org.wildfly.glow.Utils.buildMapping(configurationProvider, vers, spaces, executionContext, wildflyPreview, all, Collections.emptySet());
             consumer.consume(space, config, all, mapping, fpDependencies);
         } finally {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);

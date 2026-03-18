@@ -48,6 +48,7 @@ public class BaseArgumentsBuilder {
     protected Set<String> spaces;
     protected MetadataProvider metadataProvider;
     protected boolean disableForkEmbedded;
+    protected LayerConfigurationProvider layerConfigurationProvider;
 
     protected BaseArgumentsBuilder() {
 
@@ -79,6 +80,7 @@ public class BaseArgumentsBuilder {
                 channels,
                 spaces,
                 metadataProvider,
-                disableForkEmbedded);
+                disableForkEmbedded,
+                layerConfigurationProvider);
     }
 }
