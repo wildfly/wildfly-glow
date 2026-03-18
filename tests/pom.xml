@@ -20,7 +20,6 @@
     </properties>
 
     <modules>
-        <module>arquillian-plugin-tests</module>
         <module>glow-tests</module>
         <module>test-feature-pack</module>
     </modules>
@@ -42,4 +41,17 @@
           </plugin>
       </plugins>
     </build>
+    <profiles>
+      <profile>
+        <id>arq-plugin-tests</id>
+        <activation>
+          <property>
+            <name>!disable.arq</name>
+          </property>
+        </activation>
+        <modules>
+          <module>arquillian-plugin-tests</module>
+        </modules>
+      </profile>
+    </profiles>
 </project>
