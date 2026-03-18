@@ -90,6 +90,7 @@ public class GlowSession {
     private final List<Channel> channels = new ArrayList<>();
     private final MetadataProvider metadataProvider;
     private final Path tmpMetadataDirectory;
+    private final LayerConfigurationProvider layerConfigurationprovider;
     private final boolean bootableJar;
     private GlowSession(MavenRepoManager resolver, Arguments arguments, GlowMessageWriter writer, boolean bootableJar) throws Exception {
         this.arguments = arguments;
@@ -101,12 +102,16 @@ public class GlowSession {
                 channels.addAll(arguments.getChannels());
             }
         }
+        LayerConfigurationProvider configProvider = arguments.getLayerConfigurationProvider();
         this.resolver = repoManager;
         if (arguments.getMetadataProvider() == null) {
             String prop = System.getProperty(URL_PROPERTY);
             if (prop == null) {
-                    tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
+                tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
                 this.metadataProvider = new WildFlyMavenMetadataProvider(resolver, tmpMetadataDirectory);
+                if (configProvider == null) {
+                    configProvider = (WildFlyMavenMetadataProvider) metadataProvider;
+                }
             } else {
                 tmpMetadataDirectory = null;
                 this.metadataProvider = new WildFlyMetadataProvider(new URI(prop));
@@ -115,7 +120,10 @@ public class GlowSession {
             tmpMetadataDirectory = null;
             this.metadataProvider = arguments.getMetadataProvider();
         }
-
+        if (configProvider == null) {
+            configProvider = new DefaultLayerConfigurationProvider();
+        }
+        layerConfigurationprovider = configProvider;
     }
 
     public static void goOffline(MavenRepoManager resolver, GoOfflineArguments arguments, GlowMessageWriter writer) throws Exception {
@@ -269,7 +277,14 @@ public class GlowSession {
             Map<FeaturePackLocation.FPID, Set<FeaturePackLocation.ProducerSpec>> fpDependencies = new HashMap<>();
             Map<String, Layer> all
                     = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
-            LayerMapping mapping = Utils.buildMapping(all, arguments.getExecutionProfiles(), isBootableJar());
+            Set<String> spaces = new TreeSet<>();
+            spaces.add(Space.DEFAULT.getName());
+            if(arguments.getSpaces() != null && !arguments.getSpaces().isEmpty()) {
+                spaces.addAll(arguments.getSpaces());
+            }
+            LayerMapping mapping = Utils.buildMapping(layerConfigurationprovider,
+                    arguments.getVersion() == null ? metadataProvider.getLatestVersion() : arguments.getVersion(), spaces, arguments.getExecutionContext(), arguments.isTechPreview(),
+                    all, arguments.getExecutionProfiles(), isBootableJar());
             if (mapping.getDefaultBaseLayer() == null) {
                 throw new IllegalArgumentException("No base layer found, server version is not supported. "
                         + "You must upgrade to a more recent server version.");

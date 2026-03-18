@@ -16,8 +16,12 @@
  */
 package org.wildfly.glow;
 
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.jboss.galleon.universe.maven.MavenArtifact;
 import org.jboss.galleon.universe.maven.repo.MavenRepoManager;
@@ -27,8 +31,8 @@ import org.jboss.galleon.util.ZipUtils;
  *
  * @author jdenise
  */
-public class WildFlyMavenMetadataProvider implements MetadataProvider {
-
+public class WildFlyMavenMetadataProvider implements MetadataProvider, LayerConfigurationProvider {
+    public static final String ROOT_CONFIG_DIRECTORY = "layers-configuration";
     private static final String DEFAULT_RANGE = "[0.0,)";
     private static final String METADATA_EXTENSION = "zip";
     private static final String METADATA_GROUP_ID = "org.wildfly.galleon.feature-packs";
@@ -36,9 +40,11 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider {
     private final MavenRepoManager repo;
     private final Path tmpDirectory;
     private FeaturePacks featurePacks;
+    private final Path rootDirectory ;
     public WildFlyMavenMetadataProvider(MavenRepoManager repo, Path tmpDirectory) {
         this.repo = repo;
         this.tmpDirectory = tmpDirectory;
+        rootDirectory = tmpDirectory.resolve("glow-metadata");
     }
 
     private FeaturePacks getResolver() throws Exception {
@@ -50,7 +56,6 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider {
             artifact.setVersionRange(DEFAULT_RANGE);
             repo.resolveLatestVersion(artifact, null, false);
             Path zip = artifact.getPath();
-            Path rootDirectory = tmpDirectory.resolve("glow-metadata");
             ZipUtils.unzip(zip, rootDirectory);
             featurePacks = new FeaturePacks(rootDirectory.toUri());
         }
@@ -80,6 +85,33 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider {
     @Override
     public List<Space> getAllSpaces() throws Exception {
         return getResolver().getAllSpaces();
+    }
+    public static String URItoPath(URI uri) {
+        return uri.getPath().replace("/", "_");
+    }
+    public static Path toPath(String version, String space, String context, boolean preview) {
+        return Paths.get(ROOT_CONFIG_DIRECTORY).resolve(version).resolve(space).resolve(preview ? "preview" : "nominal").
+            resolve(context);
+    }
+    private static Path toPath(String layerName, String version, String space, String context, boolean preview, URI uri) {
+        return toPath(version, space, context, preview).resolve(layerName).resolve(URItoPath(uri));
+    }
+    @Override
+    public URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, boolean preview, URI uri) {
+        Objects.requireNonNull(version);
+        Objects.requireNonNull(spaces);
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(uri);
+        if(spaces.isEmpty()) {
+            throw new RuntimeException("At least one space is required.");
+        }
+        for (String s : spaces) {
+            Path local = rootDirectory.resolve(toPath(layerName, version, s, context, preview, uri));
+            if (Files.exists(local)) {
+                return local.toUri();
+            }
+        }
+        return uri;
     }
 
 }

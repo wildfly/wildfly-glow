@@ -36,8 +36,10 @@ import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.AddOn;
 import org.wildfly.glow.Arguments;
+import org.wildfly.glow.DefaultLayerConfigurationProvider;
 import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.Layer;
+import org.wildfly.glow.LayerConfigurationProvider;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.ProvisioningUtils;
@@ -91,11 +93,13 @@ public class ShowAddOnsCommand extends AbstractCommand {
         }
         Path tmpMetadataDirectory = null;
         MetadataProvider metadataProvider;
+        LayerConfigurationProvider configProvider = new DefaultLayerConfigurationProvider();
         try {
             String prop = System.getProperty(URL_PROPERTY);
             if (prop == null) {
                 tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
                 metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+                configProvider = (WildFlyMavenMetadataProvider) metadataProvider;
             } else {
                 tmpMetadataDirectory = null;
                 metadataProvider = new WildFlyMetadataProvider(new URI(prop));
@@ -115,14 +119,14 @@ public class ShowAddOnsCommand extends AbstractCommand {
                 }
             }
             showAddOns(Space.DEFAULT, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                    wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                    wildflyPreview.orElse(false), channels, repoManager, metadataProvider, configProvider);
             String vers = wildflyServerVersion.isPresent() ? wildflyServerVersion.get() : metadataProvider.getLatestVersion();
             for (String spaceName : spaces) {
                 Set<String> versions = metadataProvider.getAllVersions(spaceName);
                 if (versions.contains(vers)) {
                     Space space = metadataProvider.getSpace(spaceName);
                     showAddOns(space, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), wildflyServerVersion.orElse(null),
-                            wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                            wildflyPreview.orElse(false), channels, repoManager, metadataProvider, configProvider);
                 }
             }
             print("@|bold Add-ons can be set using the|@ @|fg(yellow) %s=<list of add-ons>|@ @|bold option of the|@ @|fg(yellow) %s|@ @|bold command|@", Constants.ADD_ONS_OPTION, Constants.SCAN_COMMAND);
@@ -136,7 +140,7 @@ public class ShowAddOnsCommand extends AbstractCommand {
     }
 
     public void showAddOns(Space space, String context, Path provisioningXml, boolean isLatest,
-            String serverVersion, boolean isPreview, List<Channel> channels, MavenRepoManager repoManager, MetadataProvider metadataProvider) throws Exception {
+            String serverVersion, boolean isPreview, List<Channel> channels, MavenRepoManager repoManager, MetadataProvider metadataProvider, LayerConfigurationProvider configProvider) throws Exception {
         CLIConfigurationResolver resolver = new CLIConfigurationResolver();
         ProvisioningUtils.ProvisioningConsumer consumer = new ProvisioningUtils.ProvisioningConsumer() {
             @Override
@@ -194,6 +198,6 @@ public class ShowAddOnsCommand extends AbstractCommand {
 
         };
         ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml, isLatest, serverVersion,
-                isPreview, channels, repoManager, metadataProvider);
+                isPreview, channels, repoManager, metadataProvider, configProvider);
     }
 }

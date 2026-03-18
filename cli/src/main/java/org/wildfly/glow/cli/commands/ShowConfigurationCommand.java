@@ -42,8 +42,10 @@ import org.wildfly.channel.Channel;
 import org.wildfly.channel.ChannelMapper;
 import org.wildfly.glow.maven.MavenResolver;
 import org.wildfly.glow.Arguments;
+import org.wildfly.glow.DefaultLayerConfigurationProvider;
 import static org.wildfly.glow.FeaturePacks.URL_PROPERTY;
 import org.wildfly.glow.Layer;
+import org.wildfly.glow.LayerConfigurationProvider;
 import org.wildfly.glow.LayerMapping;
 import org.wildfly.glow.MetadataProvider;
 import org.wildfly.glow.ScanArguments;
@@ -97,11 +99,13 @@ public class ShowConfigurationCommand extends AbstractCommand {
         }
         Path tmpMetadataDirectory = null;
         MetadataProvider metadataProvider;
+        LayerConfigurationProvider configProvider = new DefaultLayerConfigurationProvider();
         try {
             String prop = System.getProperty(URL_PROPERTY);
             if (prop == null) {
                 tmpMetadataDirectory = Files.createTempDirectory("wildfly-glow-metadata");
                 metadataProvider = new WildFlyMavenMetadataProvider(repoManager, tmpMetadataDirectory);
+                configProvider = (WildFlyMavenMetadataProvider) metadataProvider;
             } else {
                 tmpMetadataDirectory = null;
                 metadataProvider = new WildFlyMetadataProvider(new URI(prop));
@@ -147,12 +151,12 @@ public class ShowConfigurationCommand extends AbstractCommand {
                     print(configStr);
                 }
             };
-            ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+            ProvisioningUtils.traverseProvisioning(Space.DEFAULT, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider, configProvider);
             for (String spaceName : spaces) {
                 Set<String> versions = metadataProvider.getAllVersions(spaceName);
                 if (versions.contains(vers)) {
                     Space space = metadataProvider.getSpace(spaceName);
-                    ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider);
+                    ProvisioningUtils.traverseProvisioning(space, consumer, context, provisioningXml.orElse(null), wildflyServerVersion.isEmpty(), vers, wildflyPreview.orElse(false), channels, repoManager, metadataProvider, configProvider);
                 }
             }
         } finally {

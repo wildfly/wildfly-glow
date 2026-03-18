@@ -406,11 +406,13 @@ public final class Utils {
         return s.contains("*");
     }
 
-    public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles) {
-        return buildMapping(layers, profiles, false);
+    public static LayerMapping buildMapping(LayerConfigurationProvider configurationProvider,
+            String version, Set<String> spaces, String context, boolean preview, Map<String, Layer> layers, Set<String> profiles) throws Exception {
+        return buildMapping(configurationProvider, version, spaces, context, preview, layers, profiles, false);
     }
 
-    public static LayerMapping buildMapping(Map<String, Layer> layers, Set<String> profiles, boolean bootableJar) {
+    public static LayerMapping buildMapping(LayerConfigurationProvider configurationProvider,
+            String version, Set<String> spaces, String context, boolean preview, Map<String, Layer> layers, Set<String> profiles, boolean bootableJar) throws Exception {
         LayerMapping mapping = new LayerMapping();
         for (Layer l : layers.values()) {
             for (String k : l.getProperties().keySet()) {
@@ -473,7 +475,11 @@ public final class Utils {
                         String val = l.getProperties().get(k);
                         String[] split = val.split(",");
                         if(LayerMetadata.CONFIGURATION.equals(k) || (LayerMetadata.CONFIGURATION_SERVER.equals(k) && !bootableJar)) {
-                            l.getConfiguration().addAll(Arrays.asList(split));
+                            List<String> uris = Arrays.asList(split);
+                            for(String uri : uris) {
+                                URI actualUri = configurationProvider.getConfigurationURI(l.getName(), version, spaces, context, preview, new URI(uri));
+                                l.getConfiguration().add(actualUri.toString());
+                            }
                         }
                     }
                     continue;
