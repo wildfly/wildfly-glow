@@ -303,10 +303,6 @@ public class GlowSession {
                     throw new Exception("Unknown profile " + p);
                 }
             }
-            if (arguments.isCloud() && OutputFormat.BOOTABLE_JAR.equals(arguments.getOutput())) {
-                writer.info("NOTE. In a cloud context, Bootable JAR "
-                        + "packaging is not taken into account, a server is installed in the image.");
-            }
             // END VALIDATE USER INPUTS
 
             // DISCOVERY
