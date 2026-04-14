@@ -91,6 +91,9 @@ public class ScanResultsPrinter {
         if(arguments.getPackageStability() != null) {
             writer.info("package stability: " + arguments.getPackageStability().toString());
         }
+        if(arguments.getServerVariant() != null) {
+            writer.info("WildFly variant: " + arguments.getServerVariant());
+        }
         writer.info("galleon discovery");
         StringBuilder builder = new StringBuilder();
         builder.append("- feature-packs").append("\n");

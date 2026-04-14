@@ -37,7 +37,7 @@ public class BaseArgumentsBuilder {
     protected String configName;
     protected Set<String> layersForJndi = Collections.emptySet();
     protected boolean verbose;
-    protected boolean techPreview;
+    protected String serverVariant;
 
     protected Set<String> excludeJarsFromScan = Collections.emptySet();
     protected String packageStability;
@@ -49,6 +49,7 @@ public class BaseArgumentsBuilder {
     protected MetadataProvider metadataProvider;
     protected boolean disableForkEmbedded;
     protected LayerConfigurationProvider layerConfigurationProvider;
+    protected boolean enforceInputFeaturePacks;
 
     protected BaseArgumentsBuilder() {
 
@@ -71,7 +72,7 @@ public class BaseArgumentsBuilder {
                 configName,
                 layersForJndi,
                 verbose,
-                techPreview,
+                serverVariant,
                 excludeJarsFromScan,
                 configStability,
                 packageStability,
@@ -81,6 +82,7 @@ public class BaseArgumentsBuilder {
                 spaces,
                 metadataProvider,
                 disableForkEmbedded,
-                layerConfigurationProvider);
+                layerConfigurationProvider,
+                enforceInputFeaturePacks);
     }
 }

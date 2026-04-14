@@ -63,8 +63,8 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider, LayerConf
     }
 
     @Override
-    public Path getFeaturePacks(Space space, String version, String context, boolean techPreview) throws Exception {
-        return getResolver().getFeaturePacks(space, version, context, techPreview);
+    public Path getFeaturePacks(Space space, String version, String context, String kind) throws Exception {
+        return getResolver().getFeaturePacks(space, version, context, kind);
     }
 
     @Override
@@ -89,15 +89,15 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider, LayerConf
     public static String URItoPath(URI uri) {
         return uri.getPath().replace("/", "_");
     }
-    public static Path toPath(String version, String space, String context, boolean preview) {
-        return Paths.get(ROOT_CONFIG_DIRECTORY).resolve(version).resolve(space).resolve(preview ? "preview" : "nominal").
+    public static Path toPath(String version, String space, String context, String variant) {
+        return Paths.get(ROOT_CONFIG_DIRECTORY).resolve(version).resolve(space).resolve(variant == null ? "nominal" : variant).
             resolve(context);
     }
-    private static Path toPath(String layerName, String version, String space, String context, boolean preview, URI uri) {
-        return toPath(version, space, context, preview).resolve(layerName).resolve(URItoPath(uri));
+    private static Path toPath(String layerName, String version, String space, String context, String variant, URI uri) {
+        return toPath(version, space, context, variant).resolve(layerName).resolve(URItoPath(uri));
     }
     @Override
-    public URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, boolean preview, URI uri) {
+    public URI getConfigurationURI(String layerName, String version, Set<String> spaces, String context, String variant, URI uri) {
         Objects.requireNonNull(version);
         Objects.requireNonNull(spaces);
         Objects.requireNonNull(context);
@@ -106,12 +106,17 @@ public class WildFlyMavenMetadataProvider implements MetadataProvider, LayerConf
             throw new RuntimeException("At least one space is required.");
         }
         for (String s : spaces) {
-            Path local = rootDirectory.resolve(toPath(layerName, version, s, context, preview, uri));
+            Path local = rootDirectory.resolve(toPath(layerName, version, s, context, variant, uri));
             if (Files.exists(local)) {
                 return local.toUri();
             }
         }
         return uri;
+    }
+
+    @Override
+    public List<Variant> getAllVariants(String wildflyVersion) throws Exception {
+        return getResolver().getAllVariants(wildflyVersion);
     }
 
 }

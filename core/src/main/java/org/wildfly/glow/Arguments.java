@@ -27,11 +27,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     public static final String CLOUD_EXECUTION_CONTEXT = "cloud";
     public static final String BARE_METAL_EXECUTION_CONTEXT = "bare-metal";
     public static final String STANDALONE_XML = "standalone.xml";
-
+    public static final String PREVIEW = "preview";
     private final Boolean compact;
     private final Set<String> manualLayers;
     private final boolean verbose;
-    private final boolean techPreview;
+    private final String serverVariant;
     private final Set<Pattern> excludeArchivesFromScan;
     private final String configStability;
     private final String packageStability;
@@ -42,6 +42,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final MetadataProvider metadataProvider;
     private final boolean disableForkEmbedded;
     private final LayerConfigurationProvider layerConfigurationProvider;
+    private final boolean enforceInputFeaturePacks;
 
     protected Arguments(
             String executionContext,
@@ -55,7 +56,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             String configName,
             Set<String> layersForJndi,
             boolean verbose,
-            boolean techPreview,
+            String serverVariant,
             Set<Pattern> excludeArchivesFromScan,
             String configStability,
             String packageStability,
@@ -65,7 +66,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             Set<String> spaces,
             MetadataProvider metadataProvider,
             boolean disableForkEmbedded,
-            LayerConfigurationProvider layerConfigurationProvider) {
+            LayerConfigurationProvider layerConfigurationProvider,
+            boolean enforceInputFeaturePacks) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -77,7 +79,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.configName = configName == null ? STANDALONE_XML : configName;
         this.layersForJndi = layersForJndi;
         this.verbose = verbose;
-        this.techPreview = techPreview;
+        this.serverVariant = serverVariant;
         this.excludeArchivesFromScan = excludeArchivesFromScan;
         this.configStability = configStability;
         this.packageStability = packageStability;
@@ -96,6 +98,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.metadataProvider = metadataProvider;
         this.disableForkEmbedded = disableForkEmbedded;
         this.layerConfigurationProvider = layerConfigurationProvider;
+        this.enforceInputFeaturePacks = enforceInputFeaturePacks;
     }
 
     /**
@@ -198,9 +201,15 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         return verbose;
     }
 
+    @Deprecated
     @Override
     public boolean isTechPreview() {
-        return techPreview;
+        return PREVIEW.equals(serverVariant);
+    }
+
+    @Override
+    public String getServerVariant() {
+        return serverVariant;
     }
 
     @Override
@@ -261,6 +270,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public LayerConfigurationProvider getLayerConfigurationProvider() {
         return layerConfigurationProvider;
+    }
+
+    @Override
+    public boolean isEnforceInputFeaturePacks() {
+        return enforceInputFeaturePacks;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

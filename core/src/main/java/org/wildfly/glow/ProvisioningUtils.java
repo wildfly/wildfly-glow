@@ -46,7 +46,7 @@ public class ProvisioningUtils {
     }
 
     public static void traverseProvisioning(Space space, ProvisioningConsumer consumer,
-            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, boolean wildflyPreview, List<Channel> channels,
+            String executionContext, Path provisioningXML, boolean isLatest, String wildflyServerVersion, String variant, List<Channel> channels,
             MavenRepoManager resolver, MetadataProvider metadataProvider, LayerConfigurationProvider configurationProvider) throws Exception {
         UniverseResolver universeResolver = UniverseResolver.builder().addArtifactResolver(resolver).build();
         GalleonBuilder provider = new GalleonBuilder();
@@ -57,7 +57,7 @@ public class ProvisioningUtils {
             GalleonProvisioningConfig config = Utils.buildOfflineProvisioningConfig(provider, GlowMessageWriter.DEFAULT);
             if (config == null) {
                 if (provisioningXML == null) {
-                    provisioningXML = metadataProvider.getFeaturePacks(space, vers, executionContext, wildflyPreview);
+                    provisioningXML = metadataProvider.getFeaturePacks(space, vers, executionContext, variant);
                 }
                 provisioning = provider.newProvisioningBuilder(provisioningXML).build();
                 config = provisioning.loadProvisioningConfig(provisioningXML);
@@ -68,7 +68,7 @@ public class ProvisioningUtils {
             Map<String, Layer> all = Utils.getAllLayers(config, universeResolver, provisioning, fpDependencies);
             Set<String> spaces = new HashSet<>();
             spaces.add(space.getName());
-            LayerMapping mapping = org.wildfly.glow.Utils.buildMapping(configurationProvider, vers, spaces, executionContext, wildflyPreview, all, Collections.emptySet());
+            LayerMapping mapping = org.wildfly.glow.Utils.buildMapping(configurationProvider, vers, spaces, executionContext, variant, all, Collections.emptySet());
             consumer.consume(space, config, all, mapping, fpDependencies);
         } finally {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);

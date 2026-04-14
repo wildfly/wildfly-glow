@@ -41,7 +41,7 @@
         <version.org.apache.maven>3.8.6</version.org.apache.maven>
         <version.org.apache.maven.checkstyle>3.0.0</version.org.apache.maven.checkstyle>
         <version.org.apache.maven.resolver>1.6.3</version.org.apache.maven.resolver>
-        <version.org.jboss.galleon>6.0.4.Final</version.org.jboss.galleon>
+        <version.org.jboss.galleon>7.0.5.Final</version.org.jboss.galleon>
         <version.org.wildfly.channel>1.2.1.Final</version.org.wildfly.channel>
         <version.org.jboss.logging.slf4j-jboss-logging>1.2.1.Final</version.org.jboss.logging.slf4j-jboss-logging>
         <version.org.yaml.snakeyaml>2.2</version.org.yaml.snakeyaml>

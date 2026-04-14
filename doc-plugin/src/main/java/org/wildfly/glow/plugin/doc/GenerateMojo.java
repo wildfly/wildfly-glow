@@ -91,6 +91,7 @@ public class GenerateMojo extends AbstractMojo {
     @Parameter(required = true)
     String repoPath;
 
+    @Deprecated
     @Parameter(required = false, defaultValue = "true")
     boolean preview;
 
@@ -100,8 +101,17 @@ public class GenerateMojo extends AbstractMojo {
     @Parameter(required = false)
     String minVersionWithPackagedConfig;
 
+    @Parameter(required = false)
+    String serverVariant;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if(preview) {
+            if (serverVariant != null) {
+                throw new MojoExecutionException("preview can't be set when server-variant is already set.");
+            }
+            serverVariant = "preview";
+        }
         try {
             Path rootDir = Paths.get(repoPath);
             MetadataProvider provider = new WildFlyMetadataProvider(rootDir.toFile().getAbsoluteFile().toURI());
@@ -203,21 +213,21 @@ public class GenerateMojo extends AbstractMojo {
             for (String version : versions) {
                 System.out.println("Adding Layers configuration for version " + version);
                 //First default
-                storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "bare-metal", false);
-                storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "cloud", false);
-                if (preview) {
+                storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "bare-metal", null);
+                storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "cloud", null);
+                if (serverVariant != null) {
                     // Then preview
-                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "bare-metal", true);
-                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "cloud", true);
+                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "bare-metal", serverVariant);
+                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, Space.DEFAULT, "cloud", serverVariant);
                 }
                 for (Space space : metadataProvider.getAllSpaces()) {
                     //First default
-                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "bare-metal", false);
-                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "cloud", false);
-                    if (preview) {
+                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "bare-metal", null);
+                    storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "cloud", null);
+                    if (serverVariant != null) {
                         // Then preview
-                        storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "bare-metal", true);
-                        storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "cloud", true);
+                        storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "bare-metal", serverVariant);
+                        storeLayersConfig(version, metadataProvider, provider, universeResolver, metadataDir, space, "cloud", serverVariant);
                     }
                 }
             }
@@ -228,8 +238,8 @@ public class GenerateMojo extends AbstractMojo {
         }
     }
     private void storeLayersConfig(String version, MetadataProvider metadataProvider, GalleonBuilder provider, UniverseResolver universeResolver,
-            Path layersConfigRootDir, Space space, String context, boolean preview) throws Exception {
-        Path provisioningXML = metadataProvider.getFeaturePacks(space, version, context, preview);
+            Path layersConfigRootDir, Space space, String context, String variant) throws Exception {
+        Path provisioningXML = metadataProvider.getFeaturePacks(space, version, context, variant);
         Map<String, Layer> all;
         try (Provisioning p = provider.newProvisioningBuilder(provisioningXML).build()) {
             GalleonProvisioningConfig config = p.loadProvisioningConfig(provisioningXML);
@@ -257,10 +267,10 @@ public class GenerateMojo extends AbstractMojo {
             }
             Set<String> set = new HashSet<>();
             set.add(space.getName());
-            Utils.buildMapping(new DefaultLayerConfigurationProvider(), version, set, context, preview, all, new HashSet<>());
+            Utils.buildMapping(new DefaultLayerConfigurationProvider(), version, set, context, variant, all, new HashSet<>());
             for (Layer l : all.values()) {
                 if (!l.getConfiguration().isEmpty()) {
-                    Path layerDir = layersConfigRootDir.resolve(WildFlyMavenMetadataProvider.toPath(version, space.getName(), context, preview));
+                    Path layerDir = layersConfigRootDir.resolve(WildFlyMavenMetadataProvider.toPath(version, space.getName(), context, variant));
                     layerDir = layerDir.resolve(l.getName());
                     Files.createDirectories(layerDir);
                     for (String c : l.getConfiguration()) {
