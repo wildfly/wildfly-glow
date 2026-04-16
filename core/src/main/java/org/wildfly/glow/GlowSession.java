@@ -216,6 +216,13 @@ public class GlowSession {
     }
 
     public ScanResults scan() throws Exception {
+        if (arguments.getExecutionContext() != null) {
+           if (!Arguments.EXECUTION_CONTEXTS.contains(arguments.getExecutionContext())) {
+               throw new Exception("Invalid execution context " + arguments.getExecutionContext() +
+                       ". Valid execution contexts are " + Arguments.EXECUTION_CONTEXTS);
+           }
+        }
+
         Set<Layer> layers = new LinkedHashSet<>();
         Set<AddOn> possibleAddOns = new TreeSet<>();
         ErrorIdentificationSession errorSession = new ErrorIdentificationSession();
@@ -324,7 +331,7 @@ public class GlowSession {
             Set<String> allProfiles = Utils.getAllProfiles(all);
             for (String p : arguments.getExecutionProfiles()) {
                 if (!allProfiles.contains(p)) {
-                    throw new Exception("Unknown profile " + p);
+                    throw new Exception("Unknown profile " + p + ". Valid profiles are " + allProfiles);
                 }
             }
             // END VALIDATE USER INPUTS

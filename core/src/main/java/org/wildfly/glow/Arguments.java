@@ -1,6 +1,7 @@
 package org.wildfly.glow;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,6 +29,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     public static final String BARE_METAL_EXECUTION_CONTEXT = "bare-metal";
     public static final String STANDALONE_XML = "standalone.xml";
     public static final String PREVIEW = "preview";
+    static final List<String> EXECUTION_CONTEXTS = new ArrayList<>();
+    static {
+        EXECUTION_CONTEXTS.add(BARE_METAL_EXECUTION_CONTEXT);
+        EXECUTION_CONTEXTS.add(CLOUD_EXECUTION_CONTEXT);
+    }
     private final Boolean compact;
     private final Set<String> manualLayers;
     private final boolean verbose;
