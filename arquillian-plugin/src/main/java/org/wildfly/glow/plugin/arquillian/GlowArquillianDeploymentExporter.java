@@ -21,7 +21,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -45,15 +44,17 @@ public class GlowArquillianDeploymentExporter {
     private final List<String> fileNames = new ArrayList<>();
     private int counter = 0;
     private final boolean verbose;
+    private final boolean abortOnError;
 
-    public GlowArquillianDeploymentExporter(List<String> testClasses, ClassLoader loader, Path outputFolder, boolean verbose) {
+    public GlowArquillianDeploymentExporter(List<String> testClasses, ClassLoader loader, Path outputFolder, boolean verbose, boolean abortOnError) {
         this.testClasses = testClasses;
         this.outputFolder = outputFolder.normalize();
         this.loader = loader;
         this.verbose = verbose;
+        this.abortOnError = abortOnError;
     }
 
-    public List<String> scanAndExport() throws Exception {
+    public List<String> scanAndExport() throws Throwable {
         for (String className : testClasses) {
             inspectClassFile(className);
         }
@@ -63,7 +64,7 @@ public class GlowArquillianDeploymentExporter {
         return fileNames;
     }
 
-    private void inspectClassFile(String className) throws IOException {
+    private void inspectClassFile(String className) throws Throwable {
         Class<?> clazz;
         try {
             if(verbose) {
@@ -71,11 +72,14 @@ public class GlowArquillianDeploymentExporter {
             }
             clazz = Class.forName(className, false, loader);
         } catch (Throwable e) {
-            if (verbose) {
+            if (abortOnError || verbose) {
                 System.err.println("Exception scanning test class " + className + ": " + e);
                 // In some classes static initialisers expect some system properties to be set
                 // Just ignore this, in the hope that this does not affect any of the test classes (for now anyway)
                 e.printStackTrace();
+            }
+            if (abortOnError) {
+                throw e;
             }
             return;
         }
@@ -110,15 +114,18 @@ public class GlowArquillianDeploymentExporter {
                 methods.addAll(findDeploymentAnnotatedMethod(superClass));
             }
         } catch (Throwable ex) {
-            if (verbose) {
+            if (abortOnError || verbose) {
                 System.err.println("Exception scanning test class " + clazz + " methods: " + ex);
                 ex.printStackTrace();
+            }
+            if (abortOnError) {
+                throw ex;
             }
         }
         return methods;
     }
 
-    private void invokeDeploymentMethodAndExportArchive(Method m) {
+    private void invokeDeploymentMethodAndExportArchive(Method m) throws Exception {
         Archive<?> archive;
         try {
             ClassLoader current = Thread.currentThread().getContextClassLoader();
@@ -129,9 +136,12 @@ public class GlowArquillianDeploymentExporter {
                 Thread.currentThread().setContextClassLoader(current);
             }
         } catch (IllegalAccessException | InvocationTargetException e) {
-            if (verbose) {
+            if (abortOnError || verbose) {
                 System.err.println("Exception invoking deployment method " + m + ": " + e);
                 e.printStackTrace();
+            }
+            if (abortOnError) {
+                throw e;
             }
             return;
         }

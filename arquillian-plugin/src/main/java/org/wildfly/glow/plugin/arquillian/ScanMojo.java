@@ -161,6 +161,12 @@ public class ScanMojo extends AbstractMojo {
     @Parameter(alias = "skip-scanning", property = "org.wildfly.glow.skip-scanning")
     boolean skipScanning;
 
+    /**
+     * Abort when deployment scanning fails.
+     */
+    @Parameter(alias = "abort-scanning-on-error", property = "org.wildfly.glow.abort-scanning-on-error")
+    boolean abortScanningOnError;
+
     @Parameter(alias = "add-layers-for-jndi", property = "org.wildfly.glow.layers-for-jndi")
     Set<String> layersForJndi = Collections.emptySet();
 
@@ -560,6 +566,7 @@ public class ScanMojo extends AbstractMojo {
         cmd.add(classesLst.toString());
         cmd.add(outputFolder.toAbsolutePath().toString());
         cmd.add(verbose || getLog().isDebugEnabled() ? "true" : "false");
+        cmd.add(abortScanningOnError ? "true" : "false");
         final ProcessBuilder builder = new ProcessBuilder(cmd)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT);
@@ -635,7 +642,11 @@ public class ScanMojo extends AbstractMojo {
             }
         }
         Process p = startScanner(outputFolder, actualClasses, testArtifacts);
-        p.waitFor();
+        int ret = p.waitFor();
+        if (ret != 0 && abortScanningOnError) {
+            throw new MojoExecutionException("Test deployment scanning failed and the plugin was "
+                    + "configured to abort. Check the output for errors");
+        }
         List<Path> deployments = new ArrayList<>();
         List<String> lst = Files.readAllLines(outputFolder.resolve(GlowArquillianDeploymentExporter.ARCHIVE_LIST_FILENAME));
         for (String l : lst) {

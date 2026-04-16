@@ -51,14 +51,15 @@ public class ScannerMain {
         Path outputFolder = Paths.get(args[3]);
 
         boolean verbose = Boolean.parseBoolean(args[4]);
+        boolean abortOnError = Boolean.parseBoolean(args[5]);
         // ClassLoader to load the Scanner from the classpath (equivalent to application cp).
         // Delegates to the application classpath to resolve Java API.
         URLClassLoader cpLoader = buildClassLoader(cpArray, Thread.currentThread().getContextClassLoader());
         // ClassLoader to load the test classes, delegate to cpLoader
         URLClassLoader testLoader = buildClassLoader(urlsArray, cpLoader);
         Class<?> exporterClass = Class.forName("org.wildfly.glow.plugin.arquillian.GlowArquillianDeploymentExporter", true, cpLoader);
-        Constructor ctr = exporterClass.getConstructor(List.class, ClassLoader.class, Path.class, Boolean.TYPE);
-        Object obj = ctr.newInstance(classes, testLoader, outputFolder, verbose);
+        Constructor ctr = exporterClass.getConstructor(List.class, ClassLoader.class, Path.class, Boolean.TYPE, Boolean.TYPE);
+        Object obj = ctr.newInstance(classes, testLoader, outputFolder, verbose, abortOnError);
         Method scan = exporterClass.getMethod("scanAndExport");
         scan.invoke(obj);
         System.exit(0);
