@@ -95,110 +95,103 @@ public class ScanResultsPrinter {
             writer.info("WildFly variant: " + arguments.getServerVariant());
         }
         writer.info("galleon discovery");
-        StringBuilder builder = new StringBuilder();
-        builder.append("- feature-packs").append("\n");
+        writer.info("- feature-packs");
         for (GalleonFeaturePackConfig fp : scanResults.getProvisioningConfig().getFeaturePackDeps()) {
             FPID fpid = scanResults.getFeaturePackVersions().get(fp.getLocation().getProducer());
-            builder.append("   ").append(fpid == null ? fp.getLocation() : fpid).append("\n");
+            writer.info("   " + (fpid == null ? fp.getLocation() : fpid));
         }
-        builder.append("- layers").append("\n");
-        builder.append("   ").append(scanResults.getBaseLayer()).append("\n");
+        writer.info("- layers");
+        writer.info("   " + scanResults.getBaseLayer());
         for (Layer l : scanResults.getDecorators()) {
-            builder.append("   ").append(l.getName() + (scanResults.getExcludedFeatures().containsKey(l) ? " [WARNING: contains content at a lower stability level]" : "")).append("\n");
+            writer.info("   " + l.getName() + (scanResults.getExcludedFeatures().containsKey(l) ? " [WARNING: contains content at a lower stability level]" : ""));
         }
         if (!scanResults.getExcludedLayers().isEmpty()) {
-            builder.append("- excluded-layers\n");
+            writer.info("- excluded-layers");
             for (Layer l : scanResults.getExcludedLayers()) {
-                builder.append("   ").append(l.getName()).append("\n");
+                writer.info("   " + l.getName());
             }
         }
-        writer.info(builder);
         if (arguments.isVerbose()) {
-            StringBuilder rulesBuilder = new StringBuilder();
-            rulesBuilder.append("\nlayers inclusion rules").append("\n");
-            rulesBuilder.append("* ").append(scanResults.getBaseLayer()).append("\n");
+            writer.info(" ");
+            writer.info("layers inclusion rules");
+            writer.info("* " + scanResults.getBaseLayer());
             for (LayerMapping.RULE rule : scanResults.getBaseLayer().getMatchingRules().keySet()) {
                 Set<String> str = scanResults.getBaseLayer().getMatchingRules().get(rule);
-                rulesBuilder.append("  - ").append(rule).append((str == null || str.isEmpty()) ? "" : ": " + str).append("\n");
+                writer.info("  - " + rule + ((str == null || str.isEmpty()) ? "" : ": " + str));
             }
             for (Layer l : scanResults.getDecorators()) {
-                rulesBuilder.append("* ").append(l.getName()).append("\n");
+                writer.info("* " + l.getName());
                 for (LayerMapping.RULE rule : l.getMatchingRules().keySet()) {
                     Set<String> str = l.getMatchingRules().get(rule);
-                    rulesBuilder.append("  - ").append(rule).append((str == null || str.isEmpty()) ? "" : ": " + str).append("\n");
+                    writer.info("  - " + rule + ((str == null || str.isEmpty()) ? "" : ": " + str));
                 }
             }
-            writer.info(rulesBuilder.toString());
         }
         if (!scanResults.getEnabledAddOns().isEmpty()) {
             writer.info("enabled add-ons");
-            StringBuilder addOnsBuilder = new StringBuilder();
             for (AddOn l : scanResults.getEnabledAddOns()) {
-                addOnsBuilder.append("- ").append(l.getName()).append(l.getDescription() != null ? " : " + l.getDescription() : "").append("\n");
+                writer.info("- " + l.getName() + (l.getDescription() != null ? " : " + l.getDescription() : ""));
             }
-            writer.info(addOnsBuilder);
         }
         if (!scanResults.getDisabledAddOns().isEmpty()) {
             writer.info("disabled add-ons");
-            StringBuilder disabledBuilder = new StringBuilder();
             for (Map.Entry<AddOn, String> l : scanResults.getDisabledAddOns().entrySet()) {
-                disabledBuilder.append("- ").append(l.getKey().getName()).append(": ").append(l.getValue()).append("\n");
+                writer.info("- " + l.getKey().getName() + ": " + l.getValue());
             }
-            writer.info(disabledBuilder);
         }
-        List<StringBuilder> fixBuilders = new ArrayList<>();
-        List<StringBuilder> errorBuilders = new ArrayList<>();
-        List<StringBuilder> warnBuilders = new ArrayList<>();
+        List<String> fixBuilders = new ArrayList<>();
+        List<String> errorBuilders = new ArrayList<>();
+        List<String> warnBuilders = new ArrayList<>();
         for (IdentifiedError error : scanResults.getErrorSession().getErrors()) {
             if (error.isFixed()) {
-                StringBuilder fixBuilder = new StringBuilder();
-                fixBuilder.append("* ").append(error.getDescription()).append(" is fixed\n");
-                fixBuilder.append("  - ").append(error.getFixMessage()).append("\n");
-                fixBuilders.add(fixBuilder);
+                fixBuilders.add("* " + error.getDescription() + " is fixed");
+                fixBuilders.add("  - " + error.getFixMessage());
             } else {
-                StringBuilder errorBuilder = new StringBuilder();
-                errorBuilder.append("* ").append(error.getDescription()).append("\n");
+                List<String> errorMessages;
+                if (error.getErrorLevel() == ErrorLevel.ERROR) {
+                    errorMessages = errorBuilders;
+                } else {
+                    errorMessages = warnBuilders;
+                }
+                errorMessages.add("* " + error.getDescription());
                 if (!error.getUnverifiedFixes().isEmpty()) {
-                    errorBuilder.append("  The following suggestions should help you fix the reported warnings:\n");
+                    errorMessages.add("  The following suggestions should help you fix the reported warnings:");
                     for (String unverifiedFix : error.getUnverifiedFixes()) {
-                        errorBuilder.append("  - ").append(unverifiedFix).append("\n");
+                        errorMessages.add("  - " + unverifiedFix);
                     }
                 }
                 if (!error.getPossibleAddons().isEmpty()) {
+                    StringBuilder errorBuilder = new StringBuilder();
                     errorBuilder.append("  Enabling one of the following add-ons may ");
                     if (!error.getUnverifiedFixes().isEmpty()) {
                         errorBuilder.append("also ");
                     }
-                    errorBuilder.append("fix this issue:\n");
+                    errorBuilder.append("fix this issue:");
+                    errorMessages.add(errorBuilder.toString());
                     for (AddOn addOn : error.getPossibleAddons()) {
                         String deployer = configResolver == null ? null : configResolver.getPossibleDeployer(addOn.getLayers());
-                        errorBuilder.append("  - ").append(addOn.getName()).append((deployer == null ? "" : " (supported by "+deployer+" deployer)")).append("\n");
+                        errorMessages.add("  - " + addOn.getName() + (deployer == null ? "" : " (supported by "+deployer+" deployer)"));
                     }
-                }
-                if (error.getErrorLevel() == ErrorLevel.ERROR) {
-                    errorBuilders.add(errorBuilder);
-                } else {
-                    warnBuilders.add(errorBuilder);
                 }
             }
         }
 
         if (!errorBuilders.isEmpty()) {
             writer.info("identified errors");
-            for (StringBuilder errorBuilder : errorBuilders) {
+            for (String errorBuilder : errorBuilders) {
                 writer.error(errorBuilder);
             }
         }
 
         if (!warnBuilders.isEmpty()) {
             writer.info("possible issues");
-            for (StringBuilder warnBuilder : warnBuilders) {
+            for (String warnBuilder : warnBuilders) {
                 writer.warn(warnBuilder);
             }
         }
         if (!fixBuilders.isEmpty()) {
             writer.info("identified fixes");
-            for (StringBuilder fixBuilder : fixBuilders) {
+            for (String fixBuilder : fixBuilders) {
                 writer.info(fixBuilder);
             }
         }
@@ -229,7 +222,10 @@ public class ScanResultsPrinter {
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty()) {
             writer.warn("strongly suggested configuration at runtime");
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getStronglySuggestedConfigurations().entrySet()) {
-                writer.warn(buildSuggestions(entry.getKey(), entry.getValue()));
+                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue());
+                for(String s : lst) {
+                    writer.warn(s);
+                }
             }
             writer.warn("");
         }
@@ -237,7 +233,10 @@ public class ScanResultsPrinter {
         if (!scanResults.getSuggestions().getBuildTimeRequiredConfigurations().isEmpty()) {
             writer.warn("configuration that must be set at provisioning time");
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getBuildTimeRequiredConfigurations().entrySet()) {
-                writer.warn(buildSuggestions(entry.getKey(), entry.getValue()));
+                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue());
+                for(String s : lst) {
+                    writer.warn(s);
+                }
             }
             writer.warn("");
         }
@@ -267,8 +266,8 @@ public class ScanResultsPrinter {
                 writer.info("");
             }
         }
-        String suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
-        String suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations());
+        List<String> suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
+        List<String> suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations());
 
         if (arguments.isSuggest()) {
             writer.info("suggestions");
@@ -276,12 +275,18 @@ public class ScanResultsPrinter {
                 writer.info("none");
             } else {
                 if (!suggestedBuildTimeConfigs.isEmpty()) {
-                    writer.info("\n* you could set the following configuration at provisioning time");
-                    writer.info(suggestedBuildTimeConfigs);
+                    writer.info(" ");
+                    writer.info("* you could set the following configuration at provisioning time");
+                    for(String s : suggestedBuildTimeConfigs) {
+                        writer.info(s);
+                    }
                 }
                 if (!suggestedConfigs.isEmpty()) {
-                    writer.info("\n* you could set the following configuration at runtime");
-                    writer.info(suggestedConfigs);
+                    writer.info(" ");
+                    writer.info("* you could set the following configuration at runtime");
+                    for(String s : suggestedConfigs) {
+                        writer.info(s);
+                    }
                 }
                 if (!scanResults.getSuggestions().getPossibleAddOns().isEmpty()) {
                     writer.info("* you could enable the following add-ons:");
@@ -294,23 +299,19 @@ public class ScanResultsPrinter {
                         }
                         addons.add(addOn);
                     }
-                    StringBuilder possibleBuilder = new StringBuilder();
                     for (String family : sortedAddOns.keySet()) {
-                        possibleBuilder.append("  - ").append(family).append(" add-ons:\n");
+                        writer.info("  - " + family + " add-ons:");
                         for (AddOn l : sortedAddOns.get(family)) {
-                            possibleBuilder.append("    - ").append(l.getName()).append(l.getDescription() != null ? " : "
-                                    + l.getDescription() : "").append("\n");
+                            writer.info("    - " + l.getName() + (l.getDescription() != null ? " : "
+                                    + l.getDescription() : ""));
                         }
                     }
-                    writer.info(possibleBuilder);
                 }
                 if (!scanResults.getSuggestions().getPossibleProfiles().isEmpty()) {
                     writer.info("* you could enable profiles:");
-                    StringBuilder profilesBuilder = new StringBuilder();
                     for (String l : scanResults.getSuggestions().getPossibleProfiles()) {
-                        profilesBuilder.append("  - ").append(l).append("\n");
+                        writer.info("  - " + l);
                     }
-                    writer.info(profilesBuilder);
                 }
             }
         } else {
@@ -320,16 +321,16 @@ public class ScanResultsPrinter {
         }
     }
 
-    private String buildSuggestions(Map<Layer, Set<Env>> map) throws Exception {
-        StringBuilder suggestedConfigsBuilder = new StringBuilder();
+    private List<String> buildSuggestions(Map<Layer, Set<Env>> map) throws Exception {
+        List<String> suggestedConfigsBuilder = new ArrayList<>();
         for (Layer l : map.keySet()) {
-            suggestedConfigsBuilder.append(buildSuggestions(l, map.get(l)));
+            suggestedConfigsBuilder.addAll(buildSuggestions(l, map.get(l)));
         }
-        return suggestedConfigsBuilder.toString();
+        return suggestedConfigsBuilder;
     }
 
-    private String buildSuggestions(Layer layer, Set<Env> envs) throws Exception {
-        StringBuilder suggestedConfigsBuilder = new StringBuilder();
+    private List<String> buildSuggestions(Layer layer, Set<Env> envs) throws Exception {
+        List<String> suggestedConfigsBuilder = new ArrayList<>();
         Set<Env> envVars = new TreeSet<>();
         Set<Env> properties = new TreeSet<>();
         Iterator<Env> it = envs.iterator();
@@ -342,17 +343,18 @@ public class ScanResultsPrinter {
             }
         }
         if (!envVars.isEmpty()) {
-            suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" environment variables:\n");
+            suggestedConfigsBuilder.add(" ");
+            suggestedConfigsBuilder.add(layer.getName() + " environment variables:");
             if (configResolver != null) {
                 ResolvedEnvs resolvedEnvs = configResolver.getResolvedEnvs(layer, envVars);
                 if (resolvedEnvs != null) {
                     envVars.removeAll(resolvedEnvs.getEnvs());
                     if (envVars.isEmpty()) {
-                        suggestedConfigsBuilder.append(" - ").append("Resolver " + resolvedEnvs.getName()).append(" resolved all env variables.");
+                        suggestedConfigsBuilder.add(" - Resolver " + resolvedEnvs.getName() + " resolved all env variables.");
                     } else {
-                        suggestedConfigsBuilder.append(" - ").append("Resolver " + resolvedEnvs.getName()).append(" resolved the following env variables:\n");
+                        suggestedConfigsBuilder.add(" - Resolver " + resolvedEnvs.getName() + " resolved the following env variables:");
                         for (Env env : resolvedEnvs.getEnvs()) {
-                            suggestedConfigsBuilder.append("  - ").append(env.getName() + "\n");
+                            suggestedConfigsBuilder.add("  - " + env.getName());
 
                         }
                     }
@@ -361,22 +363,17 @@ public class ScanResultsPrinter {
             Iterator<Env> it2 = envVars.iterator();
             while (it2.hasNext()) {
                 Env e = it2.next();
-                suggestedConfigsBuilder.append(" - ").append(e.getName()).append("=").append(e.getDescription());
-                if (it2.hasNext()) {
-                    suggestedConfigsBuilder.append("\n");
-                }
+                suggestedConfigsBuilder.add(" - " + e.getName() + "=" + e.getDescription());
             }
         }
         if (!properties.isEmpty()) {
-            suggestedConfigsBuilder.append("\n").append(layer.getName()).append(" system properties:\n");
+            suggestedConfigsBuilder.add(" ");
+            suggestedConfigsBuilder.add(layer.getName() + " system properties:");
             Iterator<Env> it2 = properties.iterator();
             while (it2.hasNext()) {
                 Env e = it2.next();
-                suggestedConfigsBuilder.append(" -D").append(e.getName()).append("=").append(e.getDescription());
-                if (it2.hasNext()) {
-                    suggestedConfigsBuilder.append("\n");
-                }
+                suggestedConfigsBuilder.add(" -D" + e.getName() + "=" + e.getDescription());
             }
         }
-        return suggestedConfigsBuilder.toString();
+        return suggestedConfigsBuilder;
     }}
