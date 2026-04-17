@@ -905,7 +905,9 @@ public class GlowSession {
                     bootableJarName = "hollow";
                 }
                 String vers = arguments.getVersion() == null ? metadataProvider.getLatestVersion() : arguments.getVersion();
-                Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" + vers + "-" + BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
+                Path targetJarFile = originalTarget.toAbsolutePath().resolve(bootableJarName + "-" +
+                        (arguments.getServerVariant() == null ? "" : arguments.getServerVariant() + "-") + vers + "-" +
+                        BootableJarSupport.BOOTABLE_SUFFIX + ".jar");
                 ret = targetJarFile;
                 Files.deleteIfExists(targetJarFile);
                 BootableJarSupport.packageBootableJar(targetJarFile, originalTarget.toAbsolutePath(),
