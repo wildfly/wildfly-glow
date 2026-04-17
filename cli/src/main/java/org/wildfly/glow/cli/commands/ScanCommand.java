@@ -408,7 +408,7 @@ public class ScanCommand extends AbstractCommand {
             }
             ProducerSpec baseProducer = scanResults.getProvisioningConfig().getFeaturePackDeps().iterator().next().getLocation().getProducer();
             String vers = scanResults.getFeaturePackVersions().get(baseProducer).getBuild();
-            Path target = Paths.get(provisionOutputDir.orElse("server-" + vers));
+            Path target = Paths.get(provisionOutputDir.orElse("server-" + (serverVariant.isPresent() ? serverVariant.get() + "-" : "") + vers));
             IoUtils.recursiveDelete(target);
             switch (provision.get()) {
                 case BOOTABLE_JAR: {
