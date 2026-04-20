@@ -184,7 +184,7 @@ public class ScanResultsPrinter {
         }
 
         if (!warnBuilders.isEmpty()) {
-            writer.info("possible issues");
+            writer.warn("some potential issues have been found");
             for (String warnBuilder : warnBuilders) {
                 writer.warn(warnBuilder);
             }
