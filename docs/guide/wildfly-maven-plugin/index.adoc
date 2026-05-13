@@ -203,14 +203,30 @@ In some cases, it can appear that the error is actually not problematic and can 
 </discover-provisioning-info>
 ----
 
-### Support for WildFly Preview
+### Support for WildFly variants
+
+WildFly server offers different variants: `WildFly Preview` and `WildFly EE-10 (starting with WildFly 40)`.
+You can configure the plugin to select the server variant in use.
+
+#### Support for WildFly EE-10 variant
+
+If you are targeting deployment to the WildFly EE-10 server, evolve the `discover-provisioning-info`:
+
+[source,xml,subs=attributes+]
+----
+<discover-provisioning-info>
+    <server-variant>ee-10</server-variant>
+</discover-provisioning-info>
+----
+
+#### Support for WildFly Preview variant
 
 If you are targeting deployment to the WildFly Preview server, evolve the `discover-provisioning-info`:
 
 [source,xml,subs=attributes+]
 ----
 <discover-provisioning-info>
-    <preview>true</preview>
+    <server-variant>preview</server-variant>
 </discover-provisioning-info>
 ----
 
