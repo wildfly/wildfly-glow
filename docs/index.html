@@ -444,7 +444,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Jean-Francois Denise</span><br>
 <span id="revnumber">version 2.0.0.Final,</span>
-<span id="revdate">2026-05-07T07:27:47Z</span>
+<span id="revdate">2026-05-13T12:35:22Z</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -473,7 +473,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_ha_high_availability_support">3.5. HA (High Availability) support</a></li>
 <li><a href="#_dry_run">3.6. Dry-run</a></li>
 <li><a href="#_error_handling">3.7. Error handling</a></li>
-<li><a href="#_support_for_wildfly_preview">3.8. Support for WildFly Preview</a></li>
+<li><a href="#_support_for_wildfly_variants">3.8. Support for WildFly variants</a></li>
 <li><a href="#_specifying_additional_galleon_layers">3.9. Specifying additional Galleon Layers</a></li>
 <li><a href="#_excluding_archives">3.10. Excluding archives</a></li>
 <li><a href="#_enabling_spaces">3.11. Enabling spaces</a></li>
@@ -1075,15 +1075,35 @@ In some cases, it can appear that the error is actually not problematic and can 
 </div>
 </div>
 <div class="sect2">
-<h3 id="_support_for_wildfly_preview"><a class="anchor" href="#_support_for_wildfly_preview"></a><a class="link" href="#_support_for_wildfly_preview">3.8. Support for WildFly Preview</a></h3>
+<h3 id="_support_for_wildfly_variants"><a class="anchor" href="#_support_for_wildfly_variants"></a><a class="link" href="#_support_for_wildfly_variants">3.8. Support for WildFly variants</a></h3>
+<div class="paragraph">
+<p>WildFly server offers different variants: <code>WildFly Preview</code> and <code>WildFly EE-10 (starting with WildFly 40)</code>.
+You can configure the plugin to select the server variant in use.</p>
+</div>
+<div class="sect3">
+<h4 id="_support_for_wildfly_ee_10_variant"><a class="anchor" href="#_support_for_wildfly_ee_10_variant"></a><a class="link" href="#_support_for_wildfly_ee_10_variant">3.8.1. Support for WildFly EE-10 variant</a></h4>
+<div class="paragraph">
+<p>If you are targeting deployment to the WildFly EE-10 server, evolve the <code>discover-provisioning-info</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;server-variant&gt;</span>ee-10<span style="color:#070;font-weight:bold">&lt;/server-variant&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_support_for_wildfly_preview_variant"><a class="anchor" href="#_support_for_wildfly_preview_variant"></a><a class="link" href="#_support_for_wildfly_preview_variant">3.8.2. Support for WildFly Preview variant</a></h4>
 <div class="paragraph">
 <p>If you are targeting deployment to the WildFly Preview server, evolve the <code>discover-provisioning-info</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;discover-provisioning-info&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;preview&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/preview&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;server-variant&gt;</span>preview<span style="color:#070;font-weight:bold">&lt;/server-variant&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/discover-provisioning-info&gt;</span></code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -2676,7 +2696,7 @@ podman exec -it ollama ollama pull llama3.2:1b</code></pre>
 <div id="footer">
 <div id="footer-text">
 Version 2.0.0.Final<br>
-Last updated 2026-05-07 09:28:04 +0200
+Last updated 2026-05-13 14:35:23 +0200
 </div>
 </div>
 </body>
