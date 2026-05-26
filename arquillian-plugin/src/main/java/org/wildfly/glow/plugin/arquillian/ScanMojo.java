@@ -325,7 +325,12 @@ public class ScanMojo extends AbstractMojo {
             //Typically target/test-classes
             Path classesRootFolder = Paths.get(project.getBuild().getTestOutputDirectory());
             if (!Files.exists(classesRootFolder)) {
-                throw new IllegalStateException(classesRootFolder + " does not exist");
+                if (dependenciesToScan.isEmpty()) {
+                    throw new IllegalStateException(classesRootFolder + " does not exist and no dependencies to scan have been provided.");
+                } else {
+                    // This can happen if the phase of the plugin is before the test-compile lifecycle phase
+                    getLog().debug("No directory containing compiled classes found.");
+                }
             }
 
             //Typically under target
