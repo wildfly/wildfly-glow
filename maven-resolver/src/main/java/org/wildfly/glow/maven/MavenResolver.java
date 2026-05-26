@@ -59,6 +59,14 @@ public final class MavenResolver {
     public static final String DEFAULT_REPOSITORY_TYPE = "default";
 
     public static MavenRepoManager newMavenResolver() throws Exception  {
+        return newMavenResolver(false);
+    }
+
+    public static MavenRepoManager newOfflineMavenResolver() throws Exception  {
+        return newMavenResolver(true);
+    }
+
+    private static MavenRepoManager newMavenResolver(boolean offline) throws Exception  {
         RepositorySystem repoSystem = newRepositorySystem();
         Path settingsPath = MavenSettings.getMavenSettingsFile();
         RepositorySystemSession session;
@@ -71,8 +79,12 @@ public final class MavenResolver {
             session = settings.getSession();
             repos = settings.getRepositories();
         }
-        MavenRepoManager resolver
-                = new MavenArtifactRepositoryManager(repoSystem, session, repos);
+        MavenRepoManager resolver;
+        if (offline) {
+            resolver = new MavenArtifactRepositoryManager(repoSystem, session);
+        } else {
+            resolver = new MavenArtifactRepositoryManager(repoSystem, session, repos);
+        }
         return resolver;
     }
 
