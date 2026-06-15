@@ -89,6 +89,7 @@ public interface ScanArguments {
     MetadataProvider getMetadataProvider();
     LayerConfigurationProvider getLayerConfigurationProvider();
     boolean isEnforceInputFeaturePacks();
+    boolean isSystemPropertiesPreferred();
 
     default Builder createScanArgumentsBuilder() {
         return new Builder();
@@ -214,6 +215,10 @@ public interface ScanArguments {
         }
         public Builder setEnforceInputFeaturePacks(boolean enforceInputFeaturePacks) {
             this.enforceInputFeaturePacks = enforceInputFeaturePacks;
+            return this;
+        }
+        public Builder setPreferSystemProperties(boolean preferSystemProperties) {
+            this.preferSystemProperties = preferSystemProperties;
             return this;
         }
     }

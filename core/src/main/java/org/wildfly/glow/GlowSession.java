@@ -588,13 +588,17 @@ public class GlowSession {
                                         if (e.isRuntime()) {
                                             requiredSet.add(e);
                                         } else {
-                                            buildTimeRequiredSet.add(e);
+                                            if (!isConfigSet(e)) {
+                                                buildTimeRequiredSet.add(e);
+                                            }
                                         }
                                     } else {
                                         if (e.isRuntime()) {
                                             notRequiredSet.add(e);
                                         } else {
-                                            buildTimeSet.add(e);
+                                            if (!isConfigSet(e)) {
+                                                buildTimeSet.add(e);
+                                            }
                                         }
                                     }
                                 }
@@ -755,6 +759,24 @@ public class GlowSession {
             IoUtils.recursiveDelete(OFFLINE_CONTENT);
             IoUtils.recursiveDelete(fakeHome);
         }
+    }
+
+    private boolean isConfigSet(Env e) {
+        if (e.isProperty()) {
+            if (System.getProperties().stringPropertyNames().contains(e.getName())) {
+                return true;
+            }
+        } else {
+            if (e.getAlternateProperty() != null) {
+                if (System.getProperties().stringPropertyNames().contains(e.getAlternateProperty())) {
+                    return true;
+                }
+            }
+            if (System.getenv(e.getName()) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     OutputContent outputConfig(ScanResults scanResults, Path target, String dockerImageName) throws Exception {

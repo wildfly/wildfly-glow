@@ -27,13 +27,22 @@ public class Env implements Comparable<Env> {
     private final Boolean runtime;
     private final Boolean required;
     private final Boolean isProperty;
-   public Env(String name, String description, Boolean buildTime, Boolean required, Boolean property) {
+    private final String alternateProperty;
+   public Env(String name, String description, Boolean buildTime, Boolean required, Boolean property, String alternateProperty) {
        this.name= name;
        this.description = description;
        this.runtime = buildTime == null ? Boolean.TRUE : !buildTime;
        this.required = required == null ? Boolean.FALSE : required;
        this.isProperty = property == null ? Boolean.FALSE : property;
+       this.alternateProperty = alternateProperty;
    }
+
+   /**
+     * @return the alternateProperty
+     */
+    public String getAlternateProperty() {
+        return alternateProperty;
+    }
 
     /**
      * @return the name
