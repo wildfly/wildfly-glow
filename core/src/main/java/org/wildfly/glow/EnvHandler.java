@@ -44,7 +44,8 @@ public class EnvHandler {
                 Boolean buildTime = (Boolean) env.get("build-time");
                 String description = (String) env.get("description");
                 Boolean property = (Boolean) env.get("property");
-                ret.add(new Env(name,description, buildTime, required, property));
+                String alternateProperty = (String) env.get("alternate-system-property");
+                ret.add(new Env(name,description, buildTime, required, property, alternateProperty));
             }
         } catch (Exception ex) {
             ex.printStackTrace();

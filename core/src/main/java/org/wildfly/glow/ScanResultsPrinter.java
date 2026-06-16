@@ -220,20 +220,20 @@ public class ScanResultsPrinter {
         }
 
         if (!scanResults.getSuggestions().getStronglySuggestedConfigurations().isEmpty()) {
-            writer.warn("strongly suggested configuration at runtime");
+            writer.info("strongly suggested configuration at runtime");
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getStronglySuggestedConfigurations().entrySet()) {
-                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue());
+                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue(), arguments.isSystemPropertiesPreferred());
                 for(String s : lst) {
-                    writer.warn(s);
+                    writer.info(s);
                 }
             }
-            writer.warn("");
+            writer.info("");
         }
 
         if (!scanResults.getSuggestions().getBuildTimeRequiredConfigurations().isEmpty()) {
             writer.warn("configuration that must be set at provisioning time");
             for(Map.Entry<Layer, Set<Env>> entry : scanResults.getSuggestions().getBuildTimeRequiredConfigurations().entrySet()) {
-                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue());
+                List<String> lst = buildSuggestions(entry.getKey(), entry.getValue(), arguments.isSystemPropertiesPreferred());
                 for(String s : lst) {
                     writer.warn(s);
                 }
@@ -266,8 +266,8 @@ public class ScanResultsPrinter {
                 writer.info("");
             }
         }
-        List<String> suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations());
-        List<String> suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations());
+        List<String> suggestedConfigs = buildSuggestions(scanResults.getSuggestions().getSuggestedConfigurations(), arguments.isSystemPropertiesPreferred());
+        List<String> suggestedBuildTimeConfigs = buildSuggestions(scanResults.getSuggestions().getBuildTimeConfigurations(), arguments.isSystemPropertiesPreferred());
 
         if (arguments.isSuggest()) {
             writer.info("suggestions");
@@ -321,22 +321,22 @@ public class ScanResultsPrinter {
         }
     }
 
-    private List<String> buildSuggestions(Map<Layer, Set<Env>> map) throws Exception {
+    private List<String> buildSuggestions(Map<Layer, Set<Env>> map, boolean preferProperties) throws Exception {
         List<String> suggestedConfigsBuilder = new ArrayList<>();
         for (Layer l : map.keySet()) {
-            suggestedConfigsBuilder.addAll(buildSuggestions(l, map.get(l)));
+            suggestedConfigsBuilder.addAll(buildSuggestions(l, map.get(l), preferProperties));
         }
         return suggestedConfigsBuilder;
     }
 
-    private List<String> buildSuggestions(Layer layer, Set<Env> envs) throws Exception {
+    private List<String> buildSuggestions(Layer layer, Set<Env> envs, boolean preferProperties) throws Exception {
         List<String> suggestedConfigsBuilder = new ArrayList<>();
         Set<Env> envVars = new TreeSet<>();
         Set<Env> properties = new TreeSet<>();
         Iterator<Env> it = envs.iterator();
         while (it.hasNext()) {
             Env e = it.next();
-            if (e.isProperty()) {
+            if (e.isProperty() || (preferProperties && e.getAlternateProperty() != null) ) {
                 properties.add(e);
             } else {
                 envVars.add(e);
@@ -372,7 +372,8 @@ public class ScanResultsPrinter {
             Iterator<Env> it2 = properties.iterator();
             while (it2.hasNext()) {
                 Env e = it2.next();
-                suggestedConfigsBuilder.add(" -D" + e.getName() + "=" + e.getDescription());
+                String name = (preferProperties && e.getAlternateProperty() != null) ? e.getAlternateProperty() : e.getName();
+                suggestedConfigsBuilder.add(" -D" + name + "=" + e.getDescription());
             }
         }
         return suggestedConfigsBuilder;

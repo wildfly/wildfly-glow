@@ -49,6 +49,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     private final boolean disableForkEmbedded;
     private final LayerConfigurationProvider layerConfigurationProvider;
     private final boolean enforceInputFeaturePacks;
+    private final boolean preferSystemProperties;
 
     protected Arguments(
             String executionContext,
@@ -73,7 +74,8 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
             MetadataProvider metadataProvider,
             boolean disableForkEmbedded,
             LayerConfigurationProvider layerConfigurationProvider,
-            boolean enforceInputFeaturePacks) {
+            boolean enforceInputFeaturePacks,
+            boolean preferSystemProperties) {
         this.executionProfiles = executionProfiles;
         this.userEnabledAddOns = userEnabledAddOns;
         this.binaries = binaries;
@@ -105,6 +107,7 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
         this.disableForkEmbedded = disableForkEmbedded;
         this.layerConfigurationProvider = layerConfigurationProvider;
         this.enforceInputFeaturePacks = enforceInputFeaturePacks;
+        this.preferSystemProperties = preferSystemProperties;
     }
 
     /**
@@ -281,6 +284,11 @@ public class Arguments implements GoOfflineArguments, ScanArguments {
     @Override
     public boolean isEnforceInputFeaturePacks() {
         return enforceInputFeaturePacks;
+    }
+
+    @Override
+    public boolean isSystemPropertiesPreferred() {
+        return preferSystemProperties;
     }
 
     static GoOfflineArguments.Builder goOfflineBuilder() {

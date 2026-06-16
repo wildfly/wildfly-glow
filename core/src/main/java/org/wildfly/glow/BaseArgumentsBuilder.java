@@ -50,7 +50,7 @@ public class BaseArgumentsBuilder {
     protected boolean disableForkEmbedded;
     protected LayerConfigurationProvider layerConfigurationProvider;
     protected boolean enforceInputFeaturePacks;
-
+    protected boolean preferSystemProperties;
     protected BaseArgumentsBuilder() {
 
     }
@@ -83,6 +83,7 @@ public class BaseArgumentsBuilder {
                 metadataProvider,
                 disableForkEmbedded,
                 layerConfigurationProvider,
-                enforceInputFeaturePacks);
+                enforceInputFeaturePacks,
+                preferSystemProperties);
     }
 }
